@@ -1,0 +1,41 @@
+################
+# Global rules #
+################
+
+*.pyc
+*.pyo
+*.log
+#.kafe
+*.egg-info
+
+##########
+# Images #
+##########
+
+examples/example*/*.pdf
+examples/example*/*.jpg
+examples/example*/*.png
+
+############################
+# Re-creatable Directories #
+############################
+
+doc/build/_build
+
+#########
+# Other #
+#########
+
+MANIFEST
+dist
+/build
+
+# LaTeX auxiliary files
+doc/latex/*.idx
+doc/latex/*.ilg
+doc/latex/*.ind
+doc/latex/*.out
+doc/latex/*.toc
+doc/latex/*.aux
+doc/latex/*.log
+doc/latex/kafe~.pdf

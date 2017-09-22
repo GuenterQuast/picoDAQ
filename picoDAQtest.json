@@ -1,0 +1,18 @@
+{
+"picoChannels":["A", "B"],
+"ChanRanges":  [30E-3, 0.35],
+"Nsamples": 200,  
+"sampleTime": 10E-6, 
+"trgChan": "B",      
+"trgThr": 0.1,       
+"trgTyp": "Rising",   
+"trgTO": 1000,        
+"trgDelay":  0, 
+"trgActive": false,
+"pretrg": 0.05, 
+"frqSigGen": 100E3,
+"swpSigGen": "UpDown",
+"ChanColors": ["darkblue","darkslategrey", "darkred", "darkgreen"],  
+"verbose":1,  
+"mode": "test" 
+}
