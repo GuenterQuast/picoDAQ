@@ -20,5 +20,6 @@ Demonstrate data acquisition with PicoScope usb-oscilloscpe
   graphics implemented with matplotlib
 
   For Demo Mode:
-     Connect output of signal gnerator to channel B')
-     Connect open cable to Channel A \n')
+
+     Connect output of signal gnerator to channel B, and 
+     eventually an open cable to Channel A 
