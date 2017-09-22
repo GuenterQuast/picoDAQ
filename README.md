@@ -1,19 +1,21 @@
 # picoDAQ
+Demonstrate data acquisition with PicoScope usb-oscilloscpe 
 
-  Based on python drivers for Picotech's usb oscilloscope
-  series PicoScope by Colin O'Flynn and Mark Harfouche,
-  tested with  PS2000 and PS4000
+  Based on python drivers by Colin O'Flynn and Mark Harfouche,
+  https://github.com/colinoflynn/pico-python
+
+  tested with  PS2000a and PS4000
 
   Functions:
  
-  - set up picoscpe channel ranges and trigger
+  - set up PicoScope channel ranges and trigger
   - PicoScope configuration optionally from json file
   - acquire data (implemented as thread)
   - analyse and plot data:
 
     - DAQtest()    test speed of data acquisitin
     - VMeter       average Voltages with bar graph display
-    - Oszi         simple Oszilloskope
+    - Osci         simple oscilloscope
   
   graphics implemented with matplotlib
 
