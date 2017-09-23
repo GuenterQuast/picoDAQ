@@ -243,6 +243,40 @@ def getPicoData(ps):
   return 0
 # -- end def getPicoData
 
+def yieldEventCopy():
+# provide an event copy from getPicoData()
+   # this is useful for clients accessing only a subset of events
+  global ibufr
+# 
+  evCnt=0
+  evData = np.empty([NChannels, Ns], dtype=np.float32 )
+  evTime = 0.
+#
+  while RUNNING:
+    while ibufr < 0: # wait for data
+      time.sleep(0.001)
+    evCnt+=1
+    evTime=timeStamp[ibufr]
+    evData[:] = VBuf[ibufr] # take a copy of data
+    ibufr = -1  # signal data received to getPicoData()
+    yield (evCnt, evTime, evData)
+  
+def yieldEventPtr():
+# provide an pointer to event data from getPicoData()
+   # this is useful normal clients accessing all events
+  global ibufr
+# 
+  evCnt=0
+  evTime = 0.
+  while RUNNING:
+    while ibufr < 0: # wait for data
+      time.sleep(0.001)
+    evCnt+=1
+    evTime=timeStamp[ibufr]
+    evData = VBuf[ibufr]
+## client must set  ibufr = -1 if done ! 
+    yield (evCnt, evTime, evData)
+  
 def DAQtest():
 # test readout speed: do nothing, just request data from getPicoData
   global ibufr
@@ -269,6 +303,8 @@ def VMeter():
   ix=np.linspace(-Npoints+1, 0, Npoints) # history plot
   bwidth=0.5
   ind = bwidth + np.arange(NChannels) # bar position in bargraph for voltages
+  V=np.empty(NChannels)
+  stdV=np.empty(NChannels)
   Vhist=np.zeros( [NChannels, Npoints] )
   stdVhist=np.zeros( [NChannels, Npoints] )
 
@@ -310,7 +346,7 @@ def VMeter():
     axtxt.get_xaxis().set_visible(False)
     axtxt.get_yaxis().set_visible(False)
     axtxt.set_title('Picoscope as Voltmeter', size='xx-large')
-    
+
     return fig, axes, axbar1, axbar2
 # -- end def grVMeterIni
 
@@ -336,25 +372,21 @@ def VMeter():
 #    return bgraph + graphs + (animtxt,)
     return (bgraph1,) + (bgraph2,) + graphs + (animtxt,)  
 
-# -- end animVMeterIni()
+# -- end grVMeterIni()
 
-  def animVMeter(n):
+  def animVMeter( (n, evTime, evData) ):
     global ibufr
     k=n%Npoints
-    while ibufr < 0:
-      time.sleep(0.001)
-    t=timeStamp[ibufr]
-    txt_t='Time  %.1fs' %(t-t0)            
+
+    txt_t='Time  %.1fs' %(evTime-t0)            
     txt=[]
-    V=np.empty(NChannels)
-    stdV=np.empty(NChannels)
     for i, C in enumerate(picoChannels):
-      V[i] = VBuf[ibufr, i].mean()
+      V[i] = evData[i].mean()
       Vhist[i, k] = V[i]
-      stdV[i] = VBuf[ibufr, i].std()
+      stdV[i] = evData[i].std()
       stdVhist[i, k] = stdV[i]
       # update history graph
-      if n>0: # !!! fix to avoid permanent display of first object in blit mode
+      if n>1: # !!! fix to avoid permanent display of first object in blit mode
         graphs[i].set_data(ix,
           np.concatenate((Vhist[i, k+1:], Vhist[i, :k+1]), axis=0) )
       else:
@@ -363,21 +395,26 @@ def VMeter():
     # update bar chart
 #    for r, v in zip(bgraph, V):
 #        r.set_height(v)
-    if n>0: # !!! fix to avoid permanent display of first object in blit mode
+    if n>1: # !!! fix to avoid permanent display of first object in blit mode
       bgraph1.set_height(V[0])
       bgraph2.set_height(V[1])
     else:  
       bgraph1.set_height(0.)
       bgraph2.set_height(0.)
     animtxt.set_text(txt_t + '\n' + txt[0] + '\n' + txt[1])
+# !!! important if working wiht event pointer !!!
     ibufr = -1  # signal data received, triggers next sample
+#
     return (bgraph1,) + (bgraph2,) + graphs + (animtxt,)
+#- -end def animVMeter
+#-end def VMeter
 
-# --  end def VMeter
   if verbose>0: print(' -> initializing Voltmeter graphics')
   fig, axes, axbar1, axbar2 = grVMeterIni()
   nrep=Npoints
-  ani=anim.FuncAnimation(fig, animVMeter, nrep, interval=Wtime, blit=True,               init_func=animVMeterIni, fargs=None, repeat=True, save_count=None)
+  ani=anim.FuncAnimation(fig, animVMeter, yieldEventPtr,
+                         interval=Wtime, init_func=animVMeterIni,
+                         blit=True, fargs=None, repeat=True, save_count=None)
    # save_count=None is a (temporary) workaround to fix memory leak in animate
   plt.show()
                 
@@ -433,25 +470,18 @@ def Oszi():
                    backgroundcolor='white', alpha=0.5)
     return graphs + (animtxt,)
   
-  def animOszi(n):
-    global n0, t0, ibufr
-    if n==0:
-      t0=time.time()
-      n0=0
-
-  #  wait for data
-    while ibufr < 0:
-      time.sleep(0.001)
+  def animOszi( (n, evTime, evData) ):
+    global ibufr, n0 
+    if n==1: n0=0
 
     if n>1:    # !!! fix to avoid permanent display of first line in blit mode
       for i, C in enumerate(picoChannels):
-        graphs[i].set_data(samplingTimes, VBuf[ibufr, i])
+        graphs[i].set_data(samplingTimes, evData[i])
     else:
       for i, C in enumerate(picoChannels):
         graphs[i].set_data([],[])
-
-    ibufr = -1  # signal data received to getPicoData()
-    
+# !!! important if working wiht event pointer !!!
+    ibufr = -1  # signal data received, triggers next sample
 # display rate and life time
     if n-n0 == 100:
       txt='rate: %.3gHz  life: %.0f%%' % (readrate, lifefrac)
@@ -462,7 +492,9 @@ def Oszi():
   if verbose>0: print(' -> initializing graphics')
   fig, axes = grOsziIni()
   nrep=10000
-  ani=anim.FuncAnimation(fig, animOszi, nrep, interval=0., blit=True,               init_func=animOsziIni, fargs=None, repeat=True, save_count=None)
+  ani=anim.FuncAnimation(fig, animOszi, yieldEventPtr, interval=0.,
+                         init_func=animOsziIni, blit=True,
+                         fargs=None, repeat=True, save_count=None)
    # save_count=None is a (temporary) workaround to fix memory leak in animate
   plt.show()
 #     
