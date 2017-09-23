@@ -1,7 +1,6 @@
 {
 "picoChannels":["A", "B"],
 "ChanRanges":  [30E-3, 0.35],
-"ChanOffsets":  [0.0, 0.0],
 "Nsamples": 200,  
 "sampleTime": 10E-6, 
 "trgChan": "B",      
@@ -9,11 +8,8 @@
 "trgTyp": "Rising",   
 "trgTO": 1000,        
 "trgDelay":  0,
-"trgActive": true,
 "pretrg": 0.05, 
-"frqSigGen": 100E3,
-"swpSigGen": "UpDown",
-"ChanColors": ["darkblue","darkslategrey", "darkred", "darkgreen"],  
-"verbose":1,  
-"mode": "notest" 
+"frqSG": 100E3,
+"swpSG": "UpDown",
+"mode": "osci" 
 }

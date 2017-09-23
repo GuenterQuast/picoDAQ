@@ -57,27 +57,36 @@ if len(sys.argv)==2:
   try:
     with open(jsonfname) as f:
       confdict=json.load(f)
-      picoChannels=confdict["picoChannels"]
-      ChanRanges=confdict["ChanRanges"]
-      Nsamples=confdict["Nsamples"]
-      sampleTime=confdict["sampleTime"]
-      trgChan=confdict["trgChan"]     
-      trgThr=confdict["trgThr"]
-      trgTyp=confdict["trgTyp"]
-      trgTO=confdict["trgTO"] 
-      trgDelay=confdict["trgDelay"]
-      trgActive=confdict["trgActive"]
-      pretrg=confdict["pretrg"]
-      frqSigGen=confdict["frqSigGen"]
-      swpSigGen=confdict["swpSigGen"]
-      ChanColors=confdict["ChanColors"]
-      verbose=confdict["verbose"]
-      mode=confdict["mode"]
+  # get mandatory parameters
+      picoChannels = confdict["picoChannels"]
+      ChanRanges = confdict["ChanRanges"]
+      Nsamples = confdict["Nsamples"]
+      sampleTime = confdict["sampleTime"]
+      trgChan = confdict["trgChan"]     
+      trgThr = confdict["trgThr"]
+      trgTyp = confdict["trgTyp"]
+      frqSG = confdict["frqSG"]
+  ##    print ('   *==* all required parameters successfully read from json file')
+  # get optional parameters (will be initialised below)
+      if "ChanModes" in confdict: ChanModes = confdict['ChanModes']
+      if "trgDelay" in confdict: trgDelay=confdict["trgDelay"]
+      if "trgActive" in confdict: trgActive=confdict["trgActive"]
+      if "pretrig" in confdict: pretrg=confdict["pretrg"]
+      if "trgTO"  in confdict: trgTO=confdict["trgTO"] 
+      if "swpSG" in confdict: swpSG=confdict["swpSG"]
+      if "PkToPkSG" in confdict: PkToPkSG = confdict["PkToPkSG"]
+      if "waveTypeSG" in confdict: waveTypeSG = confdict["waveTypeSG"]
+      if "offsetVoltageSG" in confdict: offsetVoltageSG = confdict["offsetVoltageSG"] 
+      if "dwellTimeSG" in confdict: dwellTimeSG = confdict["dwellTimeSG"]
+#      if "verbose" in confict: verbose = confdict["verbose"]
+      if "mode" in confdict: mode = confdict["mode"]
+      if "ChanColors" in confdict: ChanColors=confdict["ChanColors"]
+        
   except:
     print('     failed to read input file ' + jsonfname)
     exit(1)
-else:  
-# use these default settings
+else:
+# use these default settings for mandatory parameters
   picoChannels = ['A', 'B'] # channels
 # -- signal height:
   ChanRanges=[30E-3, 0.35]  # voltage range chan. A&B
@@ -89,32 +98,40 @@ else:
 # note: setSamplingInterval uses next smallest sampling interval
 
 # -- trigger configuration
-  trgChan = 'B'      # trigger channel,
-  trgThr = ChanRanges[1]/2.  #  threshold
+  trgChan = 'A'      # trigger channel,
+  trgThr = ChanRanges[0]/2.  #  threshold
   trgTyp = 'Rising'  #  type
-  trgTO=1000          #  and time-out
-  trgDelay = 0 #
-  trgActive = True # no triggering if set to False
-  pretrg=0.05 # fraction of samples before trigger
-
 # -- signal generator
-  frqSigGen = 100E3
-  swpSigGen = 'UpDown'
-
-# -- printout control and colors
-  verbose=1  # print (detailed) info if >0 
-  ChanColors = ['darkblue', 'darkslategrey', 'darkred', 'darkgreen']  
-  mode="notest" # "test" "VMeter"
+  frqSG = 100E3
 # -- end if - else config settings
 
-# some more defaults and handy constants
-ChanOffsets=[0.0, 0.0]  # voltage offsets (not yet funcional in driver)
+# define all other parameters (if not yet done)
 NChannels = len(picoChannels)
-pkToPkSG = 0.4
-waveTypeSG = 'Sine'
-offsetVoltageSG = 0.
-dwellTimeSG = 2/frqSigGen
-stopFreqSG = 9 * frqSigGen
+if "ChanModes" not in vars():
+  ChanModes = ['AC' for i in range(NChannels)]
+if "ChanOffsets" not in vars():
+  ChanOffsets= [0. for i in range(NChannels)]  # voltage offsets (not yet funcional in driver)
+if "trgTO" not in vars(): trgTO=1000             #  and time-out
+if "trgDelay" not in vars(): trgDelay = 0        #
+if "trgActive" not in vars(): trgActive = True   # no triggering if set to False
+if "pretrg" not in vars(): pretrg=0.05           # fraction of samples before trigger
+if "swpSG" not in vars(): swpSG = 'UpDown'
+
+if "PkToPkSG" not in vars(): PkToPkSG = 0.4 
+if "waveTypeSG" not in vars(): waveTypeSG = 'Sine'
+if "stopFreqSG" not in vars(): stopFreqSG = 9 * frqSG
+if "offsetVoltageSG" not in vars(): offsetVoltageSG = 0.
+if "dwellTimeSG" not in vars(): 
+  if frqSG > 0:
+    dwellTimeSG = 10./frqSG
+  else:
+    dwellTimeSG = 0.
+# -- printout control and colors
+if "verbose" not in vars(): verbose=1            # print (detailed) info if >0 
+if "ChanColors" not in vars():
+  ChanColors = ['darkblue', 'darkslategrey', 'darkred', 'darkgreen']  
+# 
+if "mode" not in vars(): mode="notest"           # "test" "VMeter"
 
 # --------------------------------------------------------------
 # config settings are the desired inputs, actual possible settings
@@ -146,7 +163,7 @@ def picoIni():
     #print("Maximum samples = %d" % maxSamples)
 # 2) Channel Ranges
     for i, Chan in enumerate(picoChannels):
-      Ranges[i] = ps.setChannel(Chan, 'AC', ChanRanges[i],
+      Ranges[i] = ps.setChannel(Chan, ChanModes[i], ChanRanges[i],
                       VOffset=ChanOffsets[i], enabled=True, BWLimited=False)
       if verbose>0:
         print("  range channel %s: %.3gV (%.3gV)" % (picoChannels[i],
@@ -158,15 +175,15 @@ def picoIni():
     print(" Trigger channel %s enabled: %.3gV %s" % (trgChan, trgThr, trgTyp))
 
 # 4) enable Signal Generator 
-  if frqSigGen !=0. :
-    ps.setSigGenBuiltInSimple(frequency=frqSigGen, pkToPk=pkToPkSG,
+  if frqSG !=0. :
+    ps.setSigGenBuiltInSimple(frequency=frqSG, pkToPk=PkToPkSG,
        waveType=waveTypeSG, offsetVoltage=offsetVoltageSG,  
-       sweepType=swpSigGen, dwellTime=dwellTimeSG, stopFreq=stopFreqSG)
+       sweepType=swpSG, dwellTime=dwellTimeSG, stopFreq=stopFreqSG)
     if verbose>0:
       print(" -> Signal Generator enabled: %.3gHz, +/-%.3g V %s"\
-            % (frqSigGen, pkToPkSG, waveTypeSG) )
+            % (frqSG, PkToPkSG, waveTypeSG) )
       print("       sweep type %s, stop %.3gHz, Tdwell %.3gs" %\
-            (swpSigGen, stopFreqSG, dwellTimeSG) )
+            (swpSG, stopFreqSG, dwellTimeSG) )
  
   return ps
 # -- end def picoIni

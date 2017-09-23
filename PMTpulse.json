@@ -8,12 +8,7 @@
 "trgThr": -200E-3,       
 "trgTyp": "Falling",   
 "trgTO": 1000,        
-"trgDelay":  0, 
-"trgActive": true,
 "pretrg": 0.15, 
-"frqSigGen": 0.0,
-"swpSigGen": "UpDown",
-"ChanColors": ["darkblue","darkslategrey", "darkred", "darkgreen"],  
-"verbose":1,  
-"mode": "notest" 
+"frqSG": 0.0,
+"mode": "osci" 
 }
