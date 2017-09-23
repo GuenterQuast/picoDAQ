@@ -8,7 +8,8 @@ for this project, they come with great software, not only a graphical
 interface with the usual functionality known from oscilloscopes, but
 also with a software development kit (SDK) allowing to control the devices
 with a wide range of high-level languages. This makes it possible to
-implement a data acquistion system as is for example needed to record and ananlyse wave forms from randomly occuring signals, as are provided for
+implement a data acquistion system as is for example needed to record,
+ananlyse and count the occurence of wave forms such as provided for
 example by single-photon counters or detectors in nuclear physics.
 
 This project is a first proto-type towards the goal of displaying,
@@ -20,7 +21,7 @@ Code tested with PS2000a and PS4000
 **Requirements:**  
 
   - SDK by Pico Technology, https://www.picotech.com/downloads
-  - *python* bindings of the *pico-pyhton* project by Colin O'Flynn
+  - *python* bindings of the *pico-python* project by Colin O'Flynn
     and Mark Harfouche, https://github.com/colinoflynn/pico-python
 
 implemented **Functions:**
@@ -47,7 +48,7 @@ This python script is compatible with *python* versions 2.7 and 3.5.
 The low-level drivers and C-libraries contained in the Pico Technology
 Software Development Kit are required, togther with the *python* bindings
 of the *pico-python* projcect, see the installation instructions there.
-*picoDAQ* presently only consists of a single *pyhton* script and a
+*picoDAQ* presently only consists of a single *python* script and a
 number of *.json* files containing configurations. Start from the command
 line, e. g. *python picoDAQ picoDemo.json*.
 
