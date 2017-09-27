@@ -1,24 +1,20 @@
 # picoDAQ
 
-Demonstrate data acquisition with PicoScope usb-oscilloscpe.
+*pyhton* example to demonstrate data acquisition with PicoScope usb-oscilloscopes
 
-The usb-oscilloscopes PicoSpope by Pico Technology are quite universal
-measurement instruments (see https://www.picotech.com). Most importantly
-for this project, they come with great software, not only a graphical
-interface with the usual functionality known from oscilloscopes, but
-also with a software development kit (SDK) allowing to control the devices
-with a wide range of high-level languages. This makes it possible to
-implement a data acquistion system as is for example needed to record,
-ananlyse and count the occurence of wave forms such as provided for
-example by single-photon counters or detectors in nuclear physics.
+The usb-oscilloscope series PicoSpope by Pico Technology offers quite universal measurement instruments
+(see https://www.picotech.com). Most importantly for this project, they come with great software, not only a graphical
+interface with the usual functionality known from oscilloscopes,
+but also with a software development kit (SDK) allowing to
+control the devices with a wide range of high-level languages. This makes it possible to implement a data acquisition system as
+is needed to record, ananlyse and count the occurrence of wave forms such as provided for example by single-photon counters or typical detectors common in nuclear physics.
 
-This project is a first proto-type towards the goal of displaying,
-analysing and counting the occurance of typical wave forms provided
-by single-particle detectors.
+This project is a first prototype towards the goal of acquiring,
+analysing and counting the occurrence of typical electrical wave-forms as provided by single-particle detectors, including a graphical display of a subset of raw data and of the analysis results.
 
 Code tested with PS2000a and PS4000
 
-**Requirements:**  
+**Requirements:**
 
   - SDK by Pico Technology, https://www.picotech.com/downloads
   - *python* bindings of the *pico-python* project by Colin O'Flynn
@@ -36,10 +32,10 @@ implemented **Functions:**
        as numbers, bar graph and history plot
     - a simple Oscilloscope to display sampled wave forms
 
-  Graphical displaysimplemented with matplotlib
+  Graphical displays implemented with matplotlib
 
-  For Demo Mode:  
-     Connect the output of the signal gnerator to channel B, and
+  For Demo Mode:
+     Connect the output of the signal generator to channel B, and
      eventually an open cable to Channel A.
 
 **Installation**

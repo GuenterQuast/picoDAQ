@@ -228,7 +228,7 @@ def getPicoData(ps):
 # wait for client acknowlege data received        
     while ibufr >= 0: 
       if not RUNNING: return
-      time.sleep(0.0012)
+      time.sleep(0.001)
 
     # calculate and display life time and read rate
     if (Ntrig - ni) == 100:
@@ -402,6 +402,7 @@ def VMeter():
       bgraph1.set_height(0.)
       bgraph2.set_height(0.)
     animtxt.set_text(txt_t + '\n' + txt[0] + '\n' + txt[1])
+
 # !!! important if working wiht event pointer !!!
     ibufr = -1  # signal data received, triggers next sample
 #
@@ -474,13 +475,14 @@ def Oszi():
     global ibufr, n0 
     if n==1: n0=0
 
-    if n>1:    # !!! fix to avoid permanent display of first line in blit mode
+    if n>0:    # !!! fix to avoid permanent display of first line in blit mode
       for i, C in enumerate(picoChannels):
         graphs[i].set_data(samplingTimes, evData[i])
-    else:
-      for i, C in enumerate(picoChannels):
-        graphs[i].set_data([],[])
-# !!! important if working wiht event pointer !!!
+#    else:
+#      for i, C in enumerate(picoChannels):
+#        graphs[i].set_data([],[])
+
+# !!! important if working with event pointer !!!
     ibufr = -1  # signal data received, triggers next sample
 # display rate and life time
     if n-n0 == 100:
