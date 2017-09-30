@@ -276,38 +276,43 @@ def getData():
       time.sleep(0.001)
     evNr, ibufr = prod_q.popleft()
 
+#
+# -->  put code here to analyse data  <--
+#
 #  eventually, introduce random wait time to mimick processing time 
 #    time.sleep(np.random.randint(1, 25)/1000.)
 
-# analyze and re-distribute event data
-    l_obligatory=[]
-    for i, q in enumerate(request_qs):
-      if len(q):
-        req = q.popleft()
-        if req==0:                               # return poiner to Buffer      
-          consumer_qs[i].append( (evNr, ibufr) ) 
-          l_obligatory.append(i)
-        elif req==1:                               # return a copy of data
-          evTime=timeStamp[ibufr]
-          consumer_qs[i].append( (evNr, evTime, np.copy(VBuf[ibufr]) ) )
-          ibufr = -1  # signal we are done wiht this event
-        elif req==2:
-          evTime=timeStamp[ibufr]
-          consumer_qs[i].append( (evNr, evTime, np.copy(VBuf[ibufr]) ) )
-          l_obligatory.append(i)
-        else:
-          print('!!! getData: invalid mode', req)
-          exit(1)
+# !debug    print('ibufr=',ibufr,'request_qs',request_qs)
 
-    if ibufr != -1: # wait for new request(s) by (all) obligatory  consumer(s)
+# check if other threads want data
+    l_obligatory=[]
+    if len(request_qs):
+      for i, q in enumerate(request_qs):
+        if len(q):
+          req = q.popleft()
+          if req==0:                               # return poiner to Buffer      
+            consumer_qs[i].append( (evNr, ibufr) ) 
+            l_obligatory.append(i)
+          elif req==1:                               # return a copy of data
+            evTime=timeStamp[ibufr]
+            consumer_qs[i].append( (evNr, evTime, np.copy(VBuf[ibufr]) ) )
+          elif req==2:
+            evTime=timeStamp[ibufr]
+            consumer_qs[i].append( (evNr, evTime, np.copy(VBuf[ibufr]) ) )
+            l_obligatory.append(i)
+          else:
+            print('!!! getData: invalid request mode', req)
+            exit(1)
+# wait until all obligatory consumers are done
+    if len(l_obligatory):
       while True:
         done = True
         for i in l_obligatory:
-          if len(request_qs[i]) == 0: done = False
+          if not len(request_qs[i]): done = False
         if done: break
         time.sleep(0.001)        
 #  now signal to producer that we are done with this event
-      ibufr = -1  # signal done with data
+    ibufr = -1  # completely done, singnal to producer
 
 # print event rate
     n+=1
@@ -315,9 +320,8 @@ def getData():
       print('evt %i:  rate: %.3gHz   life: %.2f%%' % (n, readrate, lifefrac))
       if(evNr != n): print ("!!! ncnt != Ntrig: %i, %i"%(n,evNr) )
       n0=n
-
-# -- end def getData
-
+#   - end while True  
+# -end def getData()
 
 def yieldEventCopy():
 # provide an event copy from getData()
@@ -336,7 +340,8 @@ def yieldEventCopy():
   evTime = 0.
 
   while RUNNING:
-    rq.append(1)  # 1: request event data
+    rq.append(1)  # 1: request random sample of event data
+#    rq.append(2)  # 2: request all event data
     while not len(cq):
       time.sleep(0.01)
     evNr, evTime, evData = cq.popleft()
@@ -360,17 +365,19 @@ def yieldEventPtr():
     rq.append(0)  # 0: request an event pointer
     while not len(cq):
       time.sleep(0.01)
-    evNr, ibufr = cq.popleft()
+    evNr, ibr = cq.popleft()
    # print('*==* yieldEventPtr: received event %i'%evNr)
     evCnt+=1
-    evTime=timeStamp[ibufr]
-    evData = VBuf[ibufr]
-## client must set  ibufr = -1 if done ! 
+    evTime=timeStamp[ibr]
+    evData = VBuf[ibr]
     yield (evCnt, evTime, evData)
   
 def obligatoryConsumer_test():
   '''
     test readout speed: do nothing, just request data from main consumer
+
+      - an example of an obligatory consumer, sees all data
+        (i.e. data acquisition is halted when no data is requested)
   '''
 #   set up communication queues
   rq = deque(maxlen=1)
@@ -391,7 +398,8 @@ def obligatoryConsumer_test():
 
 def randomConsumer_test():
   '''
-    test readout speed: do nothing, just request data from main consumer
+    test readout speed: 
+      does nothing except requesting random data samples from main consumer
   '''
 #   set up communication queues
   rq = deque(maxlen=1)
@@ -407,25 +415,19 @@ def randomConsumer_test():
     print('*==* randomConsumer_test: received event %i'%evNr)
 #    introduce random wait time to mimick processing activity
     time.sleep(np.random.randint(100,2000)/1000.)
-# - end def randomComsumer_test
+# - end def randomComsumer_test()
 
-def VMeter():
-# Voltage measurement: average of short set of samples 
-  global ibufr
+#
+### some examples with graphics
+def Instruments(mode=0):
+  '''
+    graphical displays of data
 
-  Wtime=500.    # time in ms between samplings
-  Npoints = 120  # number of points for history
-  ix=np.linspace(-Npoints+1, 0, Npoints) # history plot
-  bwidth=0.5
-  ind = bwidth + np.arange(NChannels) # bar position in bargraph for voltages
-  V=np.empty(NChannels)
-  stdV=np.empty(NChannels)
-  Vhist=np.zeros( [NChannels, Npoints] )
-  stdVhist=np.zeros( [NChannels, Npoints] )
+    - a "Voltmeter" as an obligatory consumer
+    - an Oscilloscpe display  as a random consumer
 
-  t0=time.time()
-  print('VMeter starting')
-  
+  '''
+
   def grVMeterIni():
 # set up a figure to plot actual voltage and samplings from Picoscope
     fig=plt.figure(figsize=(5., 8.) )
@@ -467,7 +469,7 @@ def VMeter():
 
   def animVMeterIni():
   # initialize objects to be animated
-    global bgraph1, bgraph2, graphs, animtxt
+    global bgraph1, bgraph2, graphsVM, animtxtVM
     # a bar graph for the actual voltages
 #    bgraph = axes[0].bar(ind, np.zeros(NChannels), bwidth,
 #                           align='center', color='grey', alpha=0.5)
@@ -477,20 +479,18 @@ def VMeter():
                            align='center', color=ChanColors[1], alpha=0.5) 
 
     # history graphs
-    graphs=()
+    graphsVM=()
     for i, C in enumerate(picoChannels):
-      g,= axes[i].plot(ix, np.zeros(Npoints), color=ChanColors[i])
-      graphs += (g,)
-    animtxt = axes[3].text(0.05, 0.05 , ' ',
-                transform=axes[3].transAxes,
+      g,= axesVM[i].plot(ix, np.zeros(Npoints), color=ChanColors[i])
+      graphsVM += (g,)
+    animtxtVM = axesVM[3].text(0.05, 0.05 , ' ',
+                transform=axesVM[3].transAxes,
                 size='x-large', color='darkblue')
-#    return bgraph + graphs + (animtxt,)
-    return (bgraph1,) + (bgraph2,) + graphs + (animtxt,)  
-
+#    return bgraph + graphsVM + (animtxt,)
+    return (bgraph1,) + (bgraph2,) + graphsVM + (animtxtVM,)  
 # -- end grVMeterIni()
 
   def animVMeter( (n, evTime, evData) ):
-    global ibufr
     k=n%Npoints
 
     txt_t='Time  %.1fs' %(evTime-t0)            
@@ -502,10 +502,10 @@ def VMeter():
       stdVhist[i, k] = stdV[i]
       # update history graph
       if n>1: # !!! fix to avoid permanent display of first object in blit mode
-        graphs[i].set_data(ix,
+        graphsVM[i].set_data(ix,
           np.concatenate((Vhist[i, k+1:], Vhist[i, :k+1]), axis=0) )
       else:
-        graphs[i].set_data(ix,np.zeros(Npoints))
+        graphsVM[i].set_data(ix,np.zeros(Npoints))
       txt.append('Chan. %s:   %.3gV +/-%.2g' % (C, Vhist[i,k], stdVhist[i,k]) )
     # update bar chart
 #    for r, v in zip(bgraph, V):
@@ -516,25 +516,14 @@ def VMeter():
     else:  
       bgraph1.set_height(0.)
       bgraph2.set_height(0.)
-    animtxt.set_text(txt_t + '\n' + txt[0] + '\n' + txt[1])
-
-# !!! important if working with event pointer !!!
-###    ibufr = -1  # signal data received, triggers next sample
+    animtxtVM.set_text(txt_t + '\n' + txt[0] + '\n' + txt[1])
 #
-    return (bgraph1,) + (bgraph2,) + graphs + (animtxt,)
+    return (bgraph1,) + (bgraph2,) + graphsVM + (animtxtVM,)
 #- -end def animVMeter
 #-end def VMeter
 
-  if verbose>0: print(' -> initializing Voltmeter graphics')
-  fig, axes, axbar1, axbar2 = grVMeterIni()
-  nrep=Npoints
-  ani=anim.FuncAnimation(fig, animVMeter, yieldEventPtr,
-                         interval=Wtime, init_func=animVMeterIni,
-                         blit=True, fargs=None, repeat=True, save_count=None)
-   # save_count=None is a (temporary) workaround to fix memory leak in animate
-  plt.show()
                 
-def Oszi():
+#def Oszi():
   # Oszilloscope: display channel readings in time domain
 
   def grOsziIni():
@@ -577,44 +566,64 @@ def Oszi():
 
   def animOsziIni():
   # initialize objects to be animated
-    global graphs, animtxt
-    graphs = ()
+    global graphsOz, animtxtOz
+    graphsOz = ()
     for i, C in enumerate(picoChannels):
-      g,= axes[i].plot(samplingTimes, np.zeros(Ns), color=ChanColors[i])
-      graphs += (g,)
-    animtxt = axes[0].text(0.7, 0.95, ' ', transform=axes[0].transAxes,
+      g,= axesOz[i].plot(samplingTimes, np.zeros(Ns), color=ChanColors[i])
+      graphsOz += (g,)
+    animtxtOz = axesOz[0].text(0.7, 0.95, ' ', transform=axesOz[0].transAxes,
                    backgroundcolor='white', alpha=0.5)
-    return graphs + (animtxt,)
+    return graphsOz + (animtxtOz,)
   
   def animOszi( (n, evTime, evData) ):
-    global ibufr, n0 
+    global n0 
     if n==1: n0=0
 
     if n>1:    # !!! fix to avoid permanent display of first line in blit mode
       for i, C in enumerate(picoChannels):
-        graphs[i].set_data(samplingTimes, evData[i])
+        graphsOz[i].set_data(samplingTimes, evData[i])
     else:
       for i, C in enumerate(picoChannels):
-        graphs[i].set_data([],[])
+        graphsOz[i].set_data([],[])
 
-# !!! important if working with event pointer !!!
-####    ibufr = -1  # signal data received, triggers next sample
 # display rate and life time
     if n-n0 == 100:
       txt='rate: %.3gHz  life: %.0f%%' % (readrate, lifefrac)
-      animtxt.set_text(txt)
+      animtxtOz.set_text(txt)
       n0=n
-    return graphs + (animtxt,)
+    return graphsOz + (animtxtOz,)
+# -end animOszi
+  
+# - control part of Instruments()
+  if mode==0 or mode==2:
+# Voltmeter
+    Wtime=500.    # time in ms between samplings
+    Npoints = 120  # number of points for history
+    ix=np.linspace(-Npoints+1, 0, Npoints) # history plot
+    bwidth=0.5
+    ind = bwidth + np.arange(NChannels) # bar position in bargraph for voltages
+    V=np.empty(NChannels)
+    stdV=np.empty(NChannels)
+    Vhist=np.zeros( [NChannels, Npoints] )
+    stdVhist=np.zeros( [NChannels, Npoints] )
 
-  if verbose>0: print(' -> initializing graphics')
-  fig, axes = grOsziIni()
-  nrep=10000
-  ani=anim.FuncAnimation(fig, animOszi, yieldEventCopy, interval=50,
+    t0=time.time()
+    if verbose>0: print(' -> starting Voltmeter')
+    figVM, axesVM, axbar1, axbar2 = grVMeterIni()
+    aniVM=anim.FuncAnimation(figVM, animVMeter, yieldEventPtr,
+                         interval=Wtime, init_func=animVMeterIni,
+                         blit=True, fargs=None, repeat=True, save_count=None)
+   # save_count=None is a (temporary) workaround to fix memory leak in animate
+
+  if mode==1 or mode==2:  
+    if verbose>0: print(' -> Oscilloscope starting')
+    figOz, axesOz = grOsziIni()
+    aniOz=anim.FuncAnimation(figOz, animOszi, yieldEventCopy, interval=50,
                          init_func=animOsziIni, blit=True,
                          fargs=None, repeat=True, save_count=None)
    # save_count=None is a (temporary) workaround to fix memory leak in animate
+
   plt.show()
-# - end def oszi     
     
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
@@ -661,23 +670,27 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # --- infinite LOOP
   try:
     if mode=='test': # test readout speed
-      randomConsumer_test()
+      thr_randomConsumer_test=threading.Thread(target=randomConsumer_test )
+      thr_randomConsumer_test.daemon=True
+      thr_randomConsumer_test.start()
+      while True:
+        time.sleep(10.)
     elif mode=='VMeter': # Voltmeter mode
-      thr_VMeter=threading.Thread(target=VMeter)
-      thr_VMeter.daemon=True
-      thr_VMeter.start()
+      thr_Instruments=threading.Thread(target=Instruments, args=(0,) )
+      thr_Instruments.daemon=True
+      thr_Instruments.start()
       while True:
         time.sleep(10.)
-    elif mode=='osci': # Voltmeter mode
-      thr_Oszi=threading.Thread(target=Oszi)
-      thr_Oszi.daemon=True
-      thr_Oszi.start()
+    elif mode=='osci': # Oscilloscpe mode
+      thr_Instruments=threading.Thread(target=Instruments, args=(1,) )
+      thr_Instruments.daemon=True
+      thr_Instruments.start()
       while True:
         time.sleep(10.)
-    elif mode=='demo': # Voltmeter mode
-      thr_Oszi=threading.Thread(target=Oszi)
-      thr_Oszi.daemon=True
-      thr_Oszi.start()
+    elif mode=='demo': #  both VMeter and Oscilloscpe
+      thr_Instruments=threading.Thread(target=Instruments, args=(2,) )
+      thr_Instruments.daemon=True
+      thr_Instruments.start()
       while True:
         time.sleep(10.)
       else:
