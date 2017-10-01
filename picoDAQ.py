@@ -16,11 +16,13 @@ Demonstrate data acquisition with PicoScope usb-oscilloscpe
   - set up PicoScope channel ranges and trigger
   - PicoScope configuration optionally from json file
   - acquire data (implemented as thread)
+  - manage event data and distrobute to obligatory and random consumers
   - analyse and plot data:
 
-    - DAQtest()    test speed of data acquisitin
-    - VMeter       average Voltages with bar graph display
-    - Osci         simple oscilloscope
+    - obligatoryConsumer test speed of data acquisition
+    - randomConsumer     test concurrent access
+    - VMeter             average Voltages with bar graph display
+    - Osci               simple oscilloscope
   
   graphics implemented with matplotlib
 
@@ -190,12 +192,17 @@ def picoIni():
   return ps
 # -- end def picoIni
 
+
+# --- code to manage data acquitition and distribution to consumers
+#        = Buffer Manager
+#
+
 def acquirePicoData(ps):
   '''
    Procucer Thread
     
      - collects data in buffers
-     - provedes all acquired data to exactly one consumer 
+     - provides all acquired data to exactly one consumer, manageDataBufer 
 
    Communicates with consumer via collections.deque()
 
@@ -239,10 +246,10 @@ def acquirePicoData(ps):
       #ps.getDataV(C, Ns, dataV=VBuf[ibufw,i], dtype=np.float32)
 
     Ntrig+=1
-    prod_q.append( (Ntrig, ibufw) )
+    prod_que.append( (Ntrig, ibufw) )
        
 # wait for free buffer       
-    while len(prod_q) == NBuffers:
+    while len(prod_que) == NBuffers:
       if not RUNNING: return
       time.sleep(0.001)
       
@@ -259,11 +266,12 @@ def acquirePicoData(ps):
   return 0
 # -- end def acquirePicoData
 
-def getData():
+def manageDataBuffer():
+  global prod_que, request_ques, consumer_ques
   '''main Consumer Thread, request data from procuder (acquirePicoData):
 
        - provide all events for analysis
-       - provide subset of events to "random" consumers (picoVMeter, oszi)
+       - provide subset of events to "random" consumers (picoVMeter, oscilloscope)
 
   '''
   global ibufr # synchronize with producer via a global variable
@@ -272,9 +280,9 @@ def getData():
   n0=0
   n=0
   while True:
-    while not len(prod_q): # wait for data in producer queue
+    while not len(prod_que): # wait for data in producer queue
       time.sleep(0.001)
-    evNr, ibufr = prod_q.popleft()
+    evNr, ibufr = prod_que.popleft()
 
 #
 # -->  put code here to analyse data  <--
@@ -282,33 +290,34 @@ def getData():
 #  eventually, introduce random wait time to mimick processing time 
 #    time.sleep(np.random.randint(1, 25)/1000.)
 
-# !debug    print('ibufr=',ibufr,'request_qs',request_qs)
+# !debug    print('ibufr=',ibufr,'request_ques',request_ques)
 
 # check if other threads want data
     l_obligatory=[]
-    if len(request_qs):
-      for i, q in enumerate(request_qs):
+    if len(request_ques):
+      for i, q in enumerate(request_ques):
         if len(q):
           req = q.popleft()
           if req==0:                               # return poiner to Buffer      
-            consumer_qs[i].append( (evNr, ibufr) ) 
+            consumer_ques[i].append( (evNr, ibufr) ) 
             l_obligatory.append(i)
           elif req==1:                               # return a copy of data
             evTime=timeStamp[ibufr]
-            consumer_qs[i].append( (evNr, evTime, np.copy(VBuf[ibufr]) ) )
-          elif req==2:
+            consumer_ques[i].append( (evNr, evTime, np.copy(VBuf[ibufr]) ) )
+          elif req==2:                   # return copy and mark as obligatory
             evTime=timeStamp[ibufr]
-            consumer_qs[i].append( (evNr, evTime, np.copy(VBuf[ibufr]) ) )
+            consumer_ques[i].append( (evNr, evTime, np.copy(VBuf[ibufr]) ) )
             l_obligatory.append(i)
           else:
-            print('!!! getData: invalid request mode', req)
+            print('!!! manageDataBuffer: invalid request mode', req)
             exit(1)
+
 # wait until all obligatory consumers are done
     if len(l_obligatory):
       while True:
         done = True
         for i in l_obligatory:
-          if not len(request_qs[i]): done = False
+          if not len(request_ques[i]): done = False
         if done: break
         time.sleep(0.001)        
 #  now signal to producer that we are done with this event
@@ -321,56 +330,57 @@ def getData():
       if(evNr != n): print ("!!! ncnt != Ntrig: %i, %i"%(n,evNr) )
       n0=n
 #   - end while True  
-# -end def getData()
+# -end def manageDataBuffer()
 
-def yieldEventCopy():
-# provide an event copy from getData()
-   # this is useful for clients accessing only a subset of events
-# 
-  evCnt=0
-#  evData = np.empty([NChannels, Ns], dtype=np.float32 )
-  evTime = 0.
-#
-  rq = deque(maxlen=1)
-  request_qs.append(rq )
-  cq = deque(maxlen=1)
-  consumer_qs.append(cq )
+def BMregister():
+  global request_ques, consumer_ques
+  ''' 
+  register a client to in Buffer Manager
 
-  evCnt=0
-  evTime = 0.
+  Returns: client index
+  '''
 
-  while RUNNING:
-    rq.append(1)  # 1: request random sample of event data
-#    rq.append(2)  # 2: request all event data
-    while not len(cq):
-      time.sleep(0.01)
-    evNr, evTime, evData = cq.popleft()
-    #print('*==* yieldEventCopy: received event %i'%evNr)
-    evCnt+=1
-## client must set  ibufr = -1 if done ! 
-    yield (evCnt, evTime, evData)
+  BMlock.acquire() # my be called by many threads and needs protection ...  
+  request_ques.append(deque(maxlen=1))
+  consumer_ques.append(deque(maxlen=1))
+  client_index=len(request_ques)-1
+  BMlock.release()
   
-def yieldEventPtr():
-# provide a pointer to event data from acquirePicoData()
-   # this is useful normal clients accessing all events
-  rq = deque(maxlen=1)
-  request_qs.append(rq )
-  cq = deque(maxlen=1)
-  consumer_qs.append(cq )
+  if verbose >= 1:
+    print("*==* BMregister: new client id=%i" % client_index)
+  return client_index
 
-  evCnt=0
-  evTime = 0.
+def BMgetEvent(client_index, mode=1):
+  global request_ques, consumer_ques
+  ''' 
+  request event from Buffer Manager
+ 
+    Arguments: 
 
-  while RUNNING:
-    rq.append(0)  # 0: request an event pointer
-    while not len(cq):
+      client_index client:  index as returned by BMregister()
+      mode:   0: event pointer (olbigatory consumer)
+              1: copy of event data (random consumer)
+              2: copy of event (olbigatory consumer)
+
+    Returns: 
+
+      event data
+  '''
+
+  request_ques[client_index].append(mode)
+  cq=consumer_ques[client_index]
+  while not len(cq):
       time.sleep(0.01)
+  #print('*==* BMgetEvent: received event %i'%evNr)
+  if mode !=0: # received copy of the event data
+    return cq.popleft()
+  else: # received pointer to event buffer
     evNr, ibr = cq.popleft()
-   # print('*==* yieldEventPtr: received event %i'%evNr)
-    evCnt+=1
-    evTime=timeStamp[ibr]
+    evTime = timeStamp[ibr]
     evData = VBuf[ibr]
-    yield (evCnt, evTime, evData)
+    return evNr, evTime, evData
+#
+# --- end of Buffer Manager code
   
 def obligatoryConsumer_test():
   '''
@@ -378,47 +388,79 @@ def obligatoryConsumer_test():
 
       - an example of an obligatory consumer, sees all data
         (i.e. data acquisition is halted when no data is requested)
+    
+    for reasons of speed, only a pointer to the event buffer is returned
   '''
-#   set up communication queues
-  rq = deque(maxlen=1)
-  request_qs.append(rq )
-  cq = deque(maxlen=1)
-  consumer_qs.append(cq )
+# register with Buffer Manager
+  myId = BMregister()
+  mode = 0    # obligatory consumer, request pointer to Buffer
 
-  while True:
-    rq.append(0)  # 0: event pointer
-    while not len(cq):
-      time.sleep(0.01)
-    evNr, ibufr = cq.popleft()
-    print('*==* obligatoryConsumer_test: received event %i'%evNr)
+  evcnt=0
+  while RUNNING:
+    evNr, evtile, evData = BMgetEvent(myId, mode=mode)
+    evcnt+=1
+    print('*==* obligatoryConsumer_test: event Nr %i, %i events seen'%(evNr,evcnt))
 
 #    introduce random wait time to mimick processing activity
-    time.sleep(np.random.randint(100,2000)/1000.)
-# - end def randomComsumer_test
+    time.sleep(np.random.randint(10, 1000)/1000.)
+  return
+#-end def obligatoryComsumer_test
 
 def randomConsumer_test():
   '''
     test readout speed: 
       does nothing except requesting random data samples from main consumer
   '''
-#   set up communication queues
-  rq = deque(maxlen=1)
-  request_qs.append(rq )
-  cq = deque(maxlen=1)
-  consumer_qs.append(cq )
 
-  while True:
-    rq.append(1)  # 0: event copy
-    while not len(cq):
-      time.sleep(0.01)
-    evNr, evTime, evData = cq.popleft()
-    print('*==* randomConsumer_test: received event %i'%evNr)
-#    introduce random wait time to mimick processing activity
+  # register with Buffer Manager
+  myId = BMregister()
+  mode = 1    # random consumer, request event copy
+
+  evcnt=0
+  while RUNNING:
+    evNr, evtile, evData = BMgetEvent(myId, mode=mode)
+    evcnt+=1
+    print('*==* randomConsumer_test: event Nr %i, %i events seen'%(evNr,evcnt))
+# introduce random wait time to mimick processing activity
     time.sleep(np.random.randint(100,2000)/1000.)
 # - end def randomComsumer_test()
-
+  return
 #
-### some examples with graphics
+
+def yieldVMEvent():
+# provide an event copy from Buffer Manager
+   # this is useful for clients accessing only a subset of events
+
+  myId = BMregister()   # register with Buffer Manager
+  mode = 1              # random consumer, request event copy
+
+  evCnt=0
+  while RUNNING:
+    evNr, evTime, evData = BMgetEvent(myId, mode=mode)
+  #  print('*==* yieldEventCopy: received event %i' % evNr)
+    evCnt+=1
+    yield (evCnt, evTime, evData)
+  return
+
+def yieldOsEvent():
+# provide an event copy from Buffer Manager
+   # this is useful for clients accessing only a subset of events
+
+  myId = BMregister()   # register with Buffer Manager
+  mode = 1              # random consumer, request event copy
+
+  evCnt=0
+  while RUNNING:
+    evNr, evTime, evData = BMgetEvent(myId, mode=mode)
+  #  print('*==* yieldEventCopy: received event %i' % evNr)
+    evCnt+=1
+    yield (evCnt, evTime, evData)
+  return
+
+# 
+### consumer examples with graphics -----------------------------------------
+#
+
 def Instruments(mode=0):
   '''
     graphical displays of data
@@ -430,7 +472,7 @@ def Instruments(mode=0):
 
   def grVMeterIni():
 # set up a figure to plot actual voltage and samplings from Picoscope
-    fig=plt.figure(figsize=(5., 8.) )
+    fig=plt.figure("Voltmeter", figsize=(5., 8.) )
     fig.subplots_adjust(left=0.15, bottom=0.05, right=0.85, top=0.95,
                     wspace=None, hspace=.25)#
 
@@ -456,6 +498,8 @@ def Instruments(mode=0):
     axbar1.set_ylim(-ChanRanges[0],ChanRanges[0])
     axbar1.axhline(0., color='k', linestyle='-', lw=2, alpha=0.5)
     axbar2.set_ylim(-ChanRanges[1], ChanRanges[1])
+    axbar1.set_ylabel('Chan A (V)', color=ChanColors[0])
+    axbar2.set_ylabel('Chan B (V)', color=ChanColors[1])
     # Voltage in Text format
     axes.append(plt.subplot2grid((7,1),(0,0)) )
     axtxt=axes[3]
@@ -523,13 +567,13 @@ def Instruments(mode=0):
 #-end def VMeter
 
                 
-#def Oszi():
-  # Oszilloscope: display channel readings in time domain
+#def Osci():
+  # Oscilloscope: display channel readings in time domain
 
-  def grOsziIni():
+  def grOsciIni():
 # set up a figure to plot samplings from Picoscope
   # needs revision if more than 2 Channels present
-    fig=plt.figure(figsize=(8.0, 5.0) )
+    fig=plt.figure("Oscilloscope", figsize=(8.0, 5.0) )
     axes=[]
 # channel A
     axes.append(fig.add_subplot(1,1,1, facecolor='ivory'))
@@ -562,39 +606,39 @@ def Instruments(mode=0):
     trgax.axvline(0., color=trgcol, linestyle='--')
 
     return fig, axes
-# -- end def grOsziIni
+# -- end def grOsciIni
 
-  def animOsziIni():
+  def animOsciIni():
   # initialize objects to be animated
-    global graphsOz, animtxtOz
-    graphsOz = ()
+    global graphsOs, animtxtOs
+    graphsOs = ()
     for i, C in enumerate(picoChannels):
-      g,= axesOz[i].plot(samplingTimes, np.zeros(Ns), color=ChanColors[i])
-      graphsOz += (g,)
-    animtxtOz = axesOz[0].text(0.7, 0.95, ' ', transform=axesOz[0].transAxes,
+      g,= axesOs[i].plot(samplingTimes, np.zeros(Ns), color=ChanColors[i])
+      graphsOs += (g,)
+    animtxtOs = axesOs[0].text(0.7, 0.95, ' ', transform=axesOs[0].transAxes,
                    backgroundcolor='white', alpha=0.5)
-    return graphsOz + (animtxtOz,)
+    return graphsOs + (animtxtOs,)
   
-  def animOszi( (n, evTime, evData) ):
+  def animOsci( (n, evTime, evData) ):
     global n0 
     if n==1: n0=0
-
-    if n>1:    # !!! fix to avoid permanent display of first line in blit mode
+    if n>2:    # !!! fix to avoid permanent display of first line in blit mode
       for i, C in enumerate(picoChannels):
-        graphsOz[i].set_data(samplingTimes, evData[i])
+        graphsOs[i].set_data(samplingTimes, evData[i])
     else:
       for i, C in enumerate(picoChannels):
-        graphsOz[i].set_data([],[])
+        graphsOs[i].set_data([],[])
 
 # display rate and life time
-    if n-n0 == 100:
+    if n-n0 == 50:
       txt='rate: %.3gHz  life: %.0f%%' % (readrate, lifefrac)
-      animtxtOz.set_text(txt)
+      animtxtOs.set_text(txt)
       n0=n
-    return graphsOz + (animtxtOz,)
-# -end animOszi
+    return graphsOs + (animtxtOs,)
+# -end animOsci
   
-# - control part of Instruments()
+# - control part for graphical Instruments()
+  anims=[]
   if mode==0 or mode==2:
 # Voltmeter
     Wtime=500.    # time in ms between samplings
@@ -608,19 +652,21 @@ def Instruments(mode=0):
     stdVhist=np.zeros( [NChannels, Npoints] )
 
     t0=time.time()
-    if verbose>0: print(' -> starting Voltmeter')
+    if verbose>0: print(' -> Voltmeter starting')
     figVM, axesVM, axbar1, axbar2 = grVMeterIni()
-    aniVM=anim.FuncAnimation(figVM, animVMeter, yieldEventPtr,
+
+    anims.append(anim.FuncAnimation(figVM, animVMeter, yieldVMEvent,
                          interval=Wtime, init_func=animVMeterIni,
-                         blit=True, fargs=None, repeat=True, save_count=None)
+                         blit=True, fargs=None, repeat=True, save_count=None) )
    # save_count=None is a (temporary) workaround to fix memory leak in animate
 
   if mode==1 or mode==2:  
     if verbose>0: print(' -> Oscilloscope starting')
-    figOz, axesOz = grOsziIni()
-    aniOz=anim.FuncAnimation(figOz, animOszi, yieldEventCopy, interval=50,
-                         init_func=animOsziIni, blit=True,
-                         fargs=None, repeat=True, save_count=None)
+    figOs, axesOs = grOsciIni()
+
+    anims.append(anim.FuncAnimation(figOs, animOsci, yieldOsEvent, interval=50,
+                         init_func=animOsciIni, blit=True,
+                         fargs=None, repeat=True, save_count=None))
    # save_count=None is a (temporary) workaround to fix memory leak in animate
 
   plt.show()
@@ -634,7 +680,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   Ns = nSamples
   # array of sampling times (in ms)
   samplingTimes =\
-   1000.*np.linspace(-pretrg*Ns*dT, (1.-pretrg)*Ns*dT, Ns, endpoint=False)
+   1000.*np.linspace(-pretrg*Ns*dT, (1.-pretrg)*Ns*dT, Ns)
 
   # reserve global space for data
   NBuffers= 10
@@ -644,12 +690,14 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   ibufr = -1 # index of buffer being read
 
   # initialize queues (collections.deque() for communication with threads
-  prod_q=deque(maxlen=NBuffers) # acquireData <-> getData
-  request_qs=[] # consumer request to getData
+  prod_que=deque(maxlen=NBuffers) # acquireData <-> manageDataBuffer
+  request_ques=[] # consumer request to manageDataBuffer
                 # 0:  request event pointer, obligatory consumer
                 # 1:  request event data, random consumer 
                 # 2:  request event data, obligatoray consumer
-  consumer_qs=[] # data from getData to consumer
+  consumer_ques=[] # data from manageDataBuffer to consumer
+
+  BMlock = threading.Lock() # locking for Buffer Manager actions
 
   # start data acquisition thread
   if verbose>0:
@@ -662,9 +710,9 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   # start main consumer thread
   if verbose>0:
     print(" -> starting main consumer thread")   
-  thr_getData=threading.Thread(target=getData)
-  thr_getData.daemon=True
-  thr_getData.start()
+  thr_manageDataBuffer=threading.Thread(target=manageDataBuffer)
+  thr_manageDataBuffer.daemon=True
+  thr_manageDataBuffer.start()
 
 #
 # --- infinite LOOP
@@ -673,6 +721,14 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       thr_randomConsumer_test=threading.Thread(target=randomConsumer_test )
       thr_randomConsumer_test.daemon=True
       thr_randomConsumer_test.start()
+      thr_obligatoryConsumer_test=threading.Thread(target=obligatoryConsumer_test )
+      thr_obligatoryConsumer_test.daemon=True
+      thr_obligatoryConsumer_test.start()
+  # !!! test
+      thr_Instruments=threading.Thread(target=Instruments, args=(2,) )
+      thr_Instruments.daemon=True
+      thr_Instruments.start()
+
       while True:
         time.sleep(10.)
     elif mode=='VMeter': # Voltmeter mode
