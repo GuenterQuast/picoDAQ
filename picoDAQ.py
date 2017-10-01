@@ -136,7 +136,7 @@ if "verbose" not in vars(): verbose=1            # print (detailed) info if >0
 if "ChanColors" not in vars():
   ChanColors = ['darkblue', 'darkslategrey', 'darkred', 'darkgreen']  
 # 
-if "mode" not in vars(): mode="notest"           # "test" "VMeter"
+if "mode" not in vars(): mode="osci"   # "osci" "demo" "VMeter" "test" 
 
 # --------------------------------------------------------------
 # config settings are the desired inputs, actual possible settings
@@ -727,6 +727,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   RUNNING = True
   thr_acquireData=threading.Thread(target=acquireData, args=(acquirePicoData,))
   thr_acquireData.daemon=True
+  thr_acquireData.setName('aquireData')
   thr_acquireData.start()
 
   # start main consumer thread
@@ -734,6 +735,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     print(" -> starting main consumer thread")   
   thr_manageDataBuffer=threading.Thread(target=manageDataBuffer)
   thr_manageDataBuffer.daemon=True
+  thr_manageDataBuffer.setName('manageDataBuffer')
   thr_manageDataBuffer.start()
 
 #
@@ -771,8 +773,8 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       thr_Instruments.start()
       while True:
         time.sleep(10.)
-      else:
-        print ('!!! no valid mode - exiting')
+    else:
+      print ('!!! no valid mode - exiting')
         
   except KeyboardInterrupt:
 # END: code to clean up
