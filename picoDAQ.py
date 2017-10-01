@@ -43,9 +43,9 @@ import matplotlib.animation as anim
 from collections import deque
 
 from picoscope import ps2000a
-ps = ps2000a.PS2000a()  
+picoDevObj = ps2000a.PS2000a()  
 #from picoscope import ps4000
-#ps = ps2000a.PS4000()  
+#picoDevObj = ps2000a.PS4000()  
 
 
 # --------------------------------------------------------------
@@ -114,7 +114,8 @@ NChannels = len(picoChannels)
 if "ChanModes" not in vars():
   ChanModes = ['AC' for i in range(NChannels)]
 if "ChanOffsets" not in vars():
-  ChanOffsets= [0. for i in range(NChannels)]  # voltage offsets (not yet funcional in driver)
+  ChanOffsets= [0. for i in range(NChannels)]  # voltage offsets
+  #                                      (!!! not yet functional in driver)
 if "trgTO" not in vars(): trgTO=1000             #  and time-out
 if "trgDelay" not in vars(): trgDelay = 0        #
 if "trgActive" not in vars(): trgActive = True   # no triggering if set to False
@@ -140,47 +141,47 @@ if "mode" not in vars(): mode="notest"           # "test" "VMeter"
 # --------------------------------------------------------------
 # config settings are the desired inputs, actual possible settings
 # (returned after setting up hardware) may be different and are stored here:
-Ranges = [0., 0., 0., 0.]  # actual ranges
+CRanges = [0., 0., 0., 0.]  # actual ranges
 TSampling = 0.  # actual sampling interval
-nSamples = 0    #    and number of samples to be taken
+NSamples = 0    #    and number of samples to be taken
 
 # --------------------------------------------------------------
 
 def picoIni():
-  global TSampling, nSamples, Ranges
+  global TSampling, NSamples, CRanges
 
   if verbose>1: print(__doc__)
   if verbose>0: print("Opening PicsoScope device ...")
 #  ps = ps2000a.PS2000a()  
   if verbose>1:
     print("Found the following picoscope:")
-    print(ps.getAllUnitInfo())
+    print(picoDevObj.getAllUnitInfo())
 
 # configure oscilloscope
 # 1) Time Base
-  TSampling, nSamples, maxSamples = \
-        ps.setSamplingInterval(sampleTime/Nsamples, sampleTime)
+  TSampling, NSamples, maxSamples = \
+        picoDevObj.setSamplingInterval(sampleTime/Nsamples, sampleTime)
   if verbose>0:
     print("  Sampling interval = %.4g µs (%.g4 µs)" \
                    % (TSampling*1E6, sampleTime/Nsamples*1E6) )
-    print("  Number of samples = %d (%d)" % (nSamples, Nsamples))
+    print("  Number of samples = %d (%d)" % (NSamples, Nsamples))
     #print("Maximum samples = %d" % maxSamples)
 # 2) Channel Ranges
     for i, Chan in enumerate(picoChannels):
-      Ranges[i] = ps.setChannel(Chan, ChanModes[i], ChanRanges[i],
+      CRanges[i] = picoDevObj.setChannel(Chan, ChanModes[i], ChanRanges[i],
                       VOffset=ChanOffsets[i], enabled=True, BWLimited=False)
       if verbose>0:
         print("  range channel %s: %.3gV (%.3gV)" % (picoChannels[i],
-                                                   Ranges[i], ChanRanges[i]))
+                                                   CRanges[i], ChanRanges[i]))
 # 3) enable trigger
-  ps.setSimpleTrigger(trgChan, trgThr, trgTyp,
+  picoDevObj.setSimpleTrigger(trgChan, trgThr, trgTyp,
                       trgDelay, trgTO, enabled=trgActive)    
   if verbose>0:
     print(" Trigger channel %s enabled: %.3gV %s" % (trgChan, trgThr, trgTyp))
 
 # 4) enable Signal Generator 
   if frqSG !=0. :
-    ps.setSigGenBuiltInSimple(frequency=frqSG, pkToPk=PkToPkSG,
+    picoDevObj.setSigGenBuiltInSimple(frequency=frqSG, pkToPk=PkToPkSG,
        waveType=waveTypeSG, offsetVoltage=offsetVoltageSG,  
        sweepType=swpSG, dwellTime=dwellTimeSG, stopFreq=stopFreqSG)
     if verbose>0:
@@ -189,35 +190,65 @@ def picoIni():
       print("       sweep type %s, stop %.3gHz, Tdwell %.3gs" %\
             (swpSG, stopFreqSG, dwellTimeSG) )
  
-  return ps
+  return
 # -- end def picoIni
 
+def acquirePicoData(buffer):
+  '''
+  read data from device
+    this part is hardware (i.e. driver) specific code for PicoScope device
+
+    Args:
+      ps:  class handling devide
+      buffer: space to store data
+
+    Returns:
+      ttrg: time when device became ready
+      tlife life time of device
+  '''
+  picoDevObj.runBlock(pretrig=pretrg) #
+    # wait for PicoScope to set up (~1ms)
+  time.sleep(0.001) # set-up time not to be counted as "life time"
+  ti=time.time()
+  while not picoDevObj.isReady():
+    if not RUNNING: return
+    time.sleep(0.001)
+    # waiting time for occurence of trigger is counted as life time
+  ttrg=time.time()
+  tlife = ttrg - ti       # account life time
+  # store raw data in global array 
+  for i, C in enumerate(picoChannels):
+    picoDevObj.getDataRaw(C, Ns, data=rawBuf[i])
+    picoDevObj.rawToV(C, rawBuf[i], buffer[i], dtype=np.float32)
+# alternative:
+      #picoDevObj.getDataV(C, Ns, dataV=VBuf[ibufw,i], dtype=np.float32)
+  tlife += NSamples * TSampling
+  return ttrg, tlife
 
 # --- code to manage data acquitition and distribution to consumers
 #        = Buffer Manager
 #
-
-def acquirePicoData(ps):
+def acquireData(devDAQ):
   '''
    Procucer Thread
     
      - collects data in buffers
      - provides all acquired data to exactly one consumer, manageDataBufer 
 
+     Arg: funtion handling data acquisition from device
+
    Communicates with consumer via collections.deque()
 
   '''
   global RUNNING, ibufr, Ntrig, readrate, lifefrac
-#  print ('       !!! acquirePicoData starting')
+#  print ('       !!! acquireData starting')
   ibufw=-1     # buffer index
   Ntrig = 0    # count number of readings
-  tlife = 0.   # life time
   readrate = 0.
+  tlife = 0.
   lifefrac = 0.
 
   ni = 0       # temporary variable
-  T=Ns*dT # sampling period
-
   ts=time.time()
   
   while RUNNING:
@@ -226,26 +257,12 @@ def acquirePicoData(ps):
     while ibufw==ibufr:  # wait for consumer done with this buffer
       if not RUNNING: return
       time.sleep(0.001)
-      
-    ps.runBlock(pretrig=pretrg) #
-    # wait for PicoScope to set up (~1ms)
-    time.sleep(0.001) # set-up time not to be counted as "life time"
-    ti=time.time()
-    while not ps.isReady():
-      if not RUNNING: return
-      time.sleep(0.001)
-    # waiting time for occurence of trigger counts as life time
-    t=time.time()
-    timeStamp[ibufw] = t  # store time when data became ready
-    tlife += t - ti       # account life time
-  # store raw data in global array 
-    for i, C in enumerate(picoChannels):
-      ps.getDataRaw(C, Ns, data=rawBuf[ibufw, i])
-      ps.rawToV(C, rawBuf[ibufw,i], VBuf[ibufw,i], dtype=np.float32)
-# alternative:
-      #ps.getDataV(C, Ns, dataV=VBuf[ibufw,i], dtype=np.float32)
-
+#
+# data acquisition from hardware
+    ttrg, tl = devDAQ(VBuf[ibufw])
+    timeStamp[ibufw] = ttrg  # store time when data became ready
     Ntrig+=1
+    tlife += tl
     prod_que.append( (Ntrig, ibufw) )
        
 # wait for free buffer       
@@ -257,18 +274,18 @@ def acquirePicoData(ps):
     if (Ntrig - ni) == 100:
       dt=time.time()-ts
       readrate = (Ntrig-ni)/dt
-      lifefrac = (readrate*T + tlife/dt)*100.      
+      lifefrac = (tlife/dt)*100.      
       ts += dt
       tlife = 0.
       ni=Ntrig
   # --- end while  
-  print ('          !!! acquirePicoData()  ended')
+  print ('          !!! acquireData()  ended')
   return 0
-# -- end def acquirePicoData
+# -- end def acquireData
 
 def manageDataBuffer():
   global prod_que, request_ques, consumer_ques
-  '''main Consumer Thread, request data from procuder (acquirePicoData):
+  '''main Consumer Thread, request data from procuder (acquireData):
 
        - provide all events for analysis
        - provide subset of events to "random" consumers (picoVMeter, oscilloscope)
@@ -325,10 +342,11 @@ def manageDataBuffer():
 
 # print event rate
     n+=1
-    if n-n0 == 100:
-      print('evt %i:  rate: %.3gHz   life: %.2f%%' % (n, readrate, lifefrac))
-      if(evNr != n): print ("!!! ncnt != Ntrig: %i, %i"%(n,evNr) )
-      n0=n
+    if verbose:
+      if n-n0 == 100:
+        print('evt %i:  rate: %.3gHz   life: %.2f%%' % (n, readrate, lifefrac))
+        if(evNr != n): print ("!!! ncnt != Ntrig: %i, %i"%(n,evNr) )
+        n0=n
 #   - end while True  
 # -end def manageDataBuffer()
 
@@ -346,7 +364,7 @@ def BMregister():
   client_index=len(request_ques)-1
   BMlock.release()
   
-  if verbose >= 1:
+  if verbose:
     print("*==* BMregister: new client id=%i" % client_index)
   return client_index
 
@@ -675,21 +693,25 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # initialisation
   print('-> initializing PicoScope')
-  scope1 = picoIni()
-  dT = TSampling  # sampling time-step
-  Ns = nSamples
+  picoIni()
+  dT = TSampling # sampling time-step
+  Ns = NSamples
   # array of sampling times (in ms)
   samplingTimes =\
    1000.*np.linspace(-pretrg*Ns*dT, (1.-pretrg)*Ns*dT, Ns)
 
-  # reserve global space for data
-  NBuffers= 10
-  rawBuf = np.empty([NBuffers, NChannels, Ns], dtype=np.int16 )
-  VBuf = np.empty([NBuffers, NChannels, Ns], dtype=np.float32 )
-  timeStamp=np.empty(NBuffers)
-  ibufr = -1 # index of buffer being read
+# reserve global space for data
+  
+  # 1. static buffer for picoscope driver for storing raw data
+  rawBuf = np.empty([NChannels, NSamples], dtype=np.int16 )
 
-  # initialize queues (collections.deque() for communication with threads
+  # 2. static Buffers for stored samples converted to Volts
+  NBuffers= 16
+  VBuf = np.empty([NBuffers, NChannels, NSamples], dtype=np.float32 )
+  timeStamp=np.empty(NBuffers)
+  ibufr = -1 # read index, no event being read presently
+
+# initialize queues (collections.deque() for communication with threads
   prod_que=deque(maxlen=NBuffers) # acquireData <-> manageDataBuffer
   request_ques=[] # consumer request to manageDataBuffer
                 # 0:  request event pointer, obligatory consumer
@@ -703,9 +725,9 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   if verbose>0:
     print(" -> starting data acquisition thread")   
   RUNNING = True
-  thr_acquirePicoData=threading.Thread(target=acquirePicoData, args=(scope1,))
-  thr_acquirePicoData.daemon=True
-  thr_acquirePicoData.start()
+  thr_acquireData=threading.Thread(target=acquireData, args=(acquirePicoData,))
+  thr_acquireData.daemon=True
+  thr_acquireData.start()
 
   # start main consumer thread
   if verbose>0:
@@ -757,8 +779,8 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     if verbose>0: print(' <ctrl C>  -> cleaning up ')
     RUNNING = False  # stop background data acquisition
     time.sleep(1)    #     and wait for task to finish
-    scope1.stop()
-    scope1.close()
+    picoDevObj.stop()
+    picoDevObj.close()
     if verbose>0: print('                      -> exit ')
     exit(0)
   
