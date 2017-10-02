@@ -40,13 +40,13 @@ import sys, time, json, threading
 import numpy as np, matplotlib.pyplot as plt
 import matplotlib.animation as anim
 
-from collections import deque
 
 from picoscope import ps2000a
 picoDevObj = ps2000a.PS2000a()  
 #from picoscope import ps4000
 #picoDevObj = ps2000a.PS4000()  
 
+import BufferMan
 
 # --------------------------------------------------------------
 #              define scope settings here
@@ -218,189 +218,17 @@ def acquirePicoData(buffer):
   tlife = ttrg - ti       # account life time
   # store raw data in global array 
   for i, C in enumerate(picoChannels):
-    picoDevObj.getDataRaw(C, Ns, data=rawBuf[i])
+    picoDevObj.getDataRaw(C, NSamples, data=rawBuf[i])
     picoDevObj.rawToV(C, rawBuf[i], buffer[i], dtype=np.float32)
 # alternative:
-      #picoDevObj.getDataV(C, Ns, dataV=VBuf[ibufw,i], dtype=np.float32)
+      #picoDevObj.getDataV(C, NSamples, dataV=VBuf[ibufw,i], dtype=np.float32)
   tlife += NSamples * TSampling
   return ttrg, tlife
 
-# --- code to manage data acquitition and distribution to consumers
-#        = Buffer Manager
 #
-def acquireData(devDAQ):
-  '''
-   Procucer Thread
-    
-     - collects data in buffers
-     - provides all acquired data to exactly one consumer, manageDataBufer 
+# - - - - some examples of consumers - - - - 
 
-     Arg: funtion handling data acquisition from device
-
-   Communicates with consumer via collections.deque()
-
-  '''
-  global RUNNING, ibufr, Ntrig, readrate, lifefrac
-#  print ('       !!! acquireData starting')
-  ibufw=-1     # buffer index
-  Ntrig = 0    # count number of readings
-  readrate = 0.
-  tlife = 0.
-  lifefrac = 0.
-
-  ni = 0       # temporary variable
-  ts=time.time()
-  
-  while RUNNING:
-  # sample data from Picoscope handled by instance ps
-    ibufw = (ibufw + 1) % NBuffers # next write buffer
-    while ibufw==ibufr:  # wait for consumer done with this buffer
-      if not RUNNING: return
-      time.sleep(0.001)
-#
-# data acquisition from hardware
-    ttrg, tl = devDAQ(VBuf[ibufw])
-    timeStamp[ibufw] = ttrg  # store time when data became ready
-    Ntrig+=1
-    tlife += tl
-    prod_que.append( (Ntrig, ibufw) )
-       
-# wait for free buffer       
-    while len(prod_que) == NBuffers:
-      if not RUNNING: return
-      time.sleep(0.001)
-      
-# calculate life time and read rate
-    if (Ntrig - ni) == 100:
-      dt=time.time()-ts
-      readrate = (Ntrig-ni)/dt
-      lifefrac = (tlife/dt)*100.      
-      ts += dt
-      tlife = 0.
-      ni=Ntrig
-  # --- end while  
-  print ('          !!! acquireData()  ended')
-  return 0
-# -- end def acquireData
-
-def manageDataBuffer():
-  global prod_que, request_ques, consumer_ques
-  '''main Consumer Thread, request data from procuder (acquireData):
-
-       - provide all events for analysis
-       - provide subset of events to "random" consumers (picoVMeter, oscilloscope)
-
-  '''
-  global ibufr # synchronize with producer via a global variable
-#              # should later be done as function call to a producer class
-  t0=time.time()
-  n0=0
-  n=0
-  while True:
-    while not len(prod_que): # wait for data in producer queue
-      time.sleep(0.001)
-    evNr, ibufr = prod_que.popleft()
-
-#
-# -->  put code here to analyse data  <--
-#
-#  eventually, introduce random wait time to mimick processing time 
-#    time.sleep(np.random.randint(1, 25)/1000.)
-
-# !debug    print('ibufr=',ibufr,'request_ques',request_ques)
-
-# check if other threads want data
-    l_obligatory=[]
-    if len(request_ques):
-      for i, q in enumerate(request_ques):
-        if len(q):
-          req = q.popleft()
-          if req==0:                               # return poiner to Buffer      
-            consumer_ques[i].append( (evNr, ibufr) ) 
-            l_obligatory.append(i)
-          elif req==1:                               # return a copy of data
-            evTime=timeStamp[ibufr]
-            consumer_ques[i].append( (evNr, evTime, np.copy(VBuf[ibufr]) ) )
-          elif req==2:                   # return copy and mark as obligatory
-            evTime=timeStamp[ibufr]
-            consumer_ques[i].append( (evNr, evTime, np.copy(VBuf[ibufr]) ) )
-            l_obligatory.append(i)
-          else:
-            print('!!! manageDataBuffer: invalid request mode', req)
-            exit(1)
-
-# wait until all obligatory consumers are done
-    if len(l_obligatory):
-      while True:
-        done = True
-        for i in l_obligatory:
-          if not len(request_ques[i]): done = False
-        if done: break
-        time.sleep(0.001)        
-#  now signal to producer that we are done with this event
-    ibufr = -1  # completely done, singnal to producer
-
-# print event rate
-    n+=1
-    if verbose:
-      if n-n0 == 100:
-        print('evt %i:  rate: %.3gHz   life: %.2f%%' % (n, readrate, lifefrac))
-        if(evNr != n): print ("!!! ncnt != Ntrig: %i, %i"%(n,evNr) )
-        n0=n
-#   - end while True  
-# -end def manageDataBuffer()
-
-def BMregister():
-  global request_ques, consumer_ques
-  ''' 
-  register a client to in Buffer Manager
-
-  Returns: client index
-  '''
-
-  BMlock.acquire() # my be called by many threads and needs protection ...  
-  request_ques.append(deque(maxlen=1))
-  consumer_ques.append(deque(maxlen=1))
-  client_index=len(request_ques)-1
-  BMlock.release()
-  
-  if verbose:
-    print("*==* BMregister: new client id=%i" % client_index)
-  return client_index
-
-def BMgetEvent(client_index, mode=1):
-  global request_ques, consumer_ques
-  ''' 
-  request event from Buffer Manager
- 
-    Arguments: 
-
-      client_index client:  index as returned by BMregister()
-      mode:   0: event pointer (olbigatory consumer)
-              1: copy of event data (random consumer)
-              2: copy of event (olbigatory consumer)
-
-    Returns: 
-
-      event data
-  '''
-
-  request_ques[client_index].append(mode)
-  cq=consumer_ques[client_index]
-  while not len(cq):
-      time.sleep(0.01)
-  #print('*==* BMgetEvent: received event %i'%evNr)
-  if mode !=0: # received copy of the event data
-    return cq.popleft()
-  else: # received pointer to event buffer
-    evNr, ibr = cq.popleft()
-    evTime = timeStamp[ibr]
-    evData = VBuf[ibr]
-    return evNr, evTime, evData
-#
-# --- end of Buffer Manager code
-  
-def obligatoryConsumer_test():
+def obligConsumer():
   '''
     test readout speed: do nothing, just request data from main consumer
 
@@ -410,38 +238,38 @@ def obligatoryConsumer_test():
     for reasons of speed, only a pointer to the event buffer is returned
   '''
 # register with Buffer Manager
-  myId = BMregister()
+  myId = BM.BMregister()
   mode = 0    # obligatory consumer, request pointer to Buffer
 
   evcnt=0
   while RUNNING:
-    evNr, evtile, evData = BMgetEvent(myId, mode=mode)
+    evNr, evtile, evData = BM.BMgetEvent(myId, mode=mode)
     evcnt+=1
-    print('*==* obligatoryConsumer_test: event Nr %i, %i events seen'%(evNr,evcnt))
+    print('*==* obligConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
 
 #    introduce random wait time to mimick processing activity
     time.sleep(np.random.randint(10, 1000)/1000.)
   return
-#-end def obligatoryComsumer_test
+#-end def obligComsumer
 
-def randomConsumer_test():
+def randConsumer():
   '''
     test readout speed: 
       does nothing except requesting random data samples from main consumer
   '''
 
   # register with Buffer Manager
-  myId = BMregister()
+  myId = BM.BMregister()
   mode = 1    # random consumer, request event copy
 
   evcnt=0
   while RUNNING:
-    evNr, evtile, evData = BMgetEvent(myId, mode=mode)
+    evNr, evtile, evData = BM.BMgetEvent(myId, mode=mode)
     evcnt+=1
-    print('*==* randomConsumer_test: event Nr %i, %i events seen'%(evNr,evcnt))
+    print('*==* randConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
 # introduce random wait time to mimick processing activity
     time.sleep(np.random.randint(100,2000)/1000.)
-# - end def randomComsumer_test()
+# - end def randConsumer()
   return
 #
 
@@ -449,12 +277,12 @@ def yieldVMEvent():
 # provide an event copy from Buffer Manager
    # this is useful for clients accessing only a subset of events
 
-  myId = BMregister()   # register with Buffer Manager
+  myId = BM.BMregister()   # register with Buffer Manager
   mode = 1              # random consumer, request event copy
 
   evCnt=0
   while RUNNING:
-    evNr, evTime, evData = BMgetEvent(myId, mode=mode)
+    evNr, evTime, evData = BM.BMgetEvent(myId, mode=mode)
   #  print('*==* yieldEventCopy: received event %i' % evNr)
     evCnt+=1
     yield (evCnt, evTime, evData)
@@ -464,12 +292,12 @@ def yieldOsEvent():
 # provide an event copy from Buffer Manager
    # this is useful for clients accessing only a subset of events
 
-  myId = BMregister()   # register with Buffer Manager
+  myId = BM.BMregister()   # register with Buffer Manager
   mode = 1              # random consumer, request event copy
 
   evCnt=0
   while RUNNING:
-    evNr, evTime, evData = BMgetEvent(myId, mode=mode)
+    evNr, evTime, evData = BM.BMgetEvent(myId, mode=mode)
   #  print('*==* yieldEventCopy: received event %i' % evNr)
     evCnt+=1
     yield (evCnt, evTime, evData)
@@ -631,7 +459,7 @@ def Instruments(mode=0):
     global graphsOs, animtxtOs
     graphsOs = ()
     for i, C in enumerate(picoChannels):
-      g,= axesOs[i].plot(samplingTimes, np.zeros(Ns), color=ChanColors[i])
+      g,= axesOs[i].plot(samplingTimes, np.zeros(NSamples), color=ChanColors[i])
       graphsOs += (g,)
     animtxtOs = axesOs[0].text(0.7, 0.95, ' ', transform=axesOs[0].transAxes,
                    backgroundcolor='white', alpha=0.5)
@@ -649,7 +477,7 @@ def Instruments(mode=0):
 
 # display rate and life time
     if n-n0 == 50:
-      txt='rate: %.3gHz  life: %.0f%%' % (readrate, lifefrac)
+      txt='rate: %.3gHz  life: %.0f%%' % (BM.readrate, BM.lifefrac)
       animtxtOs.set_text(txt)
       n0=n
     return graphsOs + (animtxtOs,)
@@ -689,93 +517,59 @@ def Instruments(mode=0):
 
   plt.show()
     
+
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # initialisation
   print('-> initializing PicoScope')
-  picoIni()
-  dT = TSampling # sampling time-step
-  Ns = NSamples
+
+  picoIni() 
+  SamplingPeriod = TSampling * NSamples  
   # array of sampling times (in ms)
   samplingTimes =\
-   1000.*np.linspace(-pretrg*Ns*dT, (1.-pretrg)*Ns*dT, Ns)
+   1000.*np.linspace(-pretrg*SamplingPeriod, (1.-pretrg)*SamplingPeriod, NSamples)
 
 # reserve global space for data
-  
-  # 1. static buffer for picoscope driver for storing raw data
+  # static buffer for picoscope driver for storing raw data
   rawBuf = np.empty([NChannels, NSamples], dtype=np.int16 )
 
-  # 2. static Buffers for stored samples converted to Volts
   NBuffers= 16
-  VBuf = np.empty([NBuffers, NChannels, NSamples], dtype=np.float32 )
-  timeStamp=np.empty(NBuffers)
-  ibufr = -1 # read index, no event being read presently
-
-# initialize queues (collections.deque() for communication with threads
-  prod_que=deque(maxlen=NBuffers) # acquireData <-> manageDataBuffer
-  request_ques=[] # consumer request to manageDataBuffer
-                # 0:  request event pointer, obligatory consumer
-                # 1:  request event data, random consumer 
-                # 2:  request event data, obligatoray consumer
-  consumer_ques=[] # data from manageDataBuffer to consumer
-
-  BMlock = threading.Lock() # locking for Buffer Manager actions
+  BM = BufferMan.BufferMan(NBuffers, NChannels, NSamples, acquirePicoData)
 
   # start data acquisition thread
   if verbose>0:
-    print(" -> starting data acquisition thread")   
+    print(" -> starting Buffer Manager Threads")   
   RUNNING = True
-  thr_acquireData=threading.Thread(target=acquireData, args=(acquirePicoData,))
-  thr_acquireData.daemon=True
-  thr_acquireData.setName('aquireData')
-  thr_acquireData.start()
-
-  # start main consumer thread
-  if verbose>0:
-    print(" -> starting main consumer thread")   
-  thr_manageDataBuffer=threading.Thread(target=manageDataBuffer)
-  thr_manageDataBuffer.daemon=True
-  thr_manageDataBuffer.setName('manageDataBuffer')
-  thr_manageDataBuffer.start()
+  BM.run()  
 
 #
 # --- infinite LOOP
   try:
-    if mode=='test': # test readout speed
-      thr_randomConsumer_test=threading.Thread(target=randomConsumer_test )
-      thr_randomConsumer_test.daemon=True
-      thr_randomConsumer_test.start()
-      thr_obligatoryConsumer_test=threading.Thread(target=obligatoryConsumer_test )
-      thr_obligatoryConsumer_test.daemon=True
-      thr_obligatoryConsumer_test.start()
-  # !!! test
-      thr_Instruments=threading.Thread(target=Instruments, args=(2,) )
-      thr_Instruments.daemon=True
-      thr_Instruments.start()
-
-      while True:
-        time.sleep(10.)
-    elif mode=='VMeter': # Voltmeter mode
-      thr_Instruments=threading.Thread(target=Instruments, args=(0,) )
-      thr_Instruments.daemon=True
-      thr_Instruments.start()
-      while True:
-        time.sleep(10.)
+    if mode=='VMeter': # Voltmeter mode
+      m=0
     elif mode=='osci': # Oscilloscpe mode
-      thr_Instruments=threading.Thread(target=Instruments, args=(1,) )
-      thr_Instruments.daemon=True
-      thr_Instruments.start()
-      while True:
-        time.sleep(10.)
+      m=1
     elif mode=='demo': #  both VMeter and Oscilloscpe
-      thr_Instruments=threading.Thread(target=Instruments, args=(2,) )
-      thr_Instruments.daemon=True
-      thr_Instruments.start()
-      while True:
-        time.sleep(10.)
+      m=2
+    elif mode=='test': # test consumers
+      thr_randConsumer=threading.Thread(target=randConsumer )
+      thr_randConsumer.daemon=True
+      thr_randConsumer.start()
+      thr_obligConsumer=threading.Thread(target=obligatoryConsumer )
+      thr_obligConsumer.daemon=True
+      thr_obligConsumer.start()
+      m=2
     else:
       print ('!!! no valid mode - exiting')
-        
+      exit(1)
+    
+    thr_Instruments=threading.Thread(target=Instruments, args=(m,) )
+    thr_Instruments.daemon=True
+    thr_Instruments.start()
+
+    while True:
+      time.sleep(10.)
+
   except KeyboardInterrupt:
 # END: code to clean up
     if verbose>0: print(' <ctrl C>  -> cleaning up ')
