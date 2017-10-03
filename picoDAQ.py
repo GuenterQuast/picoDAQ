@@ -36,9 +36,12 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import sys, time, json, threading
-import numpy as np, matplotlib.pyplot as plt
-import matplotlib.animation as anim
+import sys, time, json, numpy as np, threading
+
+# graphical devices use matplotlib
+import matplotlib
+matplotlib.use('tkagg')  # set backend (qt5 not running as thread in background)
+import matplotlib.pyplot as plt, matplotlib.animation as anim
 
 
 from picoscope import ps2000a
