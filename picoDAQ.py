@@ -251,7 +251,7 @@ def obligConsumer():
     print('*==* obligConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
 
 #    introduce random wait time to mimick processing activity
-    time.sleep(np.random.randint(10, 1000)/1000.)
+    time.sleep(-0.25 * np.log(np.random.uniform(0.,1.)) )
   return
 #-end def obligComsumer
 
@@ -271,7 +271,7 @@ def randConsumer():
     evcnt+=1
     print('*==* randConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
 # introduce random wait time to mimick processing activity
-    time.sleep(np.random.randint(100,2000)/1000.)
+    time.sleep(np.random.randint(100,1000)/1000.)
 # - end def randConsumer()
   return
 #
@@ -321,10 +321,9 @@ def Instruments(mode=0):
 
   def grVMeterIni():
 # set up a figure to plot actual voltage and samplings from Picoscope
-    fig=plt.figure("Voltmeter", figsize=(5., 8.) )
-    fig.subplots_adjust(left=0.15, bottom=0.05, right=0.85, top=0.95,
-                    wspace=None, hspace=.25)#
-
+    fig = plt.figure("Voltmeter", figsize=(4., 6.) )
+    fig.subplots_adjust(left=0.2, bottom=0.08, right=0.8, top=0.95,
+                    wspace=None, hspace=.25)
     axes=[]
     # history plot
     axes.append(plt.subplot2grid((7,1),(5,0), rowspan=2) )
@@ -378,7 +377,7 @@ def Instruments(mode=0):
       graphsVM += (g,)
     animtxtVM = axesVM[3].text(0.05, 0.05 , ' ',
                 transform=axesVM[3].transAxes,
-                size='x-large', color='darkblue')
+                size='large', color='darkblue')
 #    return bgraph + graphsVM + (animtxt,)
     return (bgraph1,) + (bgraph2,) + graphsVM + (animtxtVM,)  
 # -- end grVMeterIni()
@@ -422,7 +421,9 @@ def Instruments(mode=0):
   def grOsciIni():
 # set up a figure to plot samplings from Picoscope
   # needs revision if more than 2 Channels present
-    fig=plt.figure("Oscilloscope", figsize=(8.0, 5.0) )
+    fig=plt.figure("Oscilloscope", figsize=(6., 4.) )
+    fig.subplots_adjust(left=0.13, bottom=0.125, right=0.87, top=0.925,
+                    wspace=None, hspace=.25)
     axes=[]
 # channel A
     axes.append(fig.add_subplot(1,1,1, facecolor='ivory'))
@@ -464,7 +465,7 @@ def Instruments(mode=0):
     for i, C in enumerate(picoChannels):
       g,= axesOs[i].plot(samplingTimes, np.zeros(NSamples), color=ChanColors[i])
       graphsOs += (g,)
-    animtxtOs = axesOs[0].text(0.7, 0.95, ' ', transform=axesOs[0].transAxes,
+    animtxtOs = axesOs[0].text(0.65, 0.95, ' ', transform=axesOs[0].transAxes,
                    backgroundcolor='white', alpha=0.5)
     return graphsOs + (animtxtOs,)
   
@@ -558,7 +559,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       thr_randConsumer=threading.Thread(target=randConsumer )
       thr_randConsumer.daemon=True
       thr_randConsumer.start()
-      thr_obligConsumer=threading.Thread(target=obligatoryConsumer )
+      thr_obligConsumer=threading.Thread(target=obligConsumer )
       thr_obligConsumer.daemon=True
       thr_obligConsumer.start()
       m=2
@@ -577,9 +578,10 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # END: code to clean up
     if verbose>0: print(' <ctrl C>  -> cleaning up ')
     RUNNING = False  # stop background data acquisition
-    time.sleep(1)    #     and wait for task to finish
+    BM.end()
+    time.sleep(1)    #     and wait for tasks to finish
     picoDevObj.stop()
     picoDevObj.close()
-    if verbose>0: print('                      -> exit ')
+    if verbose>0: print('                      -> exit')
     exit(0)
   

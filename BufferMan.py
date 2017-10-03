@@ -203,6 +203,7 @@ class BufferMan(object):
     self.request_ques[client_index].append(mode)
     cq=self.consumer_ques[client_index]
     while not len(cq):
+        if not self.RUNNING: return
         time.sleep(0.01)
   #print('*==* BMgetEvent: received event %i'%evNr)
     if mode !=0: # received copy of the event data
@@ -227,6 +228,9 @@ class BufferMan(object):
 
   def setverbose(self, vlevel):
     self.verbose = vlevel
+
+  def end(self):
+    self.RUNNING = False 
 
   def __del__(self):
     self.RUNNING = False
