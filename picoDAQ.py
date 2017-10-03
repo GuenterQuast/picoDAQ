@@ -165,8 +165,8 @@ def picoIni():
   TSampling, NSamples, maxSamples = \
         picoDevObj.setSamplingInterval(sampleTime/Nsamples, sampleTime)
   if verbose>0:
-    print("  Sampling interval = %.4g µs (%.g4 µs)" \
-                   % (TSampling*1E6, sampleTime/Nsamples*1E6) )
+    print("  Sampling interval = %.4g µs (%.4g µs)" \
+                   % (TSampling*1E6, sampleTime*1E6/Nsamples ) )
     print("  Number of samples = %d (%d)" % (NSamples, Nsamples))
     #print("Maximum samples = %d" % maxSamples)
 # 2) Channel Ranges
@@ -225,7 +225,6 @@ def acquirePicoData(buffer):
     picoDevObj.rawToV(C, rawBuf[i], buffer[i], dtype=np.float32)
 # alternative:
       #picoDevObj.getDataV(C, NSamples, dataV=VBuf[ibufw,i], dtype=np.float32)
-  tlife += NSamples * TSampling
   return ttrg, tlife
 
 #
@@ -574,7 +573,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     thr_Instruments.start()
 
 # run until key pressed
-    raw_input('Press <ret> to end ->  \n')
+    raw_input('\n                                             Press <ret> to end -> \n\n')
     if verbose: print(' ending  -> cleaning up ')
     RUNNING = False  # stop background processes
     BM.end()         # tell buffer manager that we're done

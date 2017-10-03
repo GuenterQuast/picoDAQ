@@ -97,9 +97,9 @@ class BufferMan(object):
 # calculate life time and read rate
       if (self.Ntrig - ni) == 100:
         dt = time.time()-ts
+        ts += dt
         self.readrate = (self.Ntrig-ni)/dt
         self.lifefrac = (tlife/dt)*100.      
-        ts += dt
         tlife = 0.
         ni=self.Ntrig
     # --- end while  
