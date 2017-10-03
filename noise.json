@@ -2,7 +2,7 @@
 "picoChannels": ["A", "B"],
 "ChanRanges":  [50E-3, 50E-3],
 "Nsamples": 250,  
-"sampleTime": 100E-6, 
+"sampleTime": 10E-3, 
 "trgChan": "A",      
 "trgThr": 25E-3,       
 "trgTyp": "Rising",   

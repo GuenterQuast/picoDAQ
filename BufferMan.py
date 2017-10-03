@@ -56,7 +56,8 @@ class BufferMan(object):
      Procucer Thread
     
        - collects and stores data in buffers
-       - provides all acquired data to exactly one consumer, manageDataBufer 
+       - provides all acquired data to manageDataBufer 
+       - count number of events and calculate life time
 
        Arg: funtion handling data acquisition from device
 
@@ -82,6 +83,7 @@ class BufferMan(object):
 #
 # data acquisition from hardware
       ttrg, tl = self.rawDAQproducer(self.BMbuf[ibufw])
+      if ttrg == -1: return
       tlife += tl
       self.timeStamp[ibufw] = ttrg  # store time when data became ready
       self.Ntrig += 1
@@ -102,7 +104,7 @@ class BufferMan(object):
         ni=self.Ntrig
     # --- end while  
     print ('          !!! acquireData()  ended')
-    return 0
+    return
 # -- end def acquireData
 
 
@@ -117,8 +119,9 @@ class BufferMan(object):
     t0=time.time()
     n0=0
     n=0
-    while True:
+    while self.RUNNING:
       while not len(self.prod_que): # wait for data in producer queue
+        if not self.RUNNING: return
         time.sleep(0.001)
       evNr, self.ibufr = self.prod_que.popleft()
 
@@ -146,11 +149,12 @@ class BufferMan(object):
 
 # wait until all obligatory consumers are done
       if len(l_obligatory):
-        while True:
+        while self.RUNNING:
           done = True
           for i in l_obligatory:
             if not len(self.request_ques[i]): done = False
           if done: break
+          if not self.RUNNING: return
           time.sleep(0.001)        
 #  now signal to producer that all consumers are done with this event
       self.ibufr = -1

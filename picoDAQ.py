@@ -180,7 +180,7 @@ def picoIni():
   picoDevObj.setSimpleTrigger(trgChan, trgThr, trgTyp,
                       trgDelay, trgTO, enabled=trgActive)    
   if verbose>0:
-    print(" Trigger channel %s enabled: %.3gV %s" % (trgChan, trgThr, trgTyp))
+    print("  Trigger channel %s enabled: %.3gV %s" % (trgChan, trgThr, trgTyp))
 
 # 4) enable Signal Generator 
   if frqSG !=0. :
@@ -214,7 +214,7 @@ def acquirePicoData(buffer):
   time.sleep(0.001) # set-up time not to be counted as "life time"
   ti=time.time()
   while not picoDevObj.isReady():
-    if not RUNNING: return
+    if not RUNNING: return -1, -1
     time.sleep(0.001)
     # waiting time for occurence of trigger is counted as life time
   ttrg=time.time()
@@ -289,7 +289,7 @@ def yieldVMEvent():
   #  print('*==* yieldEventCopy: received event %i' % evNr)
     evCnt+=1
     yield (evCnt, evTime, evData)
-  return
+  exit(1)
 
 def yieldOsEvent():
 # provide an event copy from Buffer Manager
@@ -304,8 +304,7 @@ def yieldOsEvent():
   #  print('*==* yieldEventCopy: received event %i' % evNr)
     evCnt+=1
     yield (evCnt, evTime, evData)
-  return
-
+  exit(1)
 # 
 ### consumer examples with graphics -----------------------------------------
 #
@@ -519,7 +518,10 @@ def Instruments(mode=0):
                          fargs=None, repeat=True, save_count=None))
    # save_count=None is a (temporary) workaround to fix memory leak in animate
 
-  plt.show()
+  try:
+    plt.show()
+  except: 
+    print ('matplotlib animate exiting ...')
     
 
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
@@ -571,15 +573,27 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     thr_Instruments.daemon=True
     thr_Instruments.start()
 
-    while True:
-      time.sleep(10.)
+# run until key pressed
+    raw_input('Press <ret> to end ->  \n')
+    if verbose: print(' ending  -> cleaning up ')
+    RUNNING = False  # stop background processes
+    BM.end()         # tell buffer manager that we're done
+    time.sleep(2)    #     and wait for tasks to finish
+    picoDevObj.stop()
+    picoDevObj.close()
+    if verbose>0: print('                      -> exit')
+    exit(0)
+
+#
+#    while True:
+#      time.sleep(10.)
 
   except KeyboardInterrupt:
 # END: code to clean up
     if verbose>0: print(' <ctrl C>  -> cleaning up ')
     RUNNING = False  # stop background data acquisition
     BM.end()
-    time.sleep(1)    #     and wait for tasks to finish
+    time.sleep(2)    #     and wait for tasks to finish
     picoDevObj.stop()
     picoDevObj.close()
     if verbose>0: print('                      -> exit')
