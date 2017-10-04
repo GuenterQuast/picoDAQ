@@ -76,6 +76,7 @@ if len(sys.argv)==2:
   ##    print ('   *==* all required parameters successfully read from json file')
   # get optional parameters (will be initialised below)
       if "ChanModes" in confdict: ChanModes = confdict['ChanModes']
+      if "ChanOffsets" in confdict: ChanOffsets = confdict['ChanOffsets']
       if "trgDelay" in confdict: trgDelay=confdict["trgDelay"]
       if "trgActive" in confdict: trgActive=confdict["trgActive"]
       if "pretrig" in confdict: pretrig=confdict["pretrig"]
