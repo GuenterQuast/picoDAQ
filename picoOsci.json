@@ -8,7 +8,7 @@
 "trgTyp": "Rising",   
 "trgTO": 1000,        
 "trgDelay":  0,
-"pretrg": 0.05, 
+"pretrig": 0.05, 
 "frqSG": 100E3,
 "swpSG": "UpDown",
 "mode": "osci" 

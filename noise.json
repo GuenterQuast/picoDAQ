@@ -7,6 +7,6 @@
 "trgThr": 25E-3,       
 "trgTyp": "Rising",   
 "trgTO": 10000,        
-"pretrg": 0.15, 
+"pretrig": 0.15, 
 "frqSG": 0.0
 }

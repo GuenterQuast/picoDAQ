@@ -78,7 +78,7 @@ if len(sys.argv)==2:
       if "ChanModes" in confdict: ChanModes = confdict['ChanModes']
       if "trgDelay" in confdict: trgDelay=confdict["trgDelay"]
       if "trgActive" in confdict: trgActive=confdict["trgActive"]
-      if "pretrig" in confdict: pretrg=confdict["pretrg"]
+      if "pretrig" in confdict: pretrig=confdict["pretrig"]
       if "trgTO"  in confdict: trgTO=confdict["trgTO"] 
       if "swpSG" in confdict: swpSG=confdict["swpSG"]
       if "PkToPkSG" in confdict: PkToPkSG = confdict["PkToPkSG"]
@@ -122,7 +122,7 @@ if "ChanOffsets" not in vars():
 if "trgTO" not in vars(): trgTO=1000             #  and time-out
 if "trgDelay" not in vars(): trgDelay = 0        #
 if "trgActive" not in vars(): trgActive = True   # no triggering if set to False
-if "pretrg" not in vars(): pretrg=0.05           # fraction of samples before trigger
+if "pretrig" not in vars(): pretrig=0.05           # fraction of samples before trigger
 if "swpSG" not in vars(): swpSG = 'UpDown'
 
 if "PkToPkSG" not in vars(): PkToPkSG = 0.4 
@@ -209,7 +209,7 @@ def acquirePicoData(buffer):
       ttrg: time when device became ready
       tlife life time of device
   '''
-  picoDevObj.runBlock(pretrig=pretrg) #
+  picoDevObj.runBlock(pretrig=pretrig) #
     # wait for PicoScope to set up (~1ms)
   time.sleep(0.001) # set-up time not to be counted as "life time"
   ti=time.time()
@@ -532,7 +532,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   SamplingPeriod = TSampling * NSamples  
   # array of sampling times (in ms)
   samplingTimes =\
-   1000.*np.linspace(-pretrg*SamplingPeriod, (1.-pretrg)*SamplingPeriod, NSamples)
+   1000.*np.linspace(-pretrig*SamplingPeriod, (1.-pretrig)*SamplingPeriod, NSamples)
 
 # reserve global space for data
   # static buffer for picoscope driver for storing raw data

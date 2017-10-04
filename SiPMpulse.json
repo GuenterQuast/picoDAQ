@@ -1,0 +1,13 @@
+{
+    "picoChannels":["A", "B"],
+"ChanRanges":  [0.3, 0.3],
+"Nsamples": 250,  
+"sampleTime": 1E-6, 
+"trgChan": "A",      
+"trgThr": -75E-3,       
+"trgTyp": "Falling",   
+"trgTO": 5000,        
+"pretrig": 0.25, 
+"frqSG": 0.0,
+"mode": "osci" 
+}

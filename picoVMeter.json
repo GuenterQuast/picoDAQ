@@ -8,7 +8,7 @@
 "trgTyp": "Above",   
 "trgTO": 100,        
 "trgActive": false,
-"pretrg": 0.0, 
+"pretrig": 0.0, 
 "frqSG": 0.0,
 "mode": "VMeter" 
 }
