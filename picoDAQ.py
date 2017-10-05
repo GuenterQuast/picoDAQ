@@ -16,13 +16,13 @@ Demonstrate data acquisition with PicoScope usb-oscilloscpe
   - set up PicoScope channel ranges and trigger
   - PicoScope configuration optionally from json file
   - acquire data (implemented as thread)
-  - manage event data and distrobute to obligatory and random consumers
+  - manage event data and distribute to obligatory and random consumers
   - analyse and plot data:
 
     - obligatoryConsumer test speed of data acquisition
     - randomConsumer     test concurrent access
     - VMeter             average Voltages with bar graph display
-    - Osci               simple oscilloscope
+    - Osci               simple waveform display
   
   graphics implemented with matplotlib
 
