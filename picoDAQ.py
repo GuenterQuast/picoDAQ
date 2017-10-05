@@ -227,13 +227,16 @@ def acquirePicoData(buffer):
 # alternative:
       #picoDevObj.getDataV(C, NSamples, dataV=VBuf[ibufw,i], dtype=np.float32)
   return ttrg, tlife
-
 #
-# - - - - some examples of consumers - - - - 
+
+# - - - - some examples of consumers connected to BufferManager- - - - 
+
+# rely on instance BM of BufferManager class
+#   and initialisation of PicoScope parameters as defined in picoDAQ.py 
 
 def obligConsumer():
   '''
-    test readout speed: do nothing, just request data from main consumer
+    test readout speed: do nothing, just request data from buffer manager
 
       - an example of an obligatory consumer, sees all data
         (i.e. data acquisition is halted when no data is requested)
@@ -258,7 +261,7 @@ def obligConsumer():
 def randConsumer():
   '''
     test readout speed: 
-      does nothing except requesting random data samples from main consumer
+      does nothing except requesting random data samples from buffer manager
   '''
 
   # register with Buffer Manager
@@ -522,7 +525,7 @@ def Instruments(mode=0):
     plt.show()
   except: 
     print ('matplotlib animate exiting ...')
-    
+
 
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
