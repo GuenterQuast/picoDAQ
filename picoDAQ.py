@@ -43,7 +43,6 @@ import matplotlib
 matplotlib.use('tkagg')  # set backend (qt5 not running as thread in background)
 import matplotlib.pyplot as plt, matplotlib.animation as anim
 
-
 from picoscope import ps2000a
 picoDevObj = ps2000a.PS2000a()  
 #from picoscope import ps4000
@@ -64,96 +63,18 @@ if len(sys.argv)==2:
   try:
     with open(jsonfname) as f:
       confdict=json.load(f)
-  # get mandatory parameters
-      picoChannels = confdict["picoChannels"]
-      ChanRanges = confdict["ChanRanges"]
-      Nsamples = confdict["Nsamples"]
-      sampleTime = confdict["sampleTime"]
-      trgChan = confdict["trgChan"]     
-      trgThr = confdict["trgThr"]
-      trgTyp = confdict["trgTyp"]
-      frqSG = confdict["frqSG"]
-  ##    print ('   *==* all required parameters successfully read from json file')
-  # get optional parameters (will be initialised below)
-      if "ChanModes" in confdict: ChanModes = confdict['ChanModes']
-      if "ChanOffsets" in confdict: ChanOffsets = confdict['ChanOffsets']
-      if "trgDelay" in confdict: trgDelay=confdict["trgDelay"]
-      if "trgActive" in confdict: trgActive=confdict["trgActive"]
-      if "pretrig" in confdict: pretrig=confdict["pretrig"]
-      if "trgTO"  in confdict: trgTO=confdict["trgTO"] 
-      if "swpSG" in confdict: swpSG=confdict["swpSG"]
-      if "PkToPkSG" in confdict: PkToPkSG = confdict["PkToPkSG"]
-      if "waveTypeSG" in confdict: waveTypeSG = confdict["waveTypeSG"]
-      if "offsetVoltageSG" in confdict: offsetVoltageSG = confdict["offsetVoltageSG"] 
-      if "dwellTimeSG" in confdict: dwellTimeSG = confdict["dwellTimeSG"]
-#      if "verbose" in confict: verbose = confdict["verbose"]
-      if "mode" in confdict: mode = confdict["mode"]
-      if "ChanColors" in confdict: ChanColors=confdict["ChanColors"]
-        
   except:
     print('     failed to read input file ' + jsonfname)
     exit(1)
 else:
-# use these default settings for mandatory parameters
-  picoChannels = ['A', 'B'] # channels
-# -- signal height:
-  ChanRanges=[30E-3, 0.35]  # voltage range chan. A&B
-# note: setChannel uses next largest amplitude
+  confdict=None
 
-# -- signal timing
-  Nsamples = 200  # number of samples to take 
-  sampleTime = 10.E-6 # duration of sample
-# note: setSamplingInterval uses next smallest sampling interval
-
-# -- trigger configuration
-  trgChan = 'A'      # trigger channel,
-  trgThr = ChanRanges[0]/2.  #  threshold
-  trgTyp = 'Rising'  #  type
-# -- signal generator
-  frqSG = 100E3
-# -- end if - else config settings
-
-# define all other parameters (if not yet done)
-NChannels = len(picoChannels)
-if "ChanModes" not in vars():
-  ChanModes = ['AC' for i in range(NChannels)]
-if "ChanOffsets" not in vars():
-  ChanOffsets= [0. for i in range(NChannels)]  # voltage offsets
-  #                                      (!!! not yet functional in driver)
-if "trgTO" not in vars(): trgTO=1000             #  and time-out
-if "trgDelay" not in vars(): trgDelay = 0        #
-if "trgActive" not in vars(): trgActive = True   # no triggering if set to False
-if "pretrig" not in vars(): pretrig=0.05           # fraction of samples before trigger
-if "swpSG" not in vars(): swpSG = 'UpDown'
-
-if "PkToPkSG" not in vars(): PkToPkSG = 0.4 
-if "waveTypeSG" not in vars(): waveTypeSG = 'Sine'
-if "stopFreqSG" not in vars(): stopFreqSG = 9 * frqSG
-if "offsetVoltageSG" not in vars(): offsetVoltageSG = 0.
-if "dwellTimeSG" not in vars(): 
-  if frqSG > 0:
-    dwellTimeSG = 10./frqSG
-  else:
-    dwellTimeSG = 0.
-# -- printout control and colors
-if "verbose" not in vars(): verbose=1            # print (detailed) info if >0 
-if "ChanColors" not in vars():
-  ChanColors = ['darkblue', 'darkslategrey', 'darkred', 'darkgreen']  
-# 
-if "mode" not in vars(): mode="osci"   # "osci" "demo" "VMeter" "test" 
-
-# --------------------------------------------------------------
-# config settings are the desired inputs, actual possible settings
-# (returned after setting up hardware) may be different and are stored here:
-CRanges = [0., 0., 0., 0.]  # actual ranges
-TSampling = 0.  # actual sampling interval
-NSamples = 0    #    and number of samples to be taken
+import picoConfig
 
 # --------------------------------------------------------------
 
-def picoIni():
-  global TSampling, NSamples, CRanges
-
+def picoIni(PSconf):
+  ''' initialise device controlled by class PSconf '''
   if verbose>1: print(__doc__)
   if verbose>0: print("Opening PicsoScope device ...")
 #  ps = ps2000a.PS2000a()  
@@ -164,35 +85,42 @@ def picoIni():
 # configure oscilloscope
 # 1) Time Base
   TSampling, NSamples, maxSamples = \
-        picoDevObj.setSamplingInterval(sampleTime/Nsamples, sampleTime)
+        picoDevObj.setSamplingInterval(PSconf.sampleTime/PSconf.Nsamples, 
+               PSconf.sampleTime)
   if verbose>0:
     print("  Sampling interval = %.4g µs (%.4g µs)" \
-                   % (TSampling*1E6, sampleTime*1E6/Nsamples ) )
-    print("  Number of samples = %d (%d)" % (NSamples, Nsamples))
+                   % (TSampling*1E6, PSconf.sampleTime*1E6/PSconf.Nsamples ) )
+    print("  Number of samples = %d (%d)" % (NSamples, PSconf.Nsamples))
     #print("Maximum samples = %d" % maxSamples)
 # 2) Channel Ranges
-    for i, Chan in enumerate(picoChannels):
-      CRanges[i] = picoDevObj.setChannel(Chan, ChanModes[i], ChanRanges[i],
-                      VOffset=ChanOffsets[i], enabled=True, BWLimited=False)
+    CRanges=[]
+    for i, Chan in enumerate(PSconf.picoChannels):
+      CRanges.append(picoDevObj.setChannel(Chan, PSconf.ChanModes[i], 
+                   PSconf.ChanRanges[i], VOffset=PSconf.ChanOffsets[i], 
+                   enabled=True, BWLimited=False) )
       if verbose>0:
-        print("  range channel %s: %.3gV (%.3gV)" % (picoChannels[i],
-                                                   CRanges[i], ChanRanges[i]))
+        print("  range channel %s: %.3gV (%.3gV)" % (PSconf.picoChannels[i],
+                  CRanges[i], PSconf.ChanRanges[i]))
 # 3) enable trigger
-  picoDevObj.setSimpleTrigger(trgChan, trgThr, trgTyp,
-                      trgDelay, trgTO, enabled=trgActive)    
+  picoDevObj.setSimpleTrigger(PSconf.trgChan, PSconf.trgThr, PSconf.trgTyp,
+        PSconf.trgDelay, PSconf.trgTO, enabled=PSconf.trgActive)    
   if verbose>0:
-    print("  Trigger channel %s enabled: %.3gV %s" % (trgChan, trgThr, trgTyp))
+    print("  Trigger channel %s enabled: %.3gV %s" % (PSconf.trgChan, 
+          PSconf.trgThr, PSconf.trgTyp))
 
 # 4) enable Signal Generator 
-  if frqSG !=0. :
-    picoDevObj.setSigGenBuiltInSimple(frequency=frqSG, pkToPk=PkToPkSG,
-       waveType=waveTypeSG, offsetVoltage=offsetVoltageSG,  
-       sweepType=swpSG, dwellTime=dwellTimeSG, stopFreq=stopFreqSG)
+  if PSconf.frqSG !=0. :
+    picoDevObj.setSigGenBuiltInSimple(frequency=PSconf.frqSG, 
+       pkToPk=PSconf.PkToPkSG, waveType=PSconf.waveTypeSG, 
+       offsetVoltage=PSconf.offsetVoltageSG, sweepType=PSconf.swpSG, 
+       dwellTime=PSconf.dwellTimeSG, stopFreq=PSconf.stopFreqSG)
     if verbose>0:
       print(" -> Signal Generator enabled: %.3gHz, +/-%.3g V %s"\
-            % (frqSG, PkToPkSG, waveTypeSG) )
+            % (PSconf.frqSG, PSconf.PkToPkSG, PSconf.waveTypeSG) )
       print("       sweep type %s, stop %.3gHz, Tdwell %.3gs" %\
-            (swpSG, stopFreqSG, dwellTimeSG) )
+            (PSconf.swpSG, PSconf.stopFreqSG, PSconf.dwellTimeSG) )
+
+  PSconf.setSamplingPars(TSampling, NSamples, CRanges) # store in config class
  
   return
 # -- end def picoIni
@@ -312,14 +240,37 @@ def yieldOsEvent():
 ### consumer examples with graphics -----------------------------------------
 #
 
-def Instruments(mode=0):
+def Instruments(opmode, conf, BM):
   '''
     graphical displays of data
 
     - a "Voltmeter" as an obligatory consumer
     - an Oscilloscpe display  as a random consumer
 
+   Args: 
+
+     opmode: 0, 1, or 2 for VMeter, Oscilloscpe or both
+     conf: instance for configuration class of device
+     BM:   buffer manager instance
+
   '''
+
+  picoChannels = conf.picoChannels
+  NChannels = PSconf.NChannels
+  NSamples = PSconf.NSamples
+  TSampling = PSconf.TSampling
+  pretrig = conf.pretrig
+  CRanges = conf.CRanges     # channel voltage ranges (hw settings)
+  ChanRanges = conf.ChanRanges
+  ChanColors = conf.ChanColors
+  trgChan = conf.trgChan
+  trgThr = conf.trgThr
+  trgTyp = conf.trgTyp
+  # array of sampling times (in ms)
+  SamplingPeriod = TSampling * NSamples  
+  samplingTimes =\
+    1000.*np.linspace(-pretrig * SamplingPeriod, 
+                     (1.-pretrig) * SamplingPeriod, NSamples)
 
   def grVMeterIni():
 # set up a figure to plot actual voltage and samplings from Picoscope
@@ -415,7 +366,6 @@ def Instruments(mode=0):
     return (bgraph1,) + (bgraph2,) + graphsVM + (animtxtVM,)
 #- -end def animVMeter
 #-end def VMeter
-
                 
 #def Osci():
   # Oscilloscope: display channel readings in time domain
@@ -491,7 +441,7 @@ def Instruments(mode=0):
   
 # - control part for graphical Instruments()
   anims=[]
-  if mode==0 or mode==2:
+  if opmode==0 or opmode==2:
 # Voltmeter
     Wtime=500.    # time in ms between samplings
     Npoints = 120  # number of points for history
@@ -512,8 +462,9 @@ def Instruments(mode=0):
                          blit=True, fargs=None, repeat=True, save_count=None) )
    # save_count=None is a (temporary) workaround to fix memory leak in animate
 
-  if mode==1 or mode==2:  
+  if opmode==1 or opmode==2:  
     if verbose>0: print(' -> Oscilloscope starting')
+
     figOs, axesOs = grOsciIni()
 
     anims.append(anim.FuncAnimation(figOs, animOsci, yieldOsEvent, interval=50,
@@ -532,11 +483,18 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # initialisation
   print('-> initializing PicoScope')
 
-  picoIni() 
+  PSconf=picoConfig.PSconfig(confdict)
+  verbose=PSconf.verbose
+  NChannels = PSconf.NChannels
+
+  picoIni(PSconf) 
+  TSampling = PSconf.TSampling # sampling interval
+  NSamples = PSconf.NSamples   # number of samples
   SamplingPeriod = TSampling * NSamples  
-  # array of sampling times (in ms)
-  samplingTimes =\
-   1000.*np.linspace(-pretrig*SamplingPeriod, (1.-pretrig)*SamplingPeriod, NSamples)
+
+# !!! remaining global variables, needed by acquirePicoData()
+  picoChannels = PSconf.picoChannels
+  pretrig = PSconf.pretrig
 
 # reserve global space for data
   # static buffer for picoscope driver for storing raw data
@@ -551,6 +509,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   RUNNING = True
   BM.run()  
 
+  mode = PSconf.mode
 #
 # --- infinite LOOP
   try:
@@ -572,7 +531,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       print ('!!! no valid mode - exiting')
       exit(1)
     
-    thr_Instruments=threading.Thread(target=Instruments, args=(m,) )
+    thr_Instruments=threading.Thread(target=Instruments, args=(m,PSconf,BM) )
     thr_Instruments.daemon=True
     thr_Instruments.start()
 
