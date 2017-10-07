@@ -162,10 +162,11 @@ class BufferMan(object):
 # print event rate
       n+=1
       if time.time()-t0 >= 10:
-        if self.verbose:
-          print('evt %i:  rate: %.3gHz   life: %.2f%%' % (n, self.readrate, self.lifefrac))
-        if(evNr != n): print ("!!! ncnt != Ntrig: %i, %i"%(n,evNr) )
         t0=time.time()
+        if self.verbose>1:
+          print('evt %i:  rate: %.3gHz   life: %.2f%%' % (n, self.readrate, self.lifefrac))
+        if(evNr != n): 
+          print ("!!! manageDataBuffer error: ncnt != Ntrig: %i, %i"%(n,evNr) )
 #   - end while True  
 # -end def manageDataBuffer()
 

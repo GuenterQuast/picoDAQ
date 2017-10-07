@@ -6,14 +6,21 @@ from __future__ import unicode_literals
 import time, numpy as np
 
 import matplotlib
-matplotlib.use('tkagg')  # set backend (qt5 not running as thread in background)
-matplotlib.use('tkagg')  # set backend (qt5 not running as thread in background)
+matplotlib.use('wxagg') # set backend (qt5 not running as thread in background)
+#matplotlib.use('tkagg') # set backend (qt5 not running as thread in background)
 import matplotlib.pyplot as plt, matplotlib.animation as anim
 
 import BufferMan
 
+'''
+Animated graphical displays of data received from BufferMan,
 
+  implemented as random consumers
 
+  need access to an instance of BufferMan and picoConfig
+
+  
+'''
 # 
 ### consumer examples with graphics -----------------------------------------
 #
@@ -33,7 +40,7 @@ def animInstruments(opmode, conf, BM):
      BM:   buffer manager instance
 
   '''
-
+# privde access to the relevant instance of class picoConfig as global variables
   verbose = conf.verbose
   picoChannels = conf.picoChannels
   NChannels = conf.NChannels
@@ -51,9 +58,8 @@ def animInstruments(opmode, conf, BM):
     1000.*np.linspace(-pretrig * SamplingPeriod, 
                      (1.-pretrig) * SamplingPeriod, NSamples)
 
-
   def yieldVMEvent():
-# provide an event copy from Buffer Manager
+# random consumer of Buffer Manager, receives an event copy
    # this is useful for clients accessing only a subset of events
 
     myId = BM.BMregister()   # register with Buffer Manager
@@ -68,7 +74,7 @@ def animInstruments(opmode, conf, BM):
     exit(1)
 
   def yieldOsEvent():
-# provide an event copy from Buffer Manager
+# random consumer of Buffer Manager, receives an event copy
    # this is useful for clients accessing only a subset of events
 
     myId = BM.BMregister()   # register with Buffer Manager
@@ -82,17 +88,61 @@ def animInstruments(opmode, conf, BM):
       yield (evCnt, evTime, evData)
     exit(1)
   
-  class VoltMeter():
-    ''' 
-    Bar graph display of average over samples
-    '''
+  class RateMeter(object):
+    ''' display rate history '''
+
+    def __init__(self, maxRate=20.):
+      self.Npoints = 100
+      self.R = np.zeros(self.Npoints)
+      self.maxRate = maxRate
+      self.xplt = np.linspace(-self.Npoints, 0., self.Npoints)
+    # create figure 
+      self.fig = plt.figure("RateMeter", figsize=(5.,2.5))
+      self.fig.subplots_adjust(left=0.125, bottom=0.2, right=0.99, top=0.85,
+                    wspace=None, hspace=.25)
+      self.axes = self.fig.add_subplot(1,1,1)
+      self.axes.set_title('Buffer Manager Information')
+      self.axes.set_ylabel('acquisition rate (HZ)')
+      self.axes.set_xlabel('rate history')
+      self.axes.set_ylim(0., self.maxRate)
+
+    def init(self):
+      self.line1, = self.axes.plot(self.xplt, self.R, 'b-')
+      self.animtxt = self.axes.text(0.2, 0.925 , ' ',
+                transform=self.axes.transAxes,
+                size='small', color='darkblue')
+      self.ro = 0.
+      self.n0 = 0
+      self.t0 = time.time()
+      return self.line1, self.animtxt  
+
+    def __call__(self, n):
+      if n == 0:
+         self.init()
+
+      k = n%self.Npoints
+      self.R[k] = BM.readrate
+      
+      self.line1.set_ydata(np.concatenate( (self.R[k+1:], self.R[:k+1]) ))
+      self.animtxt.set_text( \
+       'Time: %.1fs  Triggers: %i  rate: %.3gHz  life: %.1f%%'\
+          %(time.time()-self.t0, BM.Ntrig, BM.readrate, BM.lifefrac) )
+
+      return self.line1, self.animtxt  
+
+
+  class VoltMeter(object):
+    ''' Bar graph display of average over samples '''
 
     def __init__(self, Wtime):
-     # configuration parameters
+     # Arg: Wtime: waiting time between updates
+
+     # collect relevant configuration parameters
       self.Wtime = Wtime    # time in ms between samplings
       self.Npoints = 120  # number of points for history
       self.bwidth = 0.5   # width of bars
 
+     # data structures needed throughout the class
       self.ix = np.linspace(-self.Npoints+1, 0, self.Npoints) # history plot
       self.ind = self.bwidth + np.arange(NChannels) # bar position for voltages
   # 
@@ -185,7 +235,8 @@ def animInstruments(opmode, conf, BM):
             np.concatenate((self.Vhist[i, k+1:], self.Vhist[i, :k+1]), axis=0) )
         else:
           self.graphs[i].set_data(self.ix, np.zeros(self.Npoints))
-        txt.append('  %s:   %.3gV +/-%.2gV' % (C, self.Vhist[i,k], self.stdVhist[i,k]) )
+        txt.append('  %s:   %.3gV +/-%.2gV' % (C, self.Vhist[i,k], 
+                                               self.stdVhist[i,k]) )
     # update bar chart
 #      for r, v in zip(bgraph, V):
 #          r.set_height(v)
@@ -201,13 +252,13 @@ def animInstruments(opmode, conf, BM):
 #- -end def Voltmeter.__call__
 #-end class VoltMeter
                 
-#def Osci():
-  # Oscilloscope: display channel readings in time domain
 
   class Oscilloscope(object):
+    ''' Oscilloscope: display channel readings in time domain'''
+
     def __init__(self):
 # set up a figure to plot samplings from Picoscope
-    # needs revision if more than 2 Channels present
+                   # !!! code will need revision for more than 2 channels 
       fig=plt.figure("Oscilloscope", figsize=(6., 4.) )
       fig.subplots_adjust(left=0.13, bottom=0.125, right=0.87, top=0.925,
                     wspace=None, hspace=.25)
@@ -238,9 +289,9 @@ def animInstruments(opmode, conf, BM):
               color=trgcol,
               fontstyle='italic', fontname='arial', family='monospace',
               horizontalalignment='right')
-      axes[0].axhline(0., color='k', linestyle='-.', lw=2, alpha=0.5)
-      trgax.axhline(trgThr, color=trgcol, linestyle='--')
-      trgax.axvline(0., color=trgcol, linestyle='--')
+      axes[0].axhline(0., color='k', linestyle='-.', lw=2, alpha = 0.7)
+      trgax.axhline(trgThr, color=trgcol, linestyle='--', alpha = 0.7)
+      trgax.axvline(0., color=trgcol, linestyle='--', alpha = 0.5)
 
     # store graphics objects in class instance
       self.fig = fig
@@ -251,7 +302,8 @@ def animInstruments(opmode, conf, BM):
   # initialize objects to be animated
       self.graphsOs = ()
       for i, C in enumerate(picoChannels):
-        g,= self.axes[i].plot(samplingTimes, np.zeros(NSamples), color=ChanColors[i])
+        g,= self.axes[i].plot(samplingTimes, np.zeros(NSamples), 
+                              color=ChanColors[i])
         self.graphsOs += (g,)
       self.animtxtOs = self.axes[0].text(0.65, 0.95, ' ', 
                        transform=self.axes[0].transAxes,
@@ -266,7 +318,7 @@ def animInstruments(opmode, conf, BM):
       if n == 0:
         return self.init()
 
-      if n>1:    # !!! fix to avoid permanent display of first line in blit mode
+      if n>2:    # !!! fix to avoid permanent display of first line in blit mode
         for i, C in enumerate(picoChannels):
           self.graphsOs[i].set_data(samplingTimes, evData[i])
       else:
@@ -283,6 +335,25 @@ def animInstruments(opmode, conf, BM):
   
 # - control part for animated Instruments()
   anims=[]
+
+# RateMeter
+  if verbose>0: print(' -> Ratemeter starting')
+  RMinterval=1000.
+  maxR = 50.  # maximum expected rate
+  RM = RateMeter(maxR)
+  figRM = RM.fig
+  def sequence_gen():
+    i=0
+    while BM.RUNNING:
+      i+=1
+      yield i
+    return
+  anims.append(anim.FuncAnimation(figRM, RM, sequence_gen,
+                         interval=RMinterval, init_func=RM.init,
+                         blit=True, fargs=None, repeat=True, save_count=None) )
+   # save_count=None is a (temporary) workaround to fix memory leak in animate
+
+  
   if opmode==0 or opmode==2:
 # Voltmeter
     if verbose>0: print(' -> Voltmeter starting')
@@ -300,7 +371,6 @@ def animInstruments(opmode, conf, BM):
     Interval = 50.
     Osci = Oscilloscope()
     figOs = Osci.fig
-
     anims.append(anim.FuncAnimation(figOs, Osci, yieldOsEvent, interval=Interval,
                          init_func=Osci.init, blit=True,
                          fargs=None, repeat=True, save_count=None))
@@ -308,11 +378,11 @@ def animInstruments(opmode, conf, BM):
 
 # plt.show() or plt.ion() must be run in same thread
   try:
-#     plt.ion() # this does not work with animation
+     plt.ioff()
      plt.show()
-     while BM.RUNNING:
-       time.sleep(0.3)
      print ('   no longer RUNNING, matplotlib animate exiting ...')
-    
+     while BM.RUNNING:
+       time.sleep(0.5)    
+       print (' ... waiting after plt.show()...')
   except: 
     print ('   matplotlib animate killed ...')

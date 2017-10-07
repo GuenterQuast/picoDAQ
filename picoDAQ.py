@@ -38,17 +38,19 @@ from __future__ import unicode_literals
 
 import sys, time, json, numpy as np, threading
 
-# graphical devices use matplotlib
-import matplotlib
-matplotlib.use('tkagg')  # set backend (qt5 not running as thread in background)
-import matplotlib.pyplot as plt, matplotlib.animation as anim
-
-from picoscope import ps2000a
-picoDevObj = ps2000a.PS2000a()  
+#from picoscope import ps2000a
+#picoDevObj = ps2000a.PS2000a()  
 #from picoscope import ps4000
 #picoDevObj = ps2000a.PS4000()  
 
+# graphical devices use matplotlib
+#import matplotlib
+#matplotlib.use('tkagg')  # set backend (qt5 not running as thread in background)
+#import matplotlib.pyplot as plt, matplotlib.animation as anim
+
+import picoConfig
 import BufferMan
+from AnimatedInstruments import *
 
 # --------------------------------------------------------------
 #              define scope settings here
@@ -69,93 +71,8 @@ if len(sys.argv)==2:
 else:
   confdict=None
 
-import picoConfig
-
 # --------------------------------------------------------------
 
-def picoIni(PSconf):
-  ''' initialise device controlled by class PSconf '''
-  if verbose>1: print(__doc__)
-  if verbose>0: print("Opening PicsoScope device ...")
-#  ps = ps2000a.PS2000a()  
-  if verbose>1:
-    print("Found the following picoscope:")
-    print(picoDevObj.getAllUnitInfo())
-
-# configure oscilloscope
-# 1) Time Base
-  TSampling, NSamples, maxSamples = \
-        picoDevObj.setSamplingInterval(PSconf.sampleTime/PSconf.Nsamples, 
-               PSconf.sampleTime)
-  if verbose>0:
-    print("  Sampling interval = %.4g µs (%.4g µs)" \
-                   % (TSampling*1E6, PSconf.sampleTime*1E6/PSconf.Nsamples ) )
-    print("  Number of samples = %d (%d)" % (NSamples, PSconf.Nsamples))
-    #print("Maximum samples = %d" % maxSamples)
-# 2) Channel Ranges
-    CRanges=[]
-    for i, Chan in enumerate(PSconf.picoChannels):
-      CRanges.append(picoDevObj.setChannel(Chan, PSconf.ChanModes[i], 
-                   PSconf.ChanRanges[i], VOffset=PSconf.ChanOffsets[i], 
-                   enabled=True, BWLimited=False) )
-      if verbose>0:
-        print("  range channel %s: %.3gV (%.3gV)" % (PSconf.picoChannels[i],
-                  CRanges[i], PSconf.ChanRanges[i]))
-# 3) enable trigger
-  picoDevObj.setSimpleTrigger(PSconf.trgChan, PSconf.trgThr, PSconf.trgTyp,
-        PSconf.trgDelay, PSconf.trgTO, enabled=PSconf.trgActive)    
-  if verbose>0:
-    print("  Trigger channel %s enabled: %.3gV %s" % (PSconf.trgChan, 
-          PSconf.trgThr, PSconf.trgTyp))
-
-# 4) enable Signal Generator 
-  if PSconf.frqSG !=0. :
-    picoDevObj.setSigGenBuiltInSimple(frequency=PSconf.frqSG, 
-       pkToPk=PSconf.PkToPkSG, waveType=PSconf.waveTypeSG, 
-       offsetVoltage=PSconf.offsetVoltageSG, sweepType=PSconf.swpSG, 
-       dwellTime=PSconf.dwellTimeSG, stopFreq=PSconf.stopFreqSG)
-    if verbose>0:
-      print(" -> Signal Generator enabled: %.3gHz, +/-%.3g V %s"\
-            % (PSconf.frqSG, PSconf.PkToPkSG, PSconf.waveTypeSG) )
-      print("       sweep type %s, stop %.3gHz, Tdwell %.3gs" %\
-            (PSconf.swpSG, PSconf.stopFreqSG, PSconf.dwellTimeSG) )
-
-  PSconf.setSamplingPars(TSampling, NSamples, CRanges) # store in config class
- 
-  return
-# -- end def picoIni
-
-def acquirePicoData(buffer):
-  '''
-  read data from device
-    this part is hardware (i.e. driver) specific code for PicoScope device
-
-    Args:
-      ps:  class handling devide
-      buffer: space to store data
-
-    Returns:
-      ttrg: time when device became ready
-      tlife life time of device
-  '''
-  picoDevObj.runBlock(pretrig=pretrig) #
-    # wait for PicoScope to set up (~1ms)
-  time.sleep(0.001) # set-up time not to be counted as "life time"
-  ti=time.time()
-  while not picoDevObj.isReady():
-    if not RUNNING: return -1, -1
-    time.sleep(0.001)
-    # waiting time for occurence of trigger is counted as life time
-  ttrg=time.time()
-  tlife = ttrg - ti       # account life time
-  # store raw data in global array 
-  for i, C in enumerate(picoChannels):
-    picoDevObj.getDataRaw(C, NSamples, data=rawBuf[i])
-    picoDevObj.rawToV(C, rawBuf[i], buffer[i], dtype=np.float32)
-# alternative:
-      #picoDevObj.getDataV(C, NSamples, dataV=VBuf[ibufw,i], dtype=np.float32)
-  return ttrg, tlife
-#
 
 # - - - - some examples of consumers connected to BufferManager- - - - 
 
@@ -207,8 +124,6 @@ def randConsumer():
   return
 #
 
-from AnimatedInstruments import *
-
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # initialisation
@@ -218,21 +133,18 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   verbose=PSconf.verbose
   NChannels = PSconf.NChannels
 
-  picoIni(PSconf) 
+# initialize picoscope
+  PSconf.picoIni() 
   TSampling = PSconf.TSampling # sampling interval
   NSamples = PSconf.NSamples   # number of samples
   SamplingPeriod = TSampling * NSamples  
 
-# !!! remaining global variables, needed by acquirePicoData()
-  picoChannels = PSconf.picoChannels
-  pretrig = PSconf.pretrig
-
-# reserve global space for data
-  # static buffer for picoscope driver for storing raw data
-  rawBuf = np.empty([NChannels, NSamples], dtype=np.int16 )
-
   NBuffers= 16
-  BM = BufferMan.BufferMan(NBuffers, NChannels, NSamples, acquirePicoData)
+  BM = BufferMan.BufferMan(NBuffers, NChannels, NSamples, 
+        PSconf.acquirePicoData)
+
+# tell device what it's buffer manager is
+  PSconf.setBufferManagerPointer(BM)
 
   # start data acquisition thread
   if verbose>0:

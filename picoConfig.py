@@ -1,3 +1,17 @@
+# -*- coding: utf-8 -*-
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import numpy as np, time
+
+# class for PicoScope device
+from picoscope import ps2000a
+picoDevObj = ps2000a.PS2000a()  
+#from picoscope import ps4000
+#picoDevObj = ps4000a.PS4000()  
+
 class PSconfig(object):
   '''set PicoScope configuration'''
 
@@ -120,9 +134,99 @@ class PSconfig(object):
 # configuration parameters only known after initialisation
     self.TSampling = 0.
     self.NSamples = 0.
-    self.CRanges = [0.,0.,0.,0.]
+    self.CRanges = [0., 0., 0., 0.]
+   
+    self.picoDevObj = picoDevObj
 
   def setSamplingPars(self, dT, NSamples, CRanges):
     self.TSampling = dT    # sampling interval
     self.NSamples = NSamples # number of samples
     self.CRanges = CRanges # channel ranges
+
+  def setBufferManagerPointer(self, BM):
+    self.BM = BM
+
+  def picoIni(self):
+    ''' initialise device controlled by class PSconf '''
+    verbose = self.verbose
+
+    if verbose>1: print(__doc__)
+    if verbose>0: print("Opening PicsoScope device ...")
+    if verbose>1:
+      print("Found the following picoscope:")
+      print(self.picoDevObj.getAllUnitInfo())
+
+# configure oscilloscope
+# 1) Time Base
+    TSampling, NSamples, maxSamples = \
+      self.picoDevObj.setSamplingInterval(\
+       self.sampleTime/self.Nsamples, self.sampleTime)
+    if verbose>0:
+      print("  Sampling interval = %.4g µs (%.4g µs)" \
+                   % (TSampling*1E6, self.sampleTime*1E6/self.Nsamples ) )
+      print("  Number of samples = %d (%d)" % (NSamples, self.Nsamples))
+    #print("Maximum samples = %d" % maxSamples)
+# 2) Channel Ranges
+      CRanges=[]
+      for i, Chan in enumerate(self.picoChannels):
+        CRanges.append(picoDevObj.setChannel(Chan, self.ChanModes[i], 
+                   self.ChanRanges[i], VOffset=self.ChanOffsets[i], 
+                   enabled=True, BWLimited=False) )
+        if verbose>0:
+          print("  range channel %s: %.3gV (%.3gV)" % (self.picoChannels[i],
+                  CRanges[i], self.ChanRanges[i]))
+# 3) enable trigger
+    picoDevObj.setSimpleTrigger(self.trgChan, self.trgThr, self.trgTyp,
+          self.trgDelay, self.trgTO, enabled=self.trgActive)    
+    if verbose>0:
+      print("  Trigger channel %s enabled: %.3gV %s" % (self.trgChan, 
+          self.trgThr, self.trgTyp))
+
+# 4) enable Signal Generator 
+    if self.frqSG !=0. :
+      picoDevObj.setSigGenBuiltInSimple(frequency=self.frqSG, 
+         pkToPk=self.PkToPkSG, waveType=self.waveTypeSG, 
+         offsetVoltage=self.offsetVoltageSG, sweepType=self.swpSG, 
+         dwellTime=self.dwellTimeSG, stopFreq=self.stopFreqSG)
+      if verbose>0:
+        print(" -> Signal Generator enabled: %.3gHz, +/-%.3g V %s"\
+            % (self.frqSG, self.PkToPkSG, self.waveTypeSG) )
+        print("       sweep type %s, stop %.3gHz, Tdwell %.3gs" %\
+            (self.swpSG, self.stopFreqSG, self.dwellTimeSG) )
+
+    self.setSamplingPars(TSampling, NSamples, CRanges) # store in config class
+    # reserve static buffer for picoscope driver for storing raw data
+    self.rawBuf = np.empty([self.NChannels, NSamples], dtype=np.int16 )
+
+# -- end def picoIni
+
+  def acquirePicoData(self, buffer):
+    '''
+    read data from device
+      this part is hardware (i.e. driver) specific code for PicoScope device
+
+      Args:
+        buffer: space to store data
+
+      Returns:
+        ttrg: time when device became ready
+        tlife life time of device
+  '''
+    picoDevObj.runBlock(pretrig=self.pretrig) #
+    # wait for PicoScope to set up (~1ms)
+    time.sleep(0.001) # set-up time not to be counted as "life time"
+    ti=time.time()
+    while not picoDevObj.isReady():
+      if not self.BM.RUNNING: return -1, -1
+      time.sleep(0.001)
+    # waiting time for occurence of trigger is counted as life time
+    ttrg=time.time()
+    tlife = ttrg - ti       # account life time
+  # store raw data in global array 
+    for i, C in enumerate(self.picoChannels):
+      picoDevObj.getDataRaw(C, self.NSamples, data=self.rawBuf[i])
+      picoDevObj.rawToV(C, self.rawBuf[i], buffer[i], dtype=np.float32)
+# alternative:
+     # picoDevObj.getDataV(C, NSamples, dataV=VBuf[ibufw,i], dtype=np.float32)
+    return ttrg, tlife
+# - end def acquirePicoData()
