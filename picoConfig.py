@@ -138,6 +138,13 @@ class PSconfig(object):
    
     self.picoDevObj = picoDevObj
 
+    try: 
+      self.picoIni() # run initialisation routine for device  
+    except:
+      print("Error initialising device - exit")
+      exit(1)
+# - end picoConf.__init__()
+
   def setSamplingPars(self, dT, NSamples, CRanges):
     self.TSampling = dT    # sampling interval
     self.NSamples = NSamples # number of samples

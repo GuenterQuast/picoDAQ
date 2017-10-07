@@ -129,21 +129,17 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # initialisation
   print('-> initializing PicoScope')
 
+# configure and initialize picoscope
   PSconf=picoConfig.PSconfig(confdict)
   verbose=PSconf.verbose
-  NChannels = PSconf.NChannels
-
-# initialize picoscope
-  PSconf.picoIni() 
+  NChannels = PSconf.NChannels # number of channels in use
   TSampling = PSconf.TSampling # sampling interval
   NSamples = PSconf.NSamples   # number of samples
-  SamplingPeriod = TSampling * NSamples  
 
-  NBuffers= 16
+  NBuffers= 16 # number of buffers for Buffer Manager
   BM = BufferMan.BufferMan(NBuffers, NChannels, NSamples, 
         PSconf.acquirePicoData)
-
-# tell device what it's buffer manager is
+# tell device what its buffer manager is
   PSconf.setBufferManagerPointer(BM)
 
   # start data acquisition thread
