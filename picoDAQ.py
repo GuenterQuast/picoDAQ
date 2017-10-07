@@ -207,7 +207,7 @@ def randConsumer():
   return
 #
 
-from GraphicalInstruments import *
+from AnimatedInstruments import *
 
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
@@ -262,10 +262,10 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       print ('!!! no valid mode - exiting')
       exit(1)
     
-    thr_Instruments=threading.Thread(target=Instruments,
-                      args=(m, RUNNING, PSconf, BM) )
-    thr_Instruments.daemon=True
-    thr_Instruments.start()
+    thr_animInstruments=threading.Thread(target=animInstruments,
+                      args=(m, PSconf, BM) )
+    thr_animInstruments.daemon=True
+    thr_animInstruments.start()
 
 # run until key pressed
     raw_input('\n                                             Press <ret> to end -> \n\n')
