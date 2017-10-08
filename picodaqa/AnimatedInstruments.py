@@ -10,7 +10,7 @@ matplotlib.use('wxagg') # set backend (qt5 not running as thread in background)
 #matplotlib.use('tkagg') # set backend (qt5 not running as thread in background)
 import matplotlib.pyplot as plt, matplotlib.animation as anim
 
-import BufferMan
+from .BufferMan import *
 
 '''
 Animated graphical displays of data received from BufferMan,
@@ -35,7 +35,7 @@ def animInstruments(opmode, conf, BM):
 
    Args: 
 
-     opmode: 0, 1, or 2 for VMeter, Oscilloscpe or both
+     opmode: list: "osci", "VMeter" and/or "RMeter"
      conf: instance of configuration class of device
      BM:   buffer manager instance
 
@@ -332,29 +332,35 @@ def animInstruments(opmode, conf, BM):
         self.n0=n
       return self.graphsOs + (self.animtxtOs,)
 # -end class Oscilloscope
-  
-# - control part for animated Instruments()
-  anims=[]
 
-# RateMeter
-  if verbose>0: print(' -> Ratemeter starting')
-  RMinterval=1000.
-  maxR = 50.  # maximum expected rate
-  RM = RateMeter(maxR)
-  figRM = RM.fig
   def sequence_gen():
+  # generator for sequence of integers
     i=0
     while BM.RUNNING:
       i+=1
       yield i
     return
-  anims.append(anim.FuncAnimation(figRM, RM, sequence_gen,
+
+# -----------------------------------------------
+
+# - control part for animated Instruments()
+  print('-> AnimatedInstruments called: opmode= ', opmode)
+
+  anims=[]
+  if 'RMeter' in opmode:
+# RateMeter
+    if verbose>0: print(' -> Ratemeter starting')
+    RMinterval=1000.
+    maxR = 50.  # maximum expected rate
+    RM = RateMeter(maxR)
+    figRM = RM.fig
+    anims.append(anim.FuncAnimation(figRM, RM, sequence_gen,
                          interval=RMinterval, init_func=RM.init,
                          blit=True, fargs=None, repeat=True, save_count=None) )
    # save_count=None is a (temporary) workaround to fix memory leak in animate
 
-  
-  if opmode==0 or opmode==2:
+  print(opmode)
+  if 'VMeter' in opmode:
 # Voltmeter
     if verbose>0: print(' -> Voltmeter starting')
     WaitTime=500.
@@ -365,14 +371,13 @@ def animInstruments(opmode, conf, BM):
                          blit=True, fargs=None, repeat=True, save_count=None) )
    # save_count=None is a (temporary) workaround to fix memory leak in animate
 
-  if opmode==1 or opmode==2:  
+  if 'osci' in opmode:
 # Oscilloscope
     if verbose>0: print(' -> Oscilloscope starting')
     Interval = 50.
     Osci = Oscilloscope()
     figOs = Osci.fig
-    anims.append(anim.FuncAnimation(figOs, Osci, yieldOsEvent, interval=Interval,
-                         init_func=Osci.init, blit=True,
+    anims.append(anim.FuncAnimation(figOs, Osci, yieldOsEvent, interval=Interval,                                         init_func=Osci.init, blit=True,
                          fargs=None, repeat=True, save_count=None))
    # save_count=None is a (temporary) workaround to fix memory leak in animate
 

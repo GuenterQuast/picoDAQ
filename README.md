@@ -34,6 +34,11 @@ Code presently tested with PicoScope device classes PS2000a and PS4000
 under Ubuntu and openSUSE Leap.
 
 
+This project originated as a demonstration to analyse pulses from a 
+Photomultiplier or a Silicon Photo Multiplier (SiPM) registering  optical 
+signals from  a detector - a coffeepot with water in the simplest case. 
+
+
 **Requirements**:
 
   - *SDK* by Pico Technology, https://www.picotech.com/downloads
@@ -42,21 +47,31 @@ under Ubuntu and openSUSE Leap.
 
 implemented **Functions**:
 
-  - set up PicoScope channel ranges and trigger
-  - set up the internal signal generator
-  - PicoScope configuration read from *json* file
-  - acquire data (implemented as background thread)
-  - manage event data buffer and distribute to consumers
+   class *picoConfig*:
 
-     - **obligatory** consumers: data acquisition pauses until consumer done
-     - **random** consumers: receive a copy of one event, data acquisition continues
+      - set up PicoScope channel ranges and trigger
+      - set up the internal signal generator
+      - PicoScope configuration read from *json* file
+      - data aquition of raw data from device
 
-  - analyse and plot data:
-    - consumer examples:  random and obligatory types, random waits mimic  
-       processing activity
-    - VMeter: a simple Voltmeter, shows average voltages as numbers,
-      bar graph and history plot
-    - a simple Oscilloscope:  display sampled wave forms
+  class *BufferMan*:
+
+      - acquire data (implemented as background thread)
+      - manage event data buffer and distribute to consumers
+
+     *obligatory* consumers: data acquisition pauses until consumer done
+
+      *random* consumers: receive a copy of one event, data acquisition 
+      continues
+
+  module *AnimatedInstruments*
+
+      - examples of animated graphical devides - a VoltMeter,   
+        an Oscilloscope and a Ratemeter
+  
+
+The examples show applications of the graphical devices and an implementations of obligatory and random consumers.
+
 
   Graphical displays implemented with *matplotlib*
 
@@ -70,7 +85,8 @@ This python script is compatible with *python* versions 2.7 and 3.5.
 The low-level drivers and C-libraries contained in the Pico Technology
 Software Development Kit are required, together with the *python* bindings
 of the *pico-python* project, see the installation instructions there.
-*picoDAQ* presently only consists of a single *python* script and separate file
-containg the buffer manager class. A number of *.json* files contain 
-configurations examples. Start from the command line, e. g. *python picoDAQ picoDemo.json*.
+*picoDAQ* presently only consists of an example *python* script (*picoDAQtest.py*) and modules in directory *picodaqa*,
+containing the configuration and buffer manager classes and a module
+with the examples of animated graphical instruments implemented . 
+A number of *.json* files contain configurations examples. Start from the command line, e. g. *python picoDAQtest picoDemo.json*.
 

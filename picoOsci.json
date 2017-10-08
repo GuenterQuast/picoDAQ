@@ -4,12 +4,13 @@
 "Nsamples": 200,  
 "sampleTime": 10E-6, 
 "trgChan": "B",      
-"trgThr": 0.1,       
-"trgTyp": "Rising",   
-"trgTO": 1000,        
+"trgThr": 0.0,       
+"trgTyp": "Above",   
+"trgTO": 100,        
+"trgActive": false,
 "trgDelay":  0,
 "pretrig": 0.05, 
-"frqSG": 100E3,
+"frqSG": 10E3,
 "swpSG": "UpDown",
 "mode": "osci" 
 }

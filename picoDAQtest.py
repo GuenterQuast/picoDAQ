@@ -11,6 +11,11 @@ Demonstrate data acquisition with PicoScope usb-oscilloscpe
 
   tested with  PS2000a and PS4000
 
+  relies on package *picodaqa*:
+
+  - instance BM of BufferManager class and
+  - device initialisation as defined in picoConfig class
+
   Functions:
  
   - set up PicoScope channel ranges and trigger
@@ -38,46 +43,22 @@ from __future__ import unicode_literals
 
 import sys, time, json, numpy as np, threading
 
-#from picoscope import ps2000a
-#picoDevObj = ps2000a.PS2000a()  
-#from picoscope import ps4000
-#picoDevObj = ps2000a.PS4000()  
-
 # graphical devices use matplotlib
 #import matplotlib
 #matplotlib.use('tkagg')  # set backend (qt5 not running as thread in background)
 #import matplotlib.pyplot as plt, matplotlib.animation as anim
 
-import picoConfig
-import BufferMan
-from AnimatedInstruments import *
+import picodaqa
+# contais picoConfig, BufferMan and AnimatedInstruments
 
 # --------------------------------------------------------------
-#              define scope settings here
+#     scope settings defined in .json-File, see picoConfig
 # --------------------------------------------------------------
 
-print('\n*==* script ' + sys.argv[0] + ' executing')
-
-# check for / read command line arguments
-if len(sys.argv)==2:
-  jsonfname = sys.argv[1]
-  print('     scope configurtion from file ' + jsonfname)
-  try:
-    with open(jsonfname) as f:
-      confdict=json.load(f)
-  except:
-    print('     failed to read input file ' + jsonfname)
-    exit(1)
-else:
-  confdict=None
-
-# --------------------------------------------------------------
 
 
 # - - - - some examples of consumers connected to BufferManager- - - - 
 
-# rely on instance BM of BufferManager class
-#   and initialisation of PicoScope parameters as defined in picoDAQ.py 
 
 def obligConsumer():
   '''
@@ -126,63 +107,83 @@ def randConsumer():
 
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
+  print('\n*==* script ' + sys.argv[0] + ' executing')
+
+# check for / read command line arguments
+  if len(sys.argv)==2:
+    jsonfname = sys.argv[1]
+    print('     scope configurtion from file ' + jsonfname)
+    try:
+      with open(jsonfname) as f:
+        confdict=json.load(f)
+    except:
+      print('     failed to read input file ' + jsonfname)
+      exit(1)
+  else:
+    confdict=None
+
 # initialisation
   print('-> initializing PicoScope')
 
-# configure and initialize picoscope
-  PSconf=picoConfig.PSconfig(confdict)
+# configure and initialize PicoScope
+  PSconf=picodaqa.picoConfig.PSconfig(confdict)
+  # copy some of the important configuration variables
   verbose=PSconf.verbose
   NChannels = PSconf.NChannels # number of channels in use
   TSampling = PSconf.TSampling # sampling interval
   NSamples = PSconf.NSamples   # number of samples
 
+# configure Buffer Manager  ...
   NBuffers= 16 # number of buffers for Buffer Manager
-  BM = BufferMan.BufferMan(NBuffers, NChannels, NSamples, 
+  BM = picodaqa.BufferMan(NBuffers, NChannels, NSamples, 
         PSconf.acquirePicoData)
-# tell device what its buffer manager is
+# ... tell device what its buffer manager is ...
   PSconf.setBufferManagerPointer(BM)
-
-  # start data acquisition thread
+# ... and start data acquisition thread.
   if verbose>0:
     print(" -> starting Buffer Manager Threads")   
   RUNNING = True
   BM.run()  
 
+# for this example, mode encodes what to do ...
   mode = PSconf.mode
+  if type(mode) != list:  
+    mode = [mode]
 #
 # --- infinite LOOP
   try:
-    if mode=='VMeter': # Voltmeter mode
-      m=0
-    elif mode=='osci': # Oscilloscpe mode
-      m=1
-    elif mode=='demo': #  both VMeter and Oscilloscpe
-      m=2
-    elif mode=='test': # test consumers
+    mode_valid = False
+    if ('osci' in mode) or ('VMeter' in mode) or ('RMeter' in mode):
+      mode_valid= True
+      # print('calling AnimatedInstruments')
+      thr_animInstruments=threading.Thread(target=picodaqa.animInstruments,
+                                           args=(mode, PSconf, BM) )
+      thr_animInstruments.daemon=True
+      thr_animInstruments.start()
+    if 'test' in mode: # test consumers
       thr_randConsumer=threading.Thread(target=randConsumer )
       thr_randConsumer.daemon=True
       thr_randConsumer.start()
       thr_obligConsumer=threading.Thread(target=obligConsumer )
       thr_obligConsumer.daemon=True
       thr_obligConsumer.start()
-      m=2
-    else:
+      mode_valid= True   
+# 
+# -> put your own code here - for the moment, we exit ...
+    if not mode_valid:
       print ('!!! no valid mode - exiting')
       exit(1)
-    
-    thr_animInstruments=threading.Thread(target=animInstruments,
-                      args=(m, PSconf, BM) )
-    thr_animInstruments.daemon=True
-    thr_animInstruments.start()
+#                                            <--         
 
 # run until key pressed
     raw_input('\n                                             Press <ret> to end -> \n\n')
+
     if verbose: print(' ending  -> cleaning up ')
     RUNNING = False  # stop background processes
     BM.end()         # tell buffer manager that we're done
     time.sleep(2)    #     and wait for tasks to finish
-    picoDevObj.stop()
-    picoDevObj.close()
+    PSconf.picoDevObj.stop()
+    PSconf.picoDevObj.close()
     if verbose>0: print('                      -> exit')
     exit(0)
 
@@ -196,8 +197,8 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     RUNNING = False  # stop background data acquisition
     BM.end()
     time.sleep(2)    #     and wait for tasks to finish
-    picoDevObj.stop()
-    picoDevObj.close()
+    PSconf.picoDevObj.stop()
+    PSconf.picoDevObj.close()
     if verbose>0: print('                      -> exit')
     exit(0)
   

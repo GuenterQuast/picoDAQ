@@ -9,5 +9,6 @@
 "trgTyp": "Rising",   
 "trgTO": 10000,        
 "pretrig": 0.15, 
-"frqSG": 0.0
+"frqSG": 0.0,
+"mode": ["osci","RMeter"]
 }

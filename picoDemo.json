@@ -11,5 +11,5 @@
 "pretrig": 0.05, 
 "frqSG": 100E3,
 "swpSG": "UpDown",
-"mode": "demo" 
+"mode": ["osci","RMeter", "VMeter", "test"]
 }

@@ -9,5 +9,5 @@
 "trgTO": 5000,        
 "pretrig": 0.25, 
 "frqSG": 0.0,
-"mode": "osci" 
+"mode": ["osci","RMeter"]
 }
