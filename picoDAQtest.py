@@ -2,19 +2,18 @@
 # -*- coding: utf-8 -*-
 # script picoDAQ.py
 '''
-**picoDAQ** Data Aquisition Example with Picoscpe 
+**picoDAQtest** Data Aquisition Example with Picoscpe 
 
 Demonstrate data acquisition with PicoScope usb-oscilloscpe 
 
   Based on python drivers by Colin O'Flynn and Mark Harfouche,
   https://github.com/colinoflynn/pico-python
 
-  tested with  PS2000a and PS4000
-
   relies on package *picodaqa*:
-
   - instance BM of BufferManager class and
   - device initialisation as defined in picoConfig class
+
+  tested with  PS2000a and PS4000
 
   Functions:
  
@@ -42,14 +41,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys, time, json, numpy as np, threading
-
-# graphical devices use matplotlib
-#import matplotlib
-#matplotlib.use('tkagg')  # set backend (qt5 not running as thread in background)
-#import matplotlib.pyplot as plt, matplotlib.animation as anim
-
 import picodaqa
-# contais picoConfig, BufferMan and AnimatedInstruments
+#       contais picoConfig, BufferMan and AnimatedInstruments
 
 # --------------------------------------------------------------
 #     scope settings defined in .json-File, see picoConfig
@@ -58,7 +51,6 @@ import picodaqa
 
 
 # - - - - some examples of consumers connected to BufferManager- - - - 
-
 
 def obligConsumer():
   '''
@@ -105,6 +97,16 @@ def randConsumer():
   return
 #
 
+def cleanup():
+    if verbose: print(' ending  -> cleaning up ')
+    RUNNING = False  # stop background processes
+    BM.end()         # tell buffer manager that we're done
+    time.sleep(2)    #     and wait for tasks to finish
+    PSconf.picoDevObj.stop()
+    PSconf.picoDevObj.close()
+    if verbose>0: print('                      -> exit')
+    exit(0)
+
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
   print('\n*==* script ' + sys.argv[0] + ' executing')
@@ -132,6 +134,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   NChannels = PSconf.NChannels # number of channels in use
   TSampling = PSconf.TSampling # sampling interval
   NSamples = PSconf.NSamples   # number of samples
+
 
 # configure Buffer Manager  ...
   NBuffers= 16 # number of buffers for Buffer Manager
@@ -169,36 +172,18 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       thr_obligConsumer.start()
       mode_valid= True   
 # 
-# -> put your own code here - for the moment, we exit ...
+# -> put your own code here - for the moment, we simply wait ...
+
     if not mode_valid:
       print ('!!! no valid mode - exiting')
       exit(1)
 #                                            <--         
 
 # run until key pressed
-    raw_input('\n                                             Press <ret> to end -> \n\n')
-
-    if verbose: print(' ending  -> cleaning up ')
-    RUNNING = False  # stop background processes
-    BM.end()         # tell buffer manager that we're done
-    time.sleep(2)    #     and wait for tasks to finish
-    PSconf.picoDevObj.stop()
-    PSconf.picoDevObj.close()
-    if verbose>0: print('                      -> exit')
-    exit(0)
-
-#
-#    while True:
-#      time.sleep(10.)
+    raw_input('\n                                  Press <ret> to end -> \n\n')
+    cleanup()
 
   except KeyboardInterrupt:
 # END: code to clean up
-    if verbose>0: print(' <ctrl C>  -> cleaning up ')
-    RUNNING = False  # stop background data acquisition
-    BM.end()
-    time.sleep(2)    #     and wait for tasks to finish
-    PSconf.picoDevObj.stop()
-    PSconf.picoDevObj.close()
-    if verbose>0: print('                      -> exit')
-    exit(0)
+    cleanup()
   

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -53,10 +54,22 @@ def animInstruments(opmode, conf, BM):
   trgThr = conf.trgThr
   trgTyp = conf.trgTyp
   # array of sampling times (in ms)
-  SamplingPeriod = TSampling * NSamples  
-  samplingTimes =\
-    1000.*np.linspace(-pretrig * SamplingPeriod, 
+  SamplingPeriod = TSampling * NSamples
+  if SamplingPeriod < 1E-3:  
+    samplingTimes =\
+      1E6*np.linspace(-pretrig * SamplingPeriod, 
                      (1.-pretrig) * SamplingPeriod, NSamples)
+    TUnit = '(µs)'
+  elif SamplingPeriod < 1.:
+    samplingTimes =\
+      1E3*np.linspace(-pretrig * SamplingPeriod, 
+                     (1.-pretrig) * SamplingPeriod, NSamples)
+    TUnit = '(ms)'
+  else:
+    samplingTimes =\
+      1E3*np.linspace(-pretrig * SamplingPeriod, 
+                     (1.-pretrig) * SamplingPeriod, NSamples)
+    TUnit = '(s)'
 
   def yieldVMEvent():
 # random consumer of Buffer Manager, receives an event copy
@@ -279,8 +292,9 @@ def animInstruments(opmode, conf, BM):
         axes[1].tick_params(axis='y', colors=ChanColors[1])
 
   # time base
-      axes[0].set_xlabel("Time (ms)", size='x-large') 
+      axes[0].set_xlabel("Time "+TUnit, size='x-large') 
 
+  # trigger settings
       trgidx=picoChannels.index(trgChan)
       trgax=axes[trgidx]
       trgcol=ChanColors[trgidx]
