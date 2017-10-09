@@ -51,6 +51,7 @@ def animInstruments(opmode, conf, BM):
   CRanges = conf.CRanges     # channel voltage ranges (hw settings)
   ChanColors = conf.ChanColors
   trgChan = conf.trgChan
+  trgActive = conf.trgActive
   trgThr = conf.trgThr
   trgTyp = conf.trgTyp
   # array of sampling times (in ms)
@@ -298,15 +299,19 @@ def animInstruments(opmode, conf, BM):
       trgidx=picoChannels.index(trgChan)
       trgax=axes[trgidx]
       trgcol=ChanColors[trgidx]
-
-      axes[0].set_title("Trigger: %s, %.3gV %s" % (trgChan, trgThr, trgTyp),
+      if trgActive:      
+        axes[0].set_title("Trigger: %s, %.3gV %s" % (trgChan, trgThr, trgTyp),
               color=trgcol,
               fontstyle='italic', fontname='arial', family='monospace',
               horizontalalignment='right')
-      axes[0].axhline(0., color='k', linestyle='-.', lw=2, alpha = 0.7)
-      trgax.axhline(trgThr, color=trgcol, linestyle='--', alpha = 0.7)
-      trgax.axvline(0., color=trgcol, linestyle='--', alpha = 0.5)
-
+        axes[0].axhline(0., color='k', linestyle='-.', lw=2, alpha = 0.7)
+        trgax.axhline(trgThr, color=trgcol, linestyle='--', alpha = 0.7)
+        trgax.axvline(0., color=trgcol, linestyle='--', alpha = 0.5)
+      else:
+        axes[0].set_title("Trigger: none",
+              color='lightgrey', fontstyle='italic', 
+              fontname='arial', family='monospace',
+              horizontalalignment='right')
     # store graphics objects in class instance
       self.fig = fig
       self.axes=axes
@@ -319,7 +324,7 @@ def animInstruments(opmode, conf, BM):
         g,= self.axes[i].plot(samplingTimes, np.zeros(NSamples), 
                               color=ChanColors[i])
         self.graphsOs += (g,)
-      self.animtxtOs = self.axes[0].text(0.65, 0.95, ' ', 
+      self.animtxtOs = self.axes[0].text(0.65, 0.94, ' ', 
                        transform=self.axes[0].transAxes,
                        backgroundcolor='white', alpha=0.5)
 
