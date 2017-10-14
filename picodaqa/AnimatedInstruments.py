@@ -370,7 +370,7 @@ def animInstruments(opmode, conf, BM):
 # RateMeter
     if verbose>0: print(' -> Ratemeter starting')
     RMinterval=1000.
-    maxR = 50.  # maximum expected rate
+    maxR = 10.  # maximum expected rate
     RM = RateMeter(maxR)
     figRM = RM.fig
     anims.append(anim.FuncAnimation(figRM, RM, sequence_gen,
