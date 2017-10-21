@@ -5,19 +5,16 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import time, numpy as np
-
-import matplotlib
-matplotlib.use('wxagg') # set backend (qt5 not running as thread in background)
-#matplotlib.use('tkagg') # set backend (qt5 not running as thread in background)
-import matplotlib.pyplot as plt, matplotlib.animation as anim
+import matplotlib.pyplot as plt
 
 class VoltMeter(object):
   ''' Bar graph display of average over samples '''
 
-   def __init__(self, Wtime, conf):
-   # Args: Wtime: waiting time between updates
-           conf: Configuration of channels
-    # collect relevant configuration parameters
+  def __init__(self, Wtime, conf):
+    '''Args:   Wtime: waiting time between updates
+              conf: Configuration of channels
+    '''
+   # collect relevant configuration parameters
     self.Wtime = Wtime    # time in ms between samplings
     self.Npoints = 120  # number of points for history
     self.bwidth = 0.5   # width of bars
@@ -25,8 +22,7 @@ class VoltMeter(object):
     self.NChannels = conf.NChannels
     self.CRanges = conf.CRanges     # channel voltage ranges (hw settings)
     self.ChanColors = conf.ChanColors
-
-    
+    self.picoChannels = conf.picoChannels
 
    # data structures needed throughout the class
     self.ix = np.linspace(-self.Npoints+1, 0, self.Npoints) # history plot
@@ -86,13 +82,14 @@ class VoltMeter(object):
 #    self.bgraph = self.axes[0].bar(ind, np.zeros(self.NChannels), self.bwidth,
 #                           align='center', color='grey', alpha=0.5)
     self.bgraph1, = self.axbar1.bar(self.ind[0], 0. , self.bwidth,
-                         align='center', color=ChanColors[0], alpha=0.5) 
+       align='center', color = self.ChanColors[0], alpha=0.5) 
     self.bgraph2, = self.axbar2.bar(self.ind[1], 0. , self.bwidth,
-                         align='center', color=ChanColors[1], alpha=0.5) 
+       align='center', color = self.ChanColors[1], alpha=0.5) 
   # history graphs
     self.graphs=()
-    for i, C in enumerate(picoChannels):
-      g,= self.axes[i].plot(self.ix, np.zeros(self.Npoints), color=ChanColors[i])
+    for i, C in enumerate(self.picoChannels):
+      g,= self.axes[i].plot(self.ix, np.zeros(self.Npoints), 
+          color=self.ChanColors[i])
       self.graphs += (g,)
     self.animtxt = self.axes[3].text(0.01, 0.05 , ' ',
               transform=self.axes[3].transAxes,
@@ -110,7 +107,7 @@ class VoltMeter(object):
     k=n%self.Npoints
     txt_t='Time  %.1fs' %(evTime-self.t0)            
     txt=[]
-    for i, C in enumerate(picoChannels):
+    for i, C in enumerate(self.picoChannels):
       self.V[i] = evData[i].mean()
       self.Vhist[i, k] = self.V[i]
       self.stdV[i] = evData[i].std()

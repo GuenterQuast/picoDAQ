@@ -4,17 +4,17 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import time, numpy as np
-
-import matplotlib
-matplotlib.use('wxagg') # set backend (qt5 not running as thread in background)
-#matplotlib.use('tkagg') # set backend (qt5 not running as thread in background)
-import matplotlib.pyplot as plt, matplotlib.animation as anim
+import time, numpy as np, matplotlib.pyplot as plt
 
 class Oscilloscope(object):
   ''' Oscilloscope: display channel readings in time domain'''
 
-  def __init__(self, conf, BM):
+  def __init__(self, conf, BM = None):
+    ''' Args:
+          conf: picoConfig instance 
+          BM:   BufferMan instance (optional)
+    ''' 
+
     self.picoChannels = conf.picoChannels
     self.NChannels = conf.NChannels
     self.NSamples = conf.NSamples
@@ -102,12 +102,13 @@ class Oscilloscope(object):
                      transform=self.axes[0].transAxes,
                      backgroundcolor='white', alpha=0.5)
 
-    self.t0=time.time() # remember start time
-    self.n0 = 0         # initialize event counter 
+    self.T0=time.time() # remember start time
+    self.n0 = 0         # initialize counter 
+    self.N0 = 0         #   event number
 
     return self.graphsOs + (self.animtxtOs,)
   
-  def __call__( self, (n, evTime, evData) ):
+  def __call__( self, (n, evNr, evTime, evData) ):
     if n == 0:
       return self.init()
 
@@ -120,7 +121,15 @@ class Oscilloscope(object):
 
 # display rate and life time
     if n-self.n0 == 50:
-      txt='rate: %.3gHz  life: %.0f%%' % (self.BM.readrate, self.BM.lifefrac)
+      dn = evNr - self.N0
+      dt = evTime - self.T0
+      rate = dn/dt
+      self.N0 = evNr
+      self.T0 = evTime
+      if self.BM != None: 
+        txt='rate: %.3gHz  life: %.0f%%' %(self.BM.readrate, self.BM.lifefrac)
+      else:
+        txt='event rate: %.3g Hz' %(rate)
       self.animtxtOs.set_text(txt)
       self.n0=n
     return self.graphsOs + (self.animtxtOs,)

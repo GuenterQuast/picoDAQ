@@ -107,16 +107,17 @@ def subprocConsumer(Q):
     while True:
       evN, evT, evBuf = mpQ.get()
       cnt += 1
-      print('mpQ: got event %i'%(evN) )
+      print('*==* mpQ: got event %i'%(evN) )
       if cnt <= 3:
-        print('mpQ: event data \n', evBuf)        
+        print('     event data \n', evBuf)        
       time.sleep(1.)
   except:
     print('subprocConsumer: signal recieved, ending')
 
 def cleanup():
-    if verbose: print(' ending  -> cleaning up ')
-    RUNNING = False  # stop background processes
+    if verbose: print('  ending  -> cleaning up ')
+    RUNNING = False  # signal to background thrads
+    time.sleep(1)
     BM.end()         # tell buffer manager that we're done
     time.sleep(2)    #     and wait for tasks to finish
     PSconf.picoDevObj.stop()
@@ -204,10 +205,15 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # run until key pressed
     raw_input('\n                                  Press <ret> to end -> \n\n')
+    print('picoDAQtest preparing to end ...')
+    prc_mpQtest.terminate()
     cleanup()
+    time.sleep(2)
 
   except KeyboardInterrupt:
 # END: code to clean up
+    print('picoDAQtest: keyboard interrupt - preparing to end ...')
     prc_mpQtest.terminate()
     cleanup()
+    time.sleep(2)
   
