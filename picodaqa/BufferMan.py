@@ -7,6 +7,8 @@
 # - class BufferMan
 import numpy as np, time, threading
 from collections import deque
+from multiprocessing import Queue
+
   
 class BufferMan(object):
   '''
@@ -41,6 +43,9 @@ class BufferMan(object):
                 # 1:  request event data, random consumer 
                 # 2:  request event data, obligatoray consumer
     self.consumer_ques=[] # data from manageDataBuffer to consumer
+
+  # multiprocessing Queues for data transfer to subprocesses
+    self.mpQues = []
 
   # producer statistics
     self.Ntrig = 0
@@ -146,6 +151,12 @@ class BufferMan(object):
             else:
               print('!!! manageDataBuffer: invalid request mode', req)
               exit(1)
+# check in other processes want data
+      if len(self.mpQues):
+        for Q in self.mpQues:
+          if Q.empty(): # put an event in the Queue
+            evTime=self.timeStamp[self.ibufr]
+            Q.put( (evNr, evTime, np.copy(self.BMbuf[self.ibufr]) ) )
 
 # wait until all obligatory consumers are done
       if len(l_obligatory):
@@ -173,7 +184,7 @@ class BufferMan(object):
   def BMregister(self):
 #    global request_ques, consumer_ques
     ''' 
-    register a client to in Buffer Manager
+    register a client to Buffer Manager
 
     Returns: client index
     '''
@@ -187,6 +198,24 @@ class BufferMan(object):
     if self.verbose:
       print("*==* BMregister: new client id=%i" % client_index)
     return client_index
+
+  def BMregister_mpQ(self):
+#   multiprocessing Queue
+    ''' 
+    register a subprocess to Buffer Manager
+    
+    data will be transferred via a multiprocess Queue
+    
+    Returns: client index
+             multiprocess Queue
+    '''
+
+    self.mpQues.append( Queue(1) )
+    cid=len(self.mpQues)-1
+  
+    if self.verbose:
+      print("*==* BMregister_mpQ: new subprocess client id=%i" % cid)
+    return cid, self.mpQues[-1]
 
   def BMgetEvent(self, client_index, mode=1):
     global request_ques, consumer_ques

@@ -41,6 +41,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys, time, json, numpy as np, threading
+from multiprocessing import Process, Queue
 import picodaqa
 #       contais picoConfig, BufferMan and AnimatedInstruments
 
@@ -96,6 +97,22 @@ def randConsumer():
 # - end def randConsumer()
   return
 #
+def subprocConsumer(Q):
+  '''
+    test consumer in subprocess 
+      reads event data from multiprocessing.Queue()
+  '''    
+  cnt = 0  
+  try:         
+    while True:
+      evN, evT, evBuf = mpQ.get()
+      cnt += 1
+      print('mpQ: got event %i'%(evN) )
+      if cnt <= 3:
+        print('mpQ: event data \n', evBuf)        
+      time.sleep(1.)
+  except:
+    print('subprocConsumer: signal recieved, ending')
 
 def cleanup():
     if verbose: print(' ending  -> cleaning up ')
@@ -153,6 +170,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   if type(mode) != list:  
     mode = [mode]
 #
+
 # --- infinite LOOP
   try:
     mode_valid = False
@@ -172,12 +190,17 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       thr_obligConsumer.start()
       mode_valid= True   
 # 
-# -> put your own code here - for the moment, we simply wait ...
-
     if not mode_valid:
       print ('!!! no valid mode - exiting')
       exit(1)
-#                                            <--         
+
+# -> put your own code here - for the moment, we simply wait ...
+
+# test multiprocessing Queue
+    cidx, mpQ = BM.BMregister_mpQ()
+    prc_mpQtest = Process(target = subprocConsumer, args=(mpQ,) )
+    prc_mpQtest.deamon = True
+    prc_mpQtest.start()
 
 # run until key pressed
     raw_input('\n                                  Press <ret> to end -> \n\n')
@@ -185,5 +208,6 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
   except KeyboardInterrupt:
 # END: code to clean up
+    prc_mpQtest.terminate()
     cleanup()
   
