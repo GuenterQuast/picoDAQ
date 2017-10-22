@@ -100,7 +100,8 @@ class VoltMeter(object):
     return (self.bgraph1,) + (self.bgraph2,) + self.graphs + (self.animtxt,)  
 # -- end VoltMeter.init()
 
-  def __call__( self, (n, evTime, evData) ):
+  def __call__( self, evt ):
+    n, evTime, evData = evt    
     if n == 0:
       return self.init()
 

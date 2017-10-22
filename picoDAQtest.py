@@ -41,9 +41,14 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys, time, json, numpy as np, threading
-from multiprocessing import Process, Queue
+#from multiprocessing import Process, Queue
+import multiprocessing as mp
 import picodaqa
-#       contais picoConfig, BufferMan and AnimatedInstruments
+#       contais picoConfig, BufferMan, AnimatedInstruments, mpOSci ...
+
+# !!!!
+import matplotlib.pyplot as plt
+# !!!!
 
 # --------------------------------------------------------------
 #     scope settings defined in .json-File, see picoConfig
@@ -198,22 +203,36 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # -> put your own code here - for the moment, we simply wait ...
 
 # test multiprocessing Queue
+    procs =[]
     cidx, mpQ = BM.BMregister_mpQ()
-    prc_mpQtest = Process(target = subprocConsumer, args=(mpQ,) )
-    prc_mpQtest.deamon = True
-    prc_mpQtest.start()
+#    def plttst():
+#      print ('plttst started')
+#      plt.plot([1,2,3],[7,6,5])
+#      plt.show()
+#    procs.append(mp.Process(target = plttst ) )
+
+    procs.append(mp.Process(target = picodaqa.mpOsci, 
+                 args=(PSconf, mpQ,) ) )
+#    procs.append(mp.Process(target = subprocConsumer, 
+#                 args=(mpQ,) ) )
+   
+    for prc in procs:
+     prc.deamon = True
+     prc.start()
 
 # run until key pressed
     raw_input('\n                                  Press <ret> to end -> \n\n')
     print('picoDAQtest preparing to end ...')
-    prc_mpQtest.terminate()
+    for prc in procs:
+      prc.terminate()
     cleanup()
     time.sleep(2)
 
   except KeyboardInterrupt:
 # END: code to clean up
     print('picoDAQtest: keyboard interrupt - preparing to end ...')
-    prc_mpQtest.terminate()
+    for prc in procs:
+      prc.terminate()
     cleanup()
     time.sleep(2)
   

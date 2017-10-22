@@ -23,6 +23,7 @@ from . import _version_info
 from .picoConfig import *
 from .BufferMan import *
 from .AnimatedInstruments import *
+from .mpOsci import *
 
 _version_suffix = 'beta'  # for suffixes such as 'rc' or 'beta' or 'alpha'
 __version__ = _version_info._get_version_string()

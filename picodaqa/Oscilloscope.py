@@ -32,10 +32,10 @@ class Oscilloscope(object):
          np.linspace(-self.pretrig * self.SamplingPeriod, 
             (1.-self.pretrig) * self.SamplingPeriod, self.NSamples)
     if self.SamplingPeriod < 1E-3:  
-      self.samplingTimes *= 1E-6
+      self.samplingTimes *= 1E6
       self.TUnit = '(µs)'
     elif self.SamplingPeriod < 1.:
-      self.samplingTimes *= 1E-3
+      self.samplingTimes *= 1E3
       self.TUnit = '(ms)'
     else:
        self.TUnit = '(s)'
@@ -108,7 +108,9 @@ class Oscilloscope(object):
 
     return self.graphsOs + (self.animtxtOs,)
   
-  def __call__( self, (n, evNr, evTime, evData) ):
+  #def __call__( self, (n, evNr, evTime, evData) ):
+  def __call__( self, evt ):
+    n, evNr, evTime, evData = evt
     if n == 0:
       return self.init()
 

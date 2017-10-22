@@ -7,8 +7,8 @@ from __future__ import unicode_literals
 import time, numpy as np
 
 import matplotlib
-matplotlib.use('wxagg') # set backend (qt5 not running as thread in background)
-#matplotlib.use('tkagg') # set backend (qt5 not running as thread in background)
+#matplotlib.use('wxagg') # set backend (qt5 not running as thread in background)
+matplotlib.use('tkagg') # set backend (qt5 not running as thread in background)
 import matplotlib.pyplot as plt, matplotlib.animation as anim
 
 from .BufferMan import *
@@ -87,7 +87,8 @@ def animInstruments(opmode, conf, BM):
       evNr, evTime, evData = BM.BMgetEvent(myId, mode=mode)
   #    print('*==* yieldEventCopy: received event %i' % evNr)
       evCnt+=1
-      yield (evCnt, evTime, evData)
+      evt = (evCnt, evTime, evData)
+      yield evt
     exit(1)
 
   def yieldOsEvent():
@@ -102,7 +103,8 @@ def animInstruments(opmode, conf, BM):
       evNr, evTime, evData = BM.BMgetEvent(myId, mode=mode)
   #    print('*==* yieldEventCopy: received event %i' % evNr)
       cnt+=1
-      yield (cnt, evNr, evTime, evData)
+      evt=(cnt, evNr, evTime, evData)
+      yield evt
     exit(1)
   
   def sequence_gen():
