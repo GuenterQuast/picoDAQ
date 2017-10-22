@@ -12,5 +12,5 @@
 "pretrig": 0.05, 
 "frqSG": 10E3,
 "swpSG": "UpDown",
-"mode": "osci" 
+"mode": "mpOsci" 
 }

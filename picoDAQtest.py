@@ -46,78 +46,16 @@ import multiprocessing as mp
 import picodaqa
 #       contais picoConfig, BufferMan, AnimatedInstruments, mpOSci ...
 
+from exampleConsumers import *
+
 # !!!!
-import matplotlib.pyplot as plt
-# !!!!
+# import matplotlib.pyplot as plt
+# !!!! matplot can only be used if no other thread using it is active
+
 
 # --------------------------------------------------------------
 #     scope settings defined in .json-File, see picoConfig
 # --------------------------------------------------------------
-
-
-
-# - - - - some examples of consumers connected to BufferManager- - - - 
-
-def obligConsumer():
-  '''
-    test readout speed: do nothing, just request data from buffer manager
-
-      - an example of an obligatory consumer, sees all data
-        (i.e. data acquisition is halted when no data is requested)
-    
-    for reasons of speed, only a pointer to the event buffer is returned
-  '''
-# register with Buffer Manager
-  myId = BM.BMregister()
-  mode = 0    # obligatory consumer, request pointer to Buffer
-
-  evcnt=0
-  while RUNNING:
-    evNr, evtile, evData = BM.BMgetEvent(myId, mode=mode)
-    evcnt+=1
-    print('*==* obligConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
-
-#    introduce random wait time to mimick processing activity
-    time.sleep(-0.25 * np.log(np.random.uniform(0.,1.)) )
-  return
-#-end def obligComsumer
-
-def randConsumer():
-  '''
-    test readout speed: 
-      does nothing except requesting random data samples from buffer manager
-  '''
-
-  # register with Buffer Manager
-  myId = BM.BMregister()
-  mode = 1    # random consumer, request event copy
-
-  evcnt=0
-  while RUNNING:
-    evNr, evtile, evData = BM.BMgetEvent(myId, mode=mode)
-    evcnt+=1
-    print('*==* randConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
-# introduce random wait time to mimick processing activity
-    time.sleep(np.random.randint(100,1000)/1000.)
-# - end def randConsumer()
-  return
-#
-def subprocConsumer(Q):
-  '''
-    test consumer in subprocess 
-      reads event data from multiprocessing.Queue()
-  '''    
-  cnt = 0  
-  try:         
-    while True:
-      evN, evT, evBuf = mpQ.get()
-      cnt += 1
-      print('*==* mpQ: got event %i'%(evN) )
-      if cnt <= 3:
-        print('     event data \n', evBuf)        
-      time.sleep(1.)
-  except:
-    print('subprocConsumer: signal recieved, ending')
 
 def cleanup():
     if verbose: print('  ending  -> cleaning up ')
@@ -190,8 +128,10 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       mode_valid= True   
 
     if 'test' in mode: # test consumers
-      thrds.appene(threading.Thread(target=randConsumer ) )
-      thrds.append(threading.Thread(target=obligConsumer ) )
+      thrds.append(threading.Thread(target=randConsumer,
+                                    args=(BM,) ) )
+      thrds.append(threading.Thread(target=obligConsumer,
+                                    args=(BM,) ) )
       mode_valid= True   
 
     if 'mpOsci' in mode: # text subprocess,
@@ -202,26 +142,36 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 #    procs.append(mp.Process(target = subprocConsumer, 
 #                 args=(mpQ,) ) )
 # 
-      mode_valid= True   
 
-# start threads
-    for thrd in thrds:
-      thrd.daemon = True
-      thrd.start()
+      mode_valid= True   
 
 # start background processes   
     for prc in procs:
       prc.deamon = True
       prc.start()
+    time.sleep(1.)
+
+# start threads
+    for thrd in thrds:
+      thrd.daemon = True
+      thrd.start()
+        
 
 # -> put your own code here - for the moment, we simply wait ...
     if not mode_valid:
       print ('!!! no valid mode - exiting')
       exit(1)
 
+# ---- run until key pressed
+    # fist, remove pyhton 2 vs. python 3 incompatibility
+    if sys.version_info[:2] <=(2,7):
+      get_input = raw_input
+    else: 
+      get_input = input
 
-# run until key pressed
-    raw_input('\n                                  Press <ret> to end -> \n\n')
+# ->> wait here until key pressed <<- 
+    get_input('\n                                  Press <ret> to end -> \n\n')
+
     print('picoDAQtest preparing to end ...')
     for prc in procs:
       prc.terminate()

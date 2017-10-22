@@ -6,37 +6,41 @@ The *usb*-oscilloscope series PicoSpope by Pico Technology
 (see https://www.picotech.com)
 offers universal instruments that come with great software support, not only a graphical interface offering the functionality known from oscilloscopes, 
 but - most importantly for this project - also with a software development kit
-(*SDK*) allowing use the devices with wide range of high-level languages. 
+(*SDK*) which makes it possible to use the devices with wide range of 
+high-level languages. 
 
-This makes it possible to implement a data acquisition system as
-is needed to record, analyse, classify and count the occurrence of wave
-forms such as provided for example by single-photon counters or typical
-detectors common in nuclear physics.
+Provided here is a data acquisition system as is needed to record, 
+analyse, classify and count the occurrence of wave forms such as provided 
+for example by single-photon counters or typical detectors common in 
+nuclear, particle and astroparticle physics.
 
 This project is a first prototype towards the goal of acquiring,
-analysing and counting the occurrence of typical electrical wave-forms
+analysing and counting the occurrence of typical electrical waveforms
 resulting from the registered occurrence of an 'event' in a one-channel,
 single particle detector such as photo tubes, Geiger counters, avalanche
 photo diodes or SiPMs.
 
 The random nature of such processes and the need to keep dead times low
-requires an input buffer and a buffer manager running in as a background
-thread. Data are provided via the buffer manager's interface to several
+requires an input buffer and a buffer manager running as a background
+process. Data are provided via the buffer manager's interface to several
 consumer processes to analyse, check or visualise data and analysis
 results. Such consumers may be obligatory ones, i. e. data acquisition
 pauses if all input buffers are full and an obligatory consumer is still
 busy processing. A second type of random consumers receives an event copy
 from the buffer manager upon request, without pausing the data acquisition
 process. Typical examples of random consumers are displays of a subset
-of the wave forms or of intermediate analysis results. 
+of the wave forms or of intermediate analysis results. Examples are
+provided for such conusmers running as a 'thread' within the python 
+interpreter or as subprocesses using the 'multiprocessing' package.
 
-Code presently tested with PicoScope device classes PS2000a and PS4000
+Code tested with PicoScope device classes PS2000a and PS4000
 under Ubuntu and openSUSE Leap.
 
 
 This project originated as a demonstration to analyse pulses from a 
-Photomultiplier or a Silicon Photo Multiplier (SiPM) registering  optical 
-signals from  a detector - a coffeepot with water in the simplest case. 
+Photomultiplier (PM) or a Silicon Photo Multiplier (SiPM) registering  
+optical signals from  a detector - a coffeepot with water in the 
+simplest case. 
 
 
 **Requirements**:
@@ -59,7 +63,7 @@ implemented **Functions**:
       - acquire data (implemented as background thread)
       - manage event data buffer and distribute to consumers
 
-     *obligatory* consumers: data acquisition pauses until consumer done
+      *obligatory* consumers: data acquisition pauses until consumer done
 
       *random* consumers: receive a copy of one event, data acquisition 
       continues
@@ -69,8 +73,14 @@ implemented **Functions**:
       - examples of animated graphical devides - a VoltMeter,   
         an Oscilloscope and a Ratemeter
   
+      uses classes VoltMeter, Oscilloscope and plotBufManInfo.
+  
+  module *mpOsci* 
 
-The examples show applications of the graphical devices and an implementations of obligatory and random consumers.
+      - runs an instance of the Oscilloscpe class as a subprocess 
+
+The examples show applications of the graphical devices and 
+an implementations of obligatory and random consumers.
 
 
   Graphical displays implemented with *matplotlib*

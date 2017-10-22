@@ -39,7 +39,7 @@ def mpOsci(conf, Q):
      print('*==* yieldEvt_fromQ: termination signal recieved')
   
 # ------- executable part -------- 
-  print('*==* mpOsci starting')
+  print(' -> mpOsci starting')
 
   try:
     Interval = 50.
