@@ -180,45 +180,45 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # --- infinite LOOP
   try:
     mode_valid = False
+    thrds = []
+    procs =[]
     if ('osci' in mode) or ('VMeter' in mode) or ('RMeter' in mode):
       mode_valid= True
       # print('calling AnimatedInstruments')
-      thr_animInstruments=threading.Thread(target=picodaqa.animInstruments,
-                                           args=(mode, PSconf, BM) )
-      thr_animInstruments.daemon=True
-      thr_animInstruments.start()
-    if 'test' in mode: # test consumers
-      thr_randConsumer=threading.Thread(target=randConsumer )
-      thr_randConsumer.daemon=True
-      thr_randConsumer.start()
-      thr_obligConsumer=threading.Thread(target=obligConsumer )
-      thr_obligConsumer.daemon=True
-      thr_obligConsumer.start()
+      thrds.append(threading.Thread(target=picodaqa.animInstruments,
+                                           args=(mode, PSconf, BM) ) )
       mode_valid= True   
+
+    if 'test' in mode: # test consumers
+      thrds.appene(threading.Thread(target=randConsumer ) )
+      thrds.append(threading.Thread(target=obligConsumer ) )
+      mode_valid= True   
+
+    if 'mpOsci' in mode: # text subprocess,
+     # use multiprocessing.Queue for data transfer
+      cidx, mpQ = BM.BMregister_mpQ()
+      procs.append(mp.Process(target = picodaqa.mpOsci, 
+                 args=(PSconf, mpQ,) ) )
+#    procs.append(mp.Process(target = subprocConsumer, 
+#                 args=(mpQ,) ) )
 # 
+      mode_valid= True   
+
+# start threads
+    for thrd in thrds:
+      thrd.daemon = True
+      thrd.start()
+
+# start background processes   
+    for prc in procs:
+      prc.deamon = True
+      prc.start()
+
+# -> put your own code here - for the moment, we simply wait ...
     if not mode_valid:
       print ('!!! no valid mode - exiting')
       exit(1)
 
-# -> put your own code here - for the moment, we simply wait ...
-
-# test multiprocessing Queue
-    procs =[]
-    cidx, mpQ = BM.BMregister_mpQ()
-#    def plttst():
-#      print ('plttst started')
-#      plt.plot([1,2,3],[7,6,5])
-#      plt.show()
-#    procs.append(mp.Process(target = plttst ) )
-
-    procs.append(mp.Process(target = picodaqa.mpOsci, 
-                 args=(PSconf, mpQ,) ) )
-#    procs.append(mp.Process(target = subprocConsumer, 
-#                 args=(mpQ,) ) )
-   
-    for prc in procs:
-     prc.deamon = True
-     prc.start()
 
 # run until key pressed
     raw_input('\n                                  Press <ret> to end -> \n\n')
