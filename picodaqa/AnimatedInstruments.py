@@ -15,15 +15,14 @@ from .BufferMan import *
 from .Oscilloscope import *
 from .VoltMeter import *
 from .plotBufManInfo import *
+from .RMeter import *
 
 '''
 Animated graphical displays of data received from BufferMan,
 
   implemented as random consumers
 
-  need access to an instance of BufferMan and picoConfig
-
-  
+  needs access BufferMan instance and read access to picoConfig
 '''
 # 
 ### consumer examples with graphics -----------------------------------------
@@ -31,17 +30,18 @@ Animated graphical displays of data received from BufferMan,
 
 def animInstruments(opmode, conf, BM):
   '''
-    animated instruments to displays data
+    animated instruments to display status of buffer manager and
+    information from collected data (as random consumers)
 
-    - a "Voltmeter" as an obligatory consumer
-    - an Oscilloscpe display  as a random consumer
+      - a "RateMeter" consumer
+      - a "Voltmeter" consumer
+      - an Oscilloscpe display  
+    
+    Args: 
 
-
-   Args: 
-
-     opmode: list: "osci", "VMeter" and/or "RMeter"
-     conf: instance of configuration class of device
-     BM:   buffer manager instance
+      opmode: list: "osci", "VMeter" and/or "RMeter"
+      conf: instance of configuration class of device
+      BM:   buffer manager instance
 
   '''
 # provde access to the relevant instance of class picoConfig as global variables
@@ -106,6 +106,22 @@ def animInstruments(opmode, conf, BM):
       evt=(cnt, evNr, evTime, evData)
       yield evt
     exit(1)
+
+  def yieldRMEvent():
+# random consumer of Buffer Manager, receives an event copy
+   # this is useful for clients accessing only a subset of events
+
+    myId = BM.BMregister()   # register with Buffer Manager
+    mode = 1              # random consumer, request event copy
+
+    cnt=0
+    while BM.RUNNING:
+      evNr, evTime, evData = BM.BMgetEvent(myId, mode=mode)
+  #    print('*==* yieldEventCopy: received event %i' % evNr)
+      cnt+=1
+      evt=(cnt, evNr, evTime, evData)
+      yield evt
+    exit(1)
   
   def sequence_gen():
   # generator for sequence of integers
@@ -126,14 +142,28 @@ def animInstruments(opmode, conf, BM):
     if verbose>0: print(' -> Ratemeter starting')
     RMinterval=1000.
     maxR = 10.  # maximum expected rate
-    RM = plotBufManInfo(BM, maxR)
+#    RM = plotBufManInfo(BM, maxR)
+    RM = RMeter(maxR, BM)
     figRM = RM.fig
-    anims.append(anim.FuncAnimation(figRM, RM, sequence_gen,
+#    anims.append(anim.FuncAnimation(figRM, RM, sequence_gen,
+#                         interval=RMinterval, init_func=RM.init,
+#                         blit=True, fargs=None, repeat=True, save_count=None) )
+    anims.append(anim.FuncAnimation(figRM, RM, yieldRMEvent,
                          interval=RMinterval, init_func=RM.init,
-                         blit=True, fargs=None, repeat=True, save_count=None) )
-   # save_count=None is a (temporary) workaround to fix memory leak in animate
+                         blit=True, fargs=None, repeat=True, save_count=None) ) 
+  # save_count=None is a (temporary) workaround to fix memory leak in animate
 
-  print(opmode)
+  if 'BufInfo' in opmode:
+# Buffer Manager Info
+    if verbose>0: print(' -> plotBufManInfo starting')
+    BMinterval=1000.
+    maxR = 10.  # maximum expected rate
+    BMi = plotBufManInfo(BM, maxR)
+    figBMi = BMi.fig
+    anims.append(anim.FuncAnimation(figBMi, BMi, sequence_gen,
+                         interval=BMinterval, init_func=BMi.init,
+                         blit=True, fargs=None, repeat=True, save_count=None) )
+
   if 'VMeter' in opmode:
 # Voltmeter
     if verbose>0: print(' -> Voltmeter starting')

@@ -8,7 +8,12 @@ import time, numpy as np
 import matplotlib.pyplot as plt
 
 class plotBufManInfo(object):
-  ''' display rate history '''
+  ''' display statistics from Buffer Manager
+
+        uses BufferMan.getStatistics to display
+        total number of events, data acquisition rate,
+        life time and buffer filling level
+  '''
 
   def __init__(self, BM, maxRate=20.):
     self.BM = BM
@@ -19,7 +24,7 @@ class plotBufManInfo(object):
     self.xplt = np.linspace(-self.Npoints, 0., self.Npoints)
 
   # create figure 
-    self.fig = plt.figure("RateMeter", figsize=(5.,2.5))
+    self.fig = plt.figure("BufManInfo", figsize=(5.,2.5))
     self.fig.subplots_adjust(left=0.125, bottom=0.2, right=0.99, top=0.85,
                wspace=None, hspace=.25)
     self.axes = self.fig.add_subplot(1,1,1)
@@ -29,8 +34,9 @@ class plotBufManInfo(object):
     self.axes.set_ylim(0., self.maxRate)
 
   def init(self):
-    self.line1, = self.axes.plot(self.xplt, self.R, 'b-')
-    self.animtxt = self.axes.text(0.2, 0.925 , ' ',
+    self.line1, = self.axes.plot(self.xplt, self.R, 
+      marker = '*', markerfacecolor='b', linestyle='dashed', color='grey', )
+    self.animtxt = self.axes.text(0.05, 0.925 , ' ',
               transform=self.axes.transAxes,
               size='small', color='darkblue')
     self.ro = 0.
@@ -43,12 +49,12 @@ class plotBufManInfo(object):
        self.init()
 
     k = n%self.Npoints
-    self.R[k] = self.BM.readrate
+    RUNNING, Ntrig, Ttrig, readrate, lifefrac, bufLevel = self.BM.getStatus()
+    self.R[k] = readrate
       
     self.line1.set_ydata(np.concatenate( (self.R[k+1:], self.R[:k+1]) ))
     self.animtxt.set_text( \
-     'Time: %.1fs  Triggers: %i  rate: %.3gHz  life: %.1f%%'\
-      %(time.time()-self.t0, 
-        self.BM.Ntrig, self.BM.readrate, self.BM.lifefrac) )
+     'Time: %.1fs  Triggers: %i  rate: %.3gHz  life: %.1f%%  buffer: %.0f%%'\
+          %(time.time()-self.t0, Ntrig, readrate, lifefrac, bufLevel) )
 
     return self.line1, self.animtxt  

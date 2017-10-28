@@ -1,15 +1,15 @@
 {
 "picoChannels":["A", "B"],
-"ChanRanges":  [30E-3, 0.35],
+"ChanRanges":  [0.03, 0.2],
 "Nsamples": 200,  
 "sampleTime": 10E-6, 
 "trgChan": "B",      
-"trgThr": 0.1,       
+"trgThr": 0.01,       
 "trgTyp": "Rising",   
 "trgTO": 1000,        
 "trgDelay":  0,
 "pretrig": 0.05, 
 "frqSG": 100E3,
 "swpSG": "UpDown",
-"mode": ["mpOsci", "test", "VMeter", "RMeter"]
+"mode": ["mpOsci", "test", "VMeter", "RMeter", "BufInfo"]
 }

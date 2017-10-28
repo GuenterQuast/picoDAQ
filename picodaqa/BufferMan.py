@@ -69,8 +69,9 @@ class BufferMan(object):
      Communicates with consumer via collections.deque()
 
     '''
-#    print ('       !!! acquireData starting')
+#    print ('*==* BufMan:  !!! acquireData starting')
     self.Ntrig = 0    # count number of readings
+    self.Ttrig = 0    # time of last event
     self.readrate = 0.
     self.lifefrac = 0.
     tlife = 0.
@@ -91,6 +92,7 @@ class BufferMan(object):
       if ttrg == -1: return
       tlife += tl
       self.timeStamp[ibufw] = ttrg  # store time when data became ready
+      self.Ttrig = ttrg
       self.Ntrig += 1
       self.prod_que.append( (self.Ntrig, ibufw) )
        
@@ -108,7 +110,7 @@ class BufferMan(object):
         tlife = 0.
         ni=self.Ntrig
     # --- end while  
-    print ('          !!! acquireData()  ended')
+    print ('*==* BufMan:   !!! acquireData()  ended')
     return
 # -- end def acquireData
 
@@ -149,7 +151,7 @@ class BufferMan(object):
               self.consumer_ques[i].append( (evNr, evTime, np.copy(BMbuf[self.ibufr]) ) )
               l_obligatory.append(i)
             else:
-              print('!!! manageDataBuffer: invalid request mode', req)
+              print('!=! manageDataBuffer: invalid request mode', req)
               exit(1)
 # check in other processes want data
       if len(self.mpQues):
@@ -218,7 +220,6 @@ class BufferMan(object):
     return cid, self.mpQues[-1]
 
   def BMgetEvent(self, client_index, mode=1):
-    global request_ques, consumer_ques
     ''' 
     request event from Buffer Manager
  
@@ -262,6 +263,15 @@ class BufferMan(object):
 
   def setverbose(self, vlevel):
     self.verbose = vlevel
+
+  def getStatus(self):
+    ''' Returns:
+          tuple: Running status, number of events,
+                 time of last event, rate, life fraction and buffer level
+    '''
+    bL = (len(self.prod_que)*100)/self.NBuffers
+    return self.RUNNING,self.Ntrig,self.Ttrig,self.readrate,self.lifefrac, bL 
+
 
   def end(self):
     self.RUNNING = False 
