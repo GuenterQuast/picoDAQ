@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*-
+
+'''Oscilloscope display in TKinter window'''
+
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import time, numpy as np
+import sys, time, numpy as np
 
 import matplotlib
-#matplotlib.use('wxagg') # set backend (qt5 not running as thread in background)
-matplotlib.use('tkagg') # set backend (qt5 not running as thread in background)
-#matplotlib.use('gtkagg') # set backend (qt5 not running as thread in background)
-import matplotlib.pyplot as plt, matplotlib.animation as anim
+matplotlib.use('TkAgg')
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+if sys.version_info[0] < 3:
+  import Tkinter as Tk
+else:
+  import tkinter as Tk
+import numpy as np, matplotlib.pyplot as plt, matplotlib.animation as anim
 
 # import Oscilloscope class
 from .Oscilloscope import *
@@ -42,16 +48,30 @@ def mpOsci(conf, Q):
   print(' -> mpOsci starting')
 
   try:
+
     Interval = 50.
+
     Osci = Oscilloscope(conf)
     figOs = Osci.fig
+
+# generate a simple window for graphics display as a tk.DrawingArea
+    root = Tk.Tk()
+    root.wm_title("Oscilloscope Display")
+    canvas = FigureCanvasTkAgg(figOs, master=root)
+    canvas.show()
+    canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+    canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+    button = Tk.Button(master=root, text='Quit', command=sys.exit)
+    button.pack(side=Tk.BOTTOM)
+
+# set up matplotlib animation
     osciAnim = anim.FuncAnimation(figOs, Osci, yieldEvt_fromQ, 
                         init_func=Osci.init, interval=Interval, blit=True,
                         fargs=None, repeat=True, save_count=None)
                              # save_count=None is a (temporary) work-around 
                              #     to fix memory leak in animate
-    plt.show()
-    
+    Tk.mainloop()
+   
   except:
     print('*==* mpOsci: termination signal recieved')
   exit()
