@@ -50,8 +50,11 @@ class RMeter(object):
 
   def __call__(self, evt):
     n, evNr, evTime, evData = evt
-    if n == 0:
-       self.init()
+    if n < 3:
+      self.init()
+      self.T0 = evTime
+      self.N0 = evNr
+      return self.line1, self.animtxt  
 
     k = n%self.Npoints
     # calculate rate from event number and event Time
@@ -68,7 +71,7 @@ class RMeter(object):
     if self.BM == None:
       self.animtxt.set_text( \
          'Time: %.1fs  Events: %i  Rate: %.3gHz'\
-         %(time.time()-self.t0, evNR, rate) )
+         %(time.time()-self.t0, evNr, rate) )
     else:
       self.animtxt.set_text( \
          'Time: %.1fs  Triggers: %i  rate: %.3gHz  life: %.1f%%'\

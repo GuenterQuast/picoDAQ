@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-'''Oscilloscope display in TKinter window'''
+'''Rate history display in TKinter window'''
 
 from __future__ import division
 from __future__ import absolute_import
@@ -18,11 +18,11 @@ else:
   import tkinter as Tk
 import numpy as np, matplotlib.pyplot as plt, matplotlib.animation as anim
 
-# import Oscilloscope class
-from .Oscilloscope import *
+# import RMeter class
+from .RMeter import *
 
-def mpOsci(Q, conf, interval = 50.):
-  '''Oscilloscpe display of data passed via multiprocessing.Queue
+def mpRMeter(Q, maxRate = 10. , interval = 2500.):
+  '''RateMeter: show rate history
     Args:
       conf: picoConfig object
       Q:    multiprocessing.Queue()   
@@ -30,8 +30,8 @@ def mpOsci(Q, conf, interval = 50.):
 
   # Generator to provide data to animation
   def yieldEvt_fromQ():
-# random consumer of Buffer Manager, receives an event copy 
-   # via a Queue from package mutiprocessing
+  # random consumer of Buffer Manager, receives an event copy 
+  # via a Queue from package mutiprocessing
    
     cnt = 0
     try:
@@ -45,17 +45,16 @@ def mpOsci(Q, conf, interval = 50.):
       print('*==* yieldEvt_fromQ: termination signal recieved')
   
 # ------- executable part -------- 
-  print(' -> mpOsci starting')
+  print(' -> mpRMeter starting')
 
   try:
-
-    Osci = Oscilloscope(conf)
-    figOs = Osci.fig
+    RM = RMeter(maxRate)
+    figRM = RM.fig
 
 # generate a simple window for graphics display as a tk.DrawingArea
     root = Tk.Tk()
-    root.wm_title("Oscilloscope Display")
-    canvas = FigureCanvasTkAgg(figOs, master=root)
+    root.wm_title("Rate Display")
+    canvas = FigureCanvasTkAgg(figRM, master=root)
     canvas.show()
     canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
     canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
@@ -63,13 +62,13 @@ def mpOsci(Q, conf, interval = 50.):
     button.pack(side=Tk.BOTTOM)
 
 # set up matplotlib animation
-    osciAnim = anim.FuncAnimation(figOs, Osci, yieldEvt_fromQ, 
-                  init_func=Osci.init, interval=interval, blit=True,
-                  fargs=None, repeat=True, save_count=None)
-                       # save_count=None is a (temporary) work-around 
-                       #     to fix memory leak in animate
+    RMAnim = anim.FuncAnimation(figRM, RM, yieldEvt_fromQ, 
+                        init_func=RM.init, interval=interval, blit=True,
+                        fargs=None, repeat=True, save_count=None)
+                             # save_count=None is a (temporary) work-around 
+                             #     to fix memory leak in animate
     Tk.mainloop()
    
   except:
-    print('*==* mpOsci: termination signal recieved')
+    print('*==* mpRMeter: termination signal recieved')
   exit()

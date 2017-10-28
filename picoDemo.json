@@ -8,8 +8,9 @@
 "trgTyp": "Rising",   
 "trgTO": 1000,        
 "trgDelay":  0,
+"ChanColors": ["darkblue", "sienna"],
 "pretrig": 0.05, 
 "frqSG": 100E3,
 "swpSG": "UpDown",
-"mode": ["mpOsci", "test", "VMeter", "RMeter", "BufInfo"]
+"mode": ["BufInfo", "mpOsci", "test", "VMeter", "mpRMeter"]
 }

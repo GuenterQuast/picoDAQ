@@ -44,7 +44,7 @@ import sys, time, json, numpy as np, threading
 #from multiprocessing import Process, Queue
 import multiprocessing as mp
 import picodaqa
-#       contais picoConfig, BufferMan, AnimatedInstruments, mpOSci ...
+#  contais picoConfig, BufferMan, AnimatedInstruments, mpOSci, mpRMeter, ...
 
 from exampleConsumers import *
 
@@ -134,11 +134,20 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
                                     args=(BM,) ) )
       mode_valid= True   
 
-    if 'mpOsci' in mode: # text subprocess,
-     # use multiprocessing.Queue for data transfer
-      cidx, mpQ = BM.BMregister_mpQ()
+# modules to be run as a subprocess
+#     use multiprocessing.Queue for data transfer
+    if 'mpOsci' in mode: 
+      OScidx, OSmpQ = BM.BMregister_mpQ()
       procs.append(mp.Process(target = picodaqa.mpOsci, 
-                 args=(PSconf, mpQ,) ) )
+                              args=(OSmpQ, PSconf, 50.) ) )
+#                                                interval
+    if 'mpRMeter' in mode: # as subprocess,
+      RMcidx, RMmpQ = BM.BMregister_mpQ()
+      procs.append(mp.Process(target = picodaqa.mpRMeter, 
+                              args=(RMmpQ, 10., 2500.) ) )
+#                                     maxRate  interval
+#    if 'test' in mode:
+#      cidx, mpQ = BM.BMregister_mpQ()
 #    procs.append(mp.Process(target = subprocConsumer, 
 #                 args=(mpQ,) ) )
 # 
