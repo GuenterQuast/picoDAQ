@@ -22,7 +22,7 @@ def obligConsumer(BM):
 
   evcnt=0
   while BM.RUNNING:
-    evNr, evtile, evData = BM.BMgetEvent(myId, mode=mode)
+    evNr, evtime, evData = BM.getEvent(myId, mode=mode)
     evcnt+=1
     print('*==* obligConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
 
@@ -43,7 +43,7 @@ def randConsumer(BM):
 
   evcnt=0
   while BM.RUNNING:
-    evNr, evtile, evData = BM.BMgetEvent(myId, mode=mode)
+    evNr, evtime, evData = BM.getEvent(myId, mode=mode)
     evcnt+=1
     print('*==* randConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
 # introduce random wait time to mimick processing activity

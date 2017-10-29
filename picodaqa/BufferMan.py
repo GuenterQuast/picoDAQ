@@ -219,7 +219,7 @@ class BufferMan(object):
       print("*==* BMregister_mpQ: new subprocess client id=%i" % cid)
     return cid, self.mpQues[-1]
 
-  def BMgetEvent(self, client_index, mode=1):
+  def getEvent(self, client_index, mode=1):
     ''' 
     request event from Buffer Manager
  

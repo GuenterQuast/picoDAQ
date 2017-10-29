@@ -2,37 +2,36 @@
 # -*- coding: utf-8 -*-
 # script picoDAQ.py
 '''
-**picoDAQtest** Data Aquisition Example with Picoscpe 
+  **picoDAQtest** Data Aquisition Example with Picoscpe 
 
-Demonstrate data acquisition with PicoScope usb-oscilloscpe 
+  Demonstrate data acquisition with PicoScope usb-oscilloscpe 
 
   Based on python drivers by Colin O'Flynn and Mark Harfouche,
   https://github.com/colinoflynn/pico-python
 
   relies on package *picodaqa*:
-  - instance BM of BufferManager class and
-  - device initialisation as defined in picoConfig class
+    - instance BM of BufferManager class and
+    - device initialisation as defined in picoConfig class
 
   tested with  PS2000a and PS4000
 
   Functions:
  
-  - set up PicoScope channel ranges and trigger
-  - PicoScope configuration optionally from json file
-  - acquire data (implemented as thread)
-  - manage event data and distribute to obligatory and random consumers
-  - analyse and plot data:
+    - set up PicoScope channel ranges and trigger
+    - PicoScope configuration optionally from json file
+    - acquire data (implemented as thread)
+    - manage event data and distribute to obligatory and random consumers
+    - analyse and plot data:
 
-    - obligatoryConsumer test speed of data acquisition
-    - randomConsumer     test concurrent access
-    - VMeter             average Voltages with bar graph display
-    - Osci               simple waveform display
+      - obligatoryConsumer test speed of data acquisition
+      - randomConsumer     test concurrent access
+      - VMeter             average Voltages with bar graph display
+      - Osci               simple waveform display
   
   graphics implemented with matplotlib
 
-  For Demo Mode:
-     Connect output of signal gnerator to channel B')
-     Connect open cable to Channel A \n')
+  For Demo Mode: Connect output of signal gnerator to channel B, 
+  and an open cable to Channel A
 '''
 
 from __future__ import division
@@ -137,22 +136,24 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # modules to be run as a subprocess
 #     use multiprocessing.Queue for data transfer
     if 'mpOsci' in mode: 
+      mode_valid= True   
       OScidx, OSmpQ = BM.BMregister_mpQ()
       procs.append(mp.Process(target = picodaqa.mpOsci, 
                               args=(OSmpQ, PSconf, 50.) ) )
 #                                                interval
     if 'mpRMeter' in mode: # as subprocess,
+      mode_valid= True   
       RMcidx, RMmpQ = BM.BMregister_mpQ()
       procs.append(mp.Process(target = picodaqa.mpRMeter, 
                               args=(RMmpQ, 10., 2500.) ) )
 #                                     maxRate  interval
 #    if 'test' in mode:
+#      mode_valid= True   
 #      cidx, mpQ = BM.BMregister_mpQ()
 #    procs.append(mp.Process(target = subprocConsumer, 
 #                 args=(mpQ,) ) )
 # 
 
-      mode_valid= True   
 
 # start background processes   
     for prc in procs:
