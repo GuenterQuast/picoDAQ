@@ -4,10 +4,11 @@
 "Nsamples": 250,  
 "sampleTime": 1E-6, 
 "trgChan": "A",      
+"ChanColors": ["darkblue", "sienna"],
 "trgThr": -75E-3,       
 "trgTyp": "Falling",   
 "trgTO": 5000,        
 "pretrig": 0.25, 
 "frqSG": 0.0,
-"mode": ["osci","RMeter"]
+"mode": ["BufInfo", "mpOsci", "mpRMeter"]
 }

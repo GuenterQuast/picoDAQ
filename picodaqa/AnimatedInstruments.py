@@ -84,7 +84,7 @@ def animInstruments(opmode, conf, BM):
 
     evCnt=0
     while BM.RUNNING:
-      evNr, evTime, evData = BM.BMgetEvent(myId, mode=mode)
+      evNr, evTime, evData = BM.getEvent(myId, mode=mode)
   #    print('*==* yieldEventCopy: received event %i' % evNr)
       evCnt+=1
       evt = (evCnt, evTime, evData)
@@ -100,7 +100,7 @@ def animInstruments(opmode, conf, BM):
 
     cnt=0
     while BM.RUNNING:
-      evNr, evTime, evData = BM.BMgetEvent(myId, mode=mode)
+      evNr, evTime, evData = BM.getEvent(myId, mode=mode)
   #    print('*==* yieldEventCopy: received event %i' % evNr)
       cnt+=1
       evt=(cnt, evNr, evTime, evData)
@@ -116,7 +116,7 @@ def animInstruments(opmode, conf, BM):
 
     cnt=0
     while BM.RUNNING:
-      evNr, evTime, evData = BM.BMgetEvent(myId, mode=mode)
+      evNr, evTime, evData = BM.getEvent(myId, mode=mode)
   #    print('*==* yieldEventCopy: received event %i' % evNr)
       cnt+=1
       evt=(cnt, evNr, evTime, evData)

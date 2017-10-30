@@ -240,7 +240,7 @@ class BufferMan(object):
     while not len(cq):
         if not self.RUNNING: return
         time.sleep(0.01)
-  #print('*==* BMgetEvent: received event %i'%evNr)
+  #print('*==* getEvent: received event %i'%evNr)
     if mode !=0: # received copy of the event data
       return cq.popleft()
     else: # received pointer to event buffer

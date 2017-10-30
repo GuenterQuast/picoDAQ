@@ -119,7 +119,8 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     mode_valid = False
     thrds = []
     procs =[]
-    if ('osci' in mode) or ('VMeter' in mode) or ('RMeter' in mode):
+    if ('osci' in mode) or ('VMeter' in mode) or\
+       ('RMeter' in mode) or ('BufInfo' in mode):
       mode_valid= True
       # print('calling AnimatedInstruments')
       thrds.append(threading.Thread(target=picodaqa.animInstruments,
