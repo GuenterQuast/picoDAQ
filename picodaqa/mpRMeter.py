@@ -48,7 +48,7 @@ def mpRMeter(Q, maxRate = 10. , interval = 2500.):
   print(' -> mpRMeter starting')
 
   try:
-    RM = RMeter(maxRate)
+    RM = RMeter(maxRate, interval)
     figRM = RM.fig
 
 # generate a simple window for graphics display as a tk.DrawingArea
