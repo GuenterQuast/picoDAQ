@@ -15,13 +15,14 @@ class plotBufManInfo(object):
         life time and buffer filling level
   '''
 
-  def __init__(self, BM, maxRate=20.):
+  def __init__(self, BM, maxRate=20., interval=1000.):
     self.BM = BM
     self.maxRate = maxRate
+    self.interval = interval/1000 # time between updates in s
 
     self.Npoints = 100  # number of history points
     self.R = np.zeros(self.Npoints)
-    self.xplt = np.linspace(-self.Npoints, 0., self.Npoints)
+    self.xplt = np.linspace(-self.Npoints*self.interval, 0., self.Npoints)
 
   # create figure 
     self.fig = plt.figure("BufManInfo", figsize=(5.,2.5))

@@ -142,12 +142,8 @@ def animInstruments(opmode, conf, BM):
     if verbose>0: print(' -> Ratemeter starting')
     RMinterval=1000.
     maxR = 10.  # maximum expected rate
-#    RM = plotBufManInfo(BM, maxR)
-    RM = RMeter(maxR, BM)
+    RM = RMeter(maxR, RMinterval, BM)
     figRM = RM.fig
-#    anims.append(anim.FuncAnimation(figRM, RM, sequence_gen,
-#                         interval=RMinterval, init_func=RM.init,
-#                         blit=True, fargs=None, repeat=True, save_count=None) )
     anims.append(anim.FuncAnimation(figRM, RM, yieldRMEvent,
                          interval=RMinterval, init_func=RM.init,
                          blit=True, fargs=None, repeat=True, save_count=None) ) 
@@ -158,7 +154,7 @@ def animInstruments(opmode, conf, BM):
     if verbose>0: print(' -> plotBufManInfo starting')
     BMinterval=1000.
     maxR = 10.  # maximum expected rate
-    BMi = plotBufManInfo(BM, maxR)
+    BMi = plotBufManInfo(BM, maxR, BMinterval)
     figBMi = BMi.fig
     anims.append(anim.FuncAnimation(figBMi, BMi, sequence_gen,
                          interval=BMinterval, init_func=BMi.init,
