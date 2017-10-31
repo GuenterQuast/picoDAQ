@@ -28,9 +28,10 @@ class RMeter(object):
 
   # create figure 
     self.fig = plt.figure("RMeter", figsize=(5.,2.5))
-    self.fig.subplots_adjust(left=0.125, bottom=0.2, right=0.99, top=0.95,
+    self.fig.subplots_adjust(left=0.05, bottom=0.2, right=0.925, top=0.95,
                wspace=None, hspace=.25)
     self.axes = self.fig.add_subplot(1,1,1)
+    self.axes.yaxis.tick_right()
     #self.axes.set_title('')
     self.axes.set_ylabel('rate (HZ)')
     self.axes.set_xlabel('rate history')

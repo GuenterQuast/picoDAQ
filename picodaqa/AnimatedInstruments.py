@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import time, numpy as np
+import sys, time, numpy as np
 
 import matplotlib
 #matplotlib.use('wxagg') # set backend (qt5 not running as thread in background)
@@ -75,54 +75,52 @@ def animInstruments(opmode, conf, BM):
                      (1.-pretrig) * SamplingPeriod, NSamples)
     TUnit = '(s)'
 
+# ----- funcion definitions 
+
   def yieldVMEvent():
 # random consumer of Buffer Manager, receives an event copy
    # this is useful for clients accessing only a subset of events
-
+    if not BM.RUNNING: sys.exit(1)
     myId = BM.BMregister()   # register with Buffer Manager
     mode = 1              # random consumer, request event copy
 
     evCnt=0
     while BM.RUNNING:
-      evNr, evTime, evData = BM.getEvent(myId, mode=mode)
+      e = BM.getEvent(myId, mode=mode)
+      if e != None:
   #    print('*==* yieldEventCopy: received event %i' % evNr)
-      evCnt+=1
-      evt = (evCnt, evTime, evData)
-      yield evt
-    exit(1)
+        evCnt+=1
+        yield (evCnt,) + e
 
   def yieldOsEvent():
-# random consumer of Buffer Manager, receives an event copy
-   # this is useful for clients accessing only a subset of events
+# random consumer of Buffer Manager
+    if not BM.RUNNING: sys.exit(1)
 
     myId = BM.BMregister()   # register with Buffer Manager
     mode = 1              # random consumer, request event copy
 
     cnt=0
     while BM.RUNNING:
-      evNr, evTime, evData = BM.getEvent(myId, mode=mode)
-  #    print('*==* yieldEventCopy: received event %i' % evNr)
-      cnt+=1
-      evt=(cnt, evNr, evTime, evData)
-      yield evt
-    exit(1)
+      e = BM.getEvent(myId, mode=mode)
+      if e != None:
+  #      print('*==* yieldEventCopy: received event %i' % evNr)
+        cnt+=1
+        yield (cnt,) + e
 
   def yieldRMEvent():
-# random consumer of Buffer Manager, receives an event copy
-   # this is useful for clients accessing only a subset of events
-
+# random consumer of Buffer Manager
+    if not BM.RUNNING: sys.exit(1)
     myId = BM.BMregister()   # register with Buffer Manager
     mode = 1              # random consumer, request event copy
 
     cnt=0
     while BM.RUNNING:
-      evNr, evTime, evData = BM.getEvent(myId, mode=mode)
+      e = BM.getEvent(myId, mode=mode)
+      if e != None:
   #    print('*==* yieldEventCopy: received event %i' % evNr)
-      cnt+=1
-      evt=(cnt, evNr, evTime, evData)
-      yield evt
-    exit(1)
-  
+        cnt+=1
+        yield (cnt,) + e
+
   def sequence_gen():
   # generator for sequence of integers
     i=0
@@ -134,7 +132,7 @@ def animInstruments(opmode, conf, BM):
 # -----------------------------------------------
 
 # - control part for animated Instruments()
-  print('-> AnimatedInstruments called: opmode= ', opmode)
+  print('*==* AnimatedInstruments: opmode= ', opmode)
 
   anims=[]
   if 'RMeter' in opmode:
@@ -184,11 +182,11 @@ def animInstruments(opmode, conf, BM):
 
 # plt.show() or plt.ion() must be run in same thread
   try:
-     plt.ioff()
-     plt.show()
-     print ('   no longer RUNNING, matplotlib animate exiting ...')
-     while BM.RUNNING:
-       time.sleep(0.5)    
-       print (' ... waiting after plt.show()...')
+#    plt.ioff()
+    plt.show()
+    print ('*==* AnimatedInstruments: animate exiting ...')
+    
   except: 
-    print ('   matplotlib animate killed ...')
+    print ('!==! AnimatedInstruments: animate killed ...')
+  
+  sys.exit()  

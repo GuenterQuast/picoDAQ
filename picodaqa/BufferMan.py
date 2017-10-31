@@ -5,7 +5,7 @@
 '''
 #
 # - class BufferMan
-import numpy as np, time, threading
+import numpy as np, sys, time, threading
 from collections import deque
 from multiprocessing import Queue
 
@@ -84,12 +84,16 @@ class BufferMan(object):
   # sample data from Picoscope handled by instance ps
       ibufw = (ibufw + 1) % self.NBuffers # next write buffer
       while ibufw==self.ibufr:  # wait for consumer done with this buffer
-        if not self.RUNNING: return
+        if not self.RUNNING: 
+          if self.verbose: print ('*==* BufMan.acquireData()  ended')
+          return
         time.sleep(0.001)
 #
 # data acquisition from hardware
       ttrg, tl = self.rawDAQproducer(self.BMbuf[ibufw])
-      if ttrg == -1: return
+      if ttrg == -1: 
+        if self.verbose: print ('*==* BufMan.acquireData()  ended')
+        return
       tlife += tl
       self.timeStamp[ibufw] = ttrg  # store time when data became ready
       self.Ttrig = ttrg
@@ -98,7 +102,9 @@ class BufferMan(object):
        
 # wait for free buffer       
       while len(self.prod_que) == self.NBuffers:
-        if not self.RUNNING: return
+        if not self.RUNNING: 
+          if self.verbose: print ('*==* BufMan.acquireData()  ended')
+          return
         time.sleep(0.001)
       
 # calculate life time and read rate
@@ -110,7 +116,7 @@ class BufferMan(object):
         tlife = 0.
         ni=self.Ntrig
     # --- end while  
-    print ('*==* BufMan:   !!! acquireData()  ended')
+    if self.verbose: print ('*==* BufMan.acquireData()  ended')
     return
 # -- end def acquireData
 
@@ -128,7 +134,9 @@ class BufferMan(object):
     n=0
     while self.RUNNING:
       while not len(self.prod_que): # wait for data in producer queue
-        if not self.RUNNING: return
+        if not self.RUNNING:
+          if self.verbose: print ('*==* BufMan ended')
+          return
         time.sleep(0.001)
       evNr, self.ibufr = self.prod_que.popleft()
 
@@ -152,7 +160,7 @@ class BufferMan(object):
               l_obligatory.append(i)
             else:
               print('!=! manageDataBuffer: invalid request mode', req)
-              exit(1)
+              sys.exit(1)
 # check in other processes want data
       if len(self.mpQues):
         for Q in self.mpQues:
@@ -167,7 +175,9 @@ class BufferMan(object):
           for i in l_obligatory:
             if not len(self.request_ques[i]): done = False
           if done: break
-          if not self.RUNNING: return
+          if not self.RUNNING: 
+            if self.verbose: print ('*==* BufMan ended')
+            return
           time.sleep(0.001)        
 #  now signal to producer that all consumers are done with this event
       self.ibufr = -1
@@ -181,6 +191,8 @@ class BufferMan(object):
         if(evNr != n): 
           print ("!!! manageDataBuffer error: ncnt != Ntrig: %i, %i"%(n,evNr) )
 #   - end while True  
+    if self.verbose: print ('*==* BufMan ended')
+    return
 # -end def manageDataBuffer()
 
   def BMregister(self):

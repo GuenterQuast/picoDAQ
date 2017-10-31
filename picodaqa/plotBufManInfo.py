@@ -26,9 +26,10 @@ class plotBufManInfo(object):
 
   # create figure 
     self.fig = plt.figure("BufManInfo", figsize=(5.,2.5))
-    self.fig.subplots_adjust(left=0.125, bottom=0.2, right=0.99, top=0.85,
+    self.fig.subplots_adjust(left=0.05, bottom=0.2, right=0.925, top=0.85,
                wspace=None, hspace=.25)
     self.axes = self.fig.add_subplot(1,1,1)
+    self.axes.yaxis.tick_right()
     self.axes.set_title('Buffer Manager Information')
     self.axes.set_ylabel('acquisition rate (HZ)')
     self.axes.set_xlabel('rate history')
@@ -36,7 +37,7 @@ class plotBufManInfo(object):
 
   def init(self):
     self.line1, = self.axes.plot(self.xplt, self.R, 
-      marker = '*', markerfacecolor='b', linestyle='dashed', color='grey', )
+      marker = '.', markerfacecolor='b', linestyle='dashed', color='grey', )
     self.animtxt = self.axes.text(0.05, 0.925 , ' ',
               transform=self.axes.transAxes,
               size='small', color='darkblue')

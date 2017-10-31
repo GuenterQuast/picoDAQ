@@ -16,15 +16,19 @@ def obligConsumer(BM):
     
     for reasons of speed, only a pointer to the event buffer is returned
   '''
+
+  if not BM.RUNNING: sys.exit(1)
 # register with Buffer Manager
   myId = BM.BMregister()
   mode = 0    # obligatory consumer, request pointer to Buffer
 
   evcnt=0
   while BM.RUNNING:
-    evNr, evtime, evData = BM.getEvent(myId, mode=mode)
-    evcnt+=1
-    print('*==* obligConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
+    e = BM.getEvent(myId, mode=mode)
+    if e != None:
+      evNr, evtime, evData = e
+      evcnt+=1
+      print('*==* obligConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
 
 #    introduce random wait time to mimick processing activity
     time.sleep(-0.25 * np.log(np.random.uniform(0.,1.)) )
@@ -37,15 +41,18 @@ def randConsumer(BM):
       does nothing except requesting random data samples from buffer manager
   '''
 
+  if not BM.RUNNING: sys.exit(1)
   # register with Buffer Manager
   myId = BM.BMregister()
   mode = 1    # random consumer, request event copy
 
   evcnt=0
   while BM.RUNNING:
-    evNr, evtime, evData = BM.getEvent(myId, mode=mode)
-    evcnt+=1
-    print('*==* randConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
+    e = BM.getEvent(myId, mode=mode)
+    if e != None:
+      evNr, evtime, evData = e 
+      evcnt+=1
+      print('*==* randConsumer: event Nr %i, %i events seen'%(evNr,evcnt))
 # introduce random wait time to mimick processing activity
     time.sleep(np.random.randint(100,1000)/1000.)
 # - end def randConsumer()
@@ -56,6 +63,8 @@ def subprocConsumer(Q):
     test consumer in subprocess 
       reads event data from multiprocessing.Queue()
   '''    
+  if not BM.RUNNING: sys.exit(1)
+
   cnt = 0  
   try:         
     while True:

@@ -58,14 +58,14 @@ from exampleConsumers import *
 
 def cleanup():
     if verbose: print('  ending  -> cleaning up ')
-    RUNNING = False  # signal to background thrads
-    time.sleep(1)
     BM.end()         # tell buffer manager that we're done
     time.sleep(2)    #     and wait for tasks to finish
-    PSconf.picoDevObj.stop()
-    PSconf.picoDevObj.close()
-    if verbose>0: print('                      -> exit')
-    exit(0)
+    PSconf.picoDevice.stop()
+    PSconf.picoDevice.close()
+    RUNNING = False  # signal to background threads
+    time.sleep(1)
+#    if verbose>0: print('                      -> exit')
+#    sys.exit(0)
 
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
@@ -184,16 +184,17 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     get_input('\n                                  Press <ret> to end -> \n\n')
 
     print('picoDAQtest preparing to end ...')
+    cleanup()
     for prc in procs:
       prc.terminate()
-    cleanup()
     time.sleep(2)
 
   except KeyboardInterrupt:
 # END: code to clean up
     print('picoDAQtest: keyboard interrupt - preparing to end ...')
+    cleanup()
     for prc in procs:
       prc.terminate()
-    cleanup()
     time.sleep(2)
   
+  sys.exit()

@@ -72,4 +72,4 @@ def mpOsci(Q, conf, interval = 50.):
    
   except:
     print('*==* mpOsci: termination signal recieved')
-  exit()
+  sys.exit()

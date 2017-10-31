@@ -4,13 +4,13 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np, time
+import numpy as np, time, sys
 
 # class for PicoScope device
 from picoscope import ps2000a
-picoDevObj = ps2000a.PS2000a()  
+picoDevice = ps2000a.PS2000a()  
 #from picoscope import ps4000
-#picoDevObj = ps4000a.PS4000()  
+#picoDevice = ps4000a.PS4000()  
 
 class PSconfig(object):
   '''set PicoScope configuration'''
@@ -136,13 +136,13 @@ class PSconfig(object):
     self.NSamples = 0.
     self.CRanges = [0., 0., 0., 0.]
    
-    self.picoDevObj = picoDevObj
+    self.picoDevice = picoDevice
 
     try: 
       self.picoIni() # run initialisation routine for device  
     except:
       print("Error initialising device - exit")
-      exit(1)
+      sys.exit(1)
 # - end picoConf.__init__()
 
   def setSamplingPars(self, dT, NSamples, CRanges):
@@ -161,12 +161,12 @@ class PSconfig(object):
     if verbose>0: print("Opening PicsoScope device ...")
     if verbose>1:
       print("Found the following picoscope:")
-      print(self.picoDevObj.getAllUnitInfo())
+      print(self.picoDevice.getAllUnitInfo())
 
 # configure oscilloscope
 # 1) Time Base
     TSampling, NSamples, maxSamples = \
-      self.picoDevObj.setSamplingInterval(\
+      self.picoDevice.setSamplingInterval(\
        self.sampleTime/self.Nsamples, self.sampleTime)
     if verbose>0:
       print("  Sampling interval = %.4g µs (%.4g µs)" \
@@ -176,14 +176,14 @@ class PSconfig(object):
 # 2) Channel Ranges
       CRanges=[]
       for i, Chan in enumerate(self.picoChannels):
-        CRanges.append(picoDevObj.setChannel(Chan, self.ChanModes[i], 
+        CRanges.append(picoDevice.setChannel(Chan, self.ChanModes[i], 
                    self.ChanRanges[i], VOffset=self.ChanOffsets[i], 
                    enabled=True, BWLimited=False) )
         if verbose>0:
           print("  range channel %s: %.3gV (%.3gV)" % (self.picoChannels[i],
                   CRanges[i], self.ChanRanges[i]))
 # 3) enable trigger
-    picoDevObj.setSimpleTrigger(self.trgChan, self.trgThr, self.trgTyp,
+    picoDevice.setSimpleTrigger(self.trgChan, self.trgThr, self.trgTyp,
           self.trgDelay, self.trgTO, enabled=self.trgActive)    
     if verbose>0:
       print("  Trigger channel %s enabled: %.3gV %s" % (self.trgChan, 
@@ -191,7 +191,7 @@ class PSconfig(object):
 
 # 4) enable Signal Generator 
     if self.frqSG !=0. :
-      picoDevObj.setSigGenBuiltInSimple(frequency=self.frqSG, 
+      picoDevice.setSigGenBuiltInSimple(frequency=self.frqSG, 
          pkToPk=self.PkToPkSG, waveType=self.waveTypeSG, 
          offsetVoltage=self.offsetVoltageSG, sweepType=self.swpSG, 
          dwellTime=self.dwellTimeSG, stopFreq=self.stopFreqSG)
@@ -219,11 +219,11 @@ class PSconfig(object):
         ttrg: time when device became ready
         tlife life time of device
   '''
-    picoDevObj.runBlock(pretrig=self.pretrig) #
+    picoDevice.runBlock(pretrig=self.pretrig) #
     # wait for PicoScope to set up (~1ms)
     time.sleep(0.001) # set-up time not to be counted as "life time"
     ti=time.time()
-    while not picoDevObj.isReady():
+    while not picoDevice.isReady():
       if not self.BM.RUNNING: return -1, -1
       time.sleep(0.001)
     # waiting time for occurence of trigger is counted as life time
@@ -231,9 +231,9 @@ class PSconfig(object):
     tlife = ttrg - ti       # account life time
   # store raw data in global array 
     for i, C in enumerate(self.picoChannels):
-      picoDevObj.getDataRaw(C, self.NSamples, data=self.rawBuf[i])
-      picoDevObj.rawToV(C, self.rawBuf[i], buffer[i], dtype=np.float32)
+      picoDevice.getDataRaw(C, self.NSamples, data=self.rawBuf[i])
+      picoDevice.rawToV(C, self.rawBuf[i], buffer[i], dtype=np.float32)
 # alternative:
-     # picoDevObj.getDataV(C, NSamples, dataV=VBuf[ibufw,i], dtype=np.float32)
+     # picoDevice.getDataV(C, NSamples, dataV=VBuf[ibufw,i], dtype=np.float32)
     return ttrg, tlife
 # - end def acquirePicoData()

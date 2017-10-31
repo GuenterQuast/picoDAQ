@@ -101,7 +101,7 @@ class VoltMeter(object):
 # -- end VoltMeter.init()
 
   def __call__( self, evt ):
-    n, evTime, evData = evt    
+    n, evNr, evTime, evData = evt    
     if n == 0:
       return self.init()
 

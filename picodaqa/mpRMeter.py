@@ -71,4 +71,4 @@ def mpRMeter(Q, maxRate = 10. , interval = 2500.):
    
   except:
     print('*==* mpRMeter: termination signal recieved')
-  exit()
+  sys.exit()
