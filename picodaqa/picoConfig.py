@@ -158,7 +158,7 @@ class PSconfig(object):
     verbose = self.verbose
 
     if verbose>1: print(__doc__)
-    if verbose>0: print("Opening PicsoScope device ...")
+    if verbose>0: print("  Opening PicsoScope device ...")
     if verbose>1:
       print("Found the following picoscope:")
       print(self.picoDevice.getAllUnitInfo())
@@ -169,10 +169,10 @@ class PSconfig(object):
       self.picoDevice.setSamplingInterval(\
        self.sampleTime/self.Nsamples, self.sampleTime)
     if verbose>0:
-      print("  Sampling interval = %.4g µs (%.4g µs)" \
+      print("  > sampling interval = %.4g µs (%.4g µs)" \
                    % (TSampling*1E6, self.sampleTime*1E6/self.Nsamples ) )
-      print("  Number of samples = %d (%d)" % (NSamples, self.Nsamples))
-    #print("Maximum samples = %d" % maxSamples)
+      print("  > number of samples = %d (%d)" % (NSamples, self.Nsamples))
+      #print("  > maximum samples = %d" % maxSamples)
 # 2) Channel Ranges
       CRanges=[]
       for i, Chan in enumerate(self.picoChannels):
@@ -180,14 +180,17 @@ class PSconfig(object):
                    self.ChanRanges[i], VOffset=self.ChanOffsets[i], 
                    enabled=True, BWLimited=False) )
         if verbose>0:
-          print("  range channel %s: %.3gV (%.3gV)" % (self.picoChannels[i],
+          print("  > range channel %s: %.3gV (%.3gV)" % (self.picoChannels[i],
                   CRanges[i], self.ChanRanges[i]))
 # 3) enable trigger
     picoDevice.setSimpleTrigger(self.trgChan, self.trgThr, self.trgTyp,
           self.trgDelay, self.trgTO, enabled=self.trgActive)    
     if verbose>0:
-      print("  Trigger channel %s enabled: %.3gV %s" % (self.trgChan, 
+      if self.trgActive:
+        print("  > trigger channel %s enabled: %.3gV %s" % (self.trgChan, 
           self.trgThr, self.trgTyp))
+      else:
+        print("  > trigger inactive")
 
 # 4) enable Signal Generator 
     if self.frqSG !=0. :
@@ -196,7 +199,7 @@ class PSconfig(object):
          offsetVoltage=self.offsetVoltageSG, sweepType=self.swpSG, 
          dwellTime=self.dwellTimeSG, stopFreq=self.stopFreqSG)
       if verbose>0:
-        print(" -> Signal Generator enabled: %.3gHz, +/-%.3g V %s"\
+        print("  > signal generator enabled: %.3gHz, +/-%.3g V %s"\
             % (self.frqSG, self.PkToPkSG, self.waveTypeSG) )
         print("       sweep type %s, stop %.3gHz, Tdwell %.3gs" %\
             (self.swpSG, self.stopFreqSG, self.dwellTimeSG) )

@@ -85,7 +85,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     confdict=None
 
 # initialisation
-  print('-> initializing PicoScope')
+  print(' -> initializing PicoScope')
 
 # configure and initialize PicoScope
   PSconf=picodaqa.picoConfig.PSconfig(confdict)

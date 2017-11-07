@@ -80,7 +80,9 @@ def animInstruments(opmode, conf, BM):
   def yieldVMEvent():
 # random consumer of Buffer Manager, receives an event copy
    # this is useful for clients accessing only a subset of events
+#    if not BM.RUNNING: sys.exit(1)
     if not BM.RUNNING: sys.exit(1)
+
     myId = BM.BMregister()   # register with Buffer Manager
     mode = 1              # random consumer, request event copy
 
@@ -180,13 +182,10 @@ def animInstruments(opmode, conf, BM):
                          fargs=None, repeat=True, save_count=None))
    # save_count=None is a (temporary) workaround to fix memory leak in animate
 
-# plt.show() or plt.ion() must be run in same thread
   try:
-#    plt.ioff()
     plt.show()
-    print ('*==* AnimatedInstruments: animate exiting ...')
-    
+    print ('*==* AnimatedInstruments: exiting ...')    
   except: 
-    print ('!==! AnimatedInstruments: animate killed ...')
+    print ('!==! AnimatedInstruments: killed ...')
   
   sys.exit()  
