@@ -169,7 +169,7 @@ class PSconfig(object):
       self.picoDevice.setSamplingInterval(\
        self.sampleTime/self.Nsamples, self.sampleTime)
     if verbose>0:
-      print("  > sampling interval = %.4g µs (%.4g µs)" \
+      print("  > sampling interval = %.1g µs (%.1g µs)" \
                    % (TSampling*1E6, self.sampleTime*1E6/self.Nsamples ) )
       print("  > number of samples = %d (%d)" % (NSamples, self.Nsamples))
       #print("  > maximum samples = %d" % maxSamples)

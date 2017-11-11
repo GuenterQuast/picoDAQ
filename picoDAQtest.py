@@ -46,6 +46,7 @@ import picodaqa
 #  contais picoConfig, BufferMan, AnimatedInstruments, mpOSci, mpRMeter, ...
 
 from exampleConsumers import *
+from pulseFilter import *
 
 # !!!!
 # import matplotlib.pyplot as plt
@@ -98,7 +99,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # configure Buffer Manager  ...
   NBuffers= 16 # number of buffers for Buffer Manager
-  BM = picodaqa.BufferMan(NBuffers, NChannels, NSamples, 
+  BM = picodaqa.BufferMan(NBuffers, NChannels, NSamples, TSampling,
         PSconf.acquirePicoData)
 # ... tell device what its buffer manager is ...
   PSconf.setBufferManagerPointer(BM)
@@ -146,7 +147,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       mode_valid= True   
       RMcidx, RMmpQ = BM.BMregister_mpQ()
       procs.append(mp.Process(target = picodaqa.mpRMeter, 
-                              args=(RMmpQ, 10., 2500.) ) )
+                              args=(RMmpQ, 75., 2500.) ) )
 #                                     maxRate  interval
 #    if 'test' in mode:
 #      mode_valid= True   
@@ -173,6 +174,9 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       print ('!!! no valid mode - exiting')
       exit(1)
 
+# pulse shape analysis
+    pulseFilter(BM)
+
 # ---- run until key pressed
     # fist, remove pyhton 2 vs. python 3 incompatibility
     if sys.version_info[:2] <=(2,7):
@@ -196,5 +200,6 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     for prc in procs:
       prc.terminate()
     time.sleep(2)
+    sys.exit()
   
   sys.exit()

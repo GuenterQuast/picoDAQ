@@ -22,22 +22,23 @@ class BufferMan(object):
   of the consumers' progress)
   '''
 
-  def __init__(self, NBuffers, NChannels, NSamples, rawDAQproducer):
+  def __init__(self, NBuf, NChan, NSamp, TSamp, rawDAQproducer):
     ''' data structure for BufferManager '''
-    self.NBuffers = NBuffers
-    self.NChannels = NChannels
-    self.NSamples = NSamples
+    self.NBuffers = NBuf
+    self.NChannels = NChan
+    self.NSamples = NSamp
+    self.TSampling = TSamp
 
   # function collecting data from hardware device
     self.rawDAQproducer = rawDAQproducer  
 
   # set up event buffer
-    self.BMbuf = np.empty([NBuffers, NChannels, NSamples], dtype=np.float32 )
-    self.timeStamp = np.empty(NBuffers)
+    self.BMbuf = np.empty([NBuf, NChan, NSamp], dtype=np.float32 )
+    self.timeStamp = np.empty(NBuf    )
     self.ibufr = -1     # read index, used to synchronize with producer 
 
   # queues (collections.deque() for communication with threads
-    self.prod_que = deque(maxlen=NBuffers) # acquireData <-> manageDataBuffer
+    self.prod_que = deque(maxlen=NBuf    ) # acquireData <-> manageDataBuffer
     self.request_ques=[] # consumer request to manageDataBuffer
                 # 0:  request event pointer, obligatory consumer
                 # 1:  request event data, random consumer 
@@ -265,12 +266,13 @@ class BufferMan(object):
     self.RUNNING = True  
     thr_acquireData=threading.Thread(target=self.acquireData)
     thr_acquireData.daemon=True
-    thr_acquireData.setName('aquireData')
+    thr_acquireData.setName('acquireData')
     thr_acquireData.start()
 
     thr_manageDataBuffer=threading.Thread(target=self.manageDataBuffer)
     thr_manageDataBuffer.daemon=True
     thr_manageDataBuffer.setName('manageDataBuffer')
+    self.BMT0 = time.time()
     thr_manageDataBuffer.start()
 
   def setverbose(self, vlevel):

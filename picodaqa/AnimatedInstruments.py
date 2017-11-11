@@ -153,7 +153,7 @@ def animInstruments(opmode, conf, BM):
 # Buffer Manager Info
     if verbose>0: print(' -> plotBufManInfo starting')
     BMinterval=1000.
-    maxR = 10.  # maximum expected rate
+    maxR = 100.  # maximum expected rate
     BMi = plotBufManInfo(BM, maxR, BMinterval)
     figBMi = BMi.fig
     anims.append(anim.FuncAnimation(figBMi, BMi, sequence_gen,
@@ -187,5 +187,4 @@ def animInstruments(opmode, conf, BM):
     print ('*==* AnimatedInstruments: exiting ...')    
   except: 
     print ('!==! AnimatedInstruments: killed ...')
-  
   sys.exit()  
