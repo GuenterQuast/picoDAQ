@@ -166,11 +166,23 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # 
 
 # pulse shape analysis
-    filtInfoQ = mp.Queue(1) # information queue for Filter
-    procs.append(mp.Process(target = picodaqa.mpRMeter, 
-                args=(filtInfoQ, 12., 2500., 'muon rate history') ) )
-#                     mp.Queue  rate updte interval          
-# start background processes   
+    if 'filtRMeter' in mode:  # Rate Meter for event filter as sub-process
+      mode_valid= True   
+      filtRateQ = mp.Queue(1) # information queue for Filter
+      procs.append(mp.Process(target = picodaqa.mpRMeter, 
+                args=(filtRateQ, 12., 2500., 'muon rate history') ) )
+#                      mp.Queue  rate  update interval          
+
+    if 'pulseFilter' in mode: # event filter as thread 
+      mode_valid= True   
+      if 'filtRMeter' not in mode: filtRateQ = None
+      thrds.append(threading.Thread(target=pulseFilter,
+                                    args=(BM, filtRateQ, 1 ) ) )
+#                                             RateMeter Q   verbose    
+#   could also run this in main thread
+#     pulseFilter(BM, filtRateQ, verbose=1) 
+
+# start all background processes   
     for prc in procs:
       prc.deamon = True
       prc.start()
@@ -187,7 +199,6 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       print ('!!! no valid mode - exiting')
       exit(1)
 
-    pulseFilter(BM, filtInfoQ, verbose=1)
 
 # ---- run until key pressed
     # fist, remove pyhton 2 vs. python 3 incompatibility

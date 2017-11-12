@@ -1,6 +1,7 @@
 {
     "picoChannels":["A", "B"],
 "ChanRanges":  [0.3, 0.3],
+"ChanOffsets": [0.0, 0.0],
 "Nsamples": 1199,  
 "sampleTime": 5E-6, 
 "trgChan": "A",      
@@ -10,5 +11,5 @@
 "trgTO": 5000,        
 "pretrig": 0.25, 
 "frqSG": 0.0,
-"mode": ["mpBufInfo", "mpOsci"]
+"mode": ["mpBufInfo", "mpOsci", "pulseFilter", "filtRMeter"]
 }

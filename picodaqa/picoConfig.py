@@ -182,6 +182,8 @@ class PSconfig(object):
         if verbose>0:
           print("  > range channel %s: %.3gV (%.3gV)" % (self.picoChannels[i],
                   CRanges[i], self.ChanRanges[i]))
+          #print("  > channel offset %s: %.3gV" % (self.picoChannels[i],
+          #        self.ChanOffsets[i]))
 # 3) enable trigger
     picoDevice.setSimpleTrigger(self.trgChan, self.trgThr, self.trgTyp,
           self.trgDelay, self.trgTO, enabled=self.trgActive)    

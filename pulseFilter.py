@@ -39,7 +39,7 @@ def setRefPulse(dT):
   return l, rp
 
 
-def pulseFilter(BM, filtInfoQue = None, verbose=1):
+def pulseFilter(BM, filtRateQue = None, verbose=1):
   '''
     Find a pulse similar to a template pulse using cross-correlatation
     of signal and template pulse
@@ -145,8 +145,9 @@ def pulseFilter(BM, filtInfoQue = None, verbose=1):
 
       if(verbose and evcnt%1000==0):
           print("*==* pulseFilter: evNR %i, events accepted %i"%(evNr, evacc))
-      if filtInfoQue is not None and filtInfoQue.empty(): 
-        filtInfoQue.put( (evacc, evTime) ) 
+    # provide information mecessary for RateMeter
+      if filtRateQue is not None and filtRateQue.empty(): 
+        filtRateQue.put( (evacc, evTime) ) 
 
 #   -- end if e!=None  
 
