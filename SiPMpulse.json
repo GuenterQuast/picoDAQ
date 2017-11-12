@@ -5,10 +5,10 @@
 "sampleTime": 5E-6, 
 "trgChan": "A",      
 "ChanColors": ["darkblue", "sienna"],
-"trgThr": -35E-3,       
+"trgThr": -40E-3,       
 "trgTyp": "Falling",   
 "trgTO": 5000,        
 "pretrig": 0.25, 
 "frqSG": 0.0,
-"mode": ["BufInfo", "mpOsci", "mpRMeter"]
+"mode": ["mpBufInfo", "mpOsci", "mpRMeter"]
 }

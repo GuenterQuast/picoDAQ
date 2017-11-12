@@ -25,6 +25,7 @@ from .BufferMan import *
 from .AnimatedInstruments import *
 from .mpOsci import *
 from .mpRMeter import *
+from .mpBufManInfo import *
 
 _version_suffix = 'beta'  # for suffixes such as 'rc' or 'beta' or 'alpha'
 __version__ = _version_info._get_version_string()

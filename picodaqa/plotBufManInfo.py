@@ -10,13 +10,15 @@ import matplotlib.pyplot as plt
 class plotBufManInfo(object):
   ''' display statistics from Buffer Manager
 
-        uses BufferMan.getStatistics to display
+        uses BufferMan InfoQue to display
         total number of events, data acquisition rate,
         life time and buffer filling level
   '''
 
-  def __init__(self, BM, maxRate=20., interval=1000.):
-    self.BM = BM
+
+  def __init__(self, Q, maxRate=20., interval=1000.):
+    self.Q = Q
+ 
     self.maxRate = maxRate
     self.interval = interval/1000 # time between updates in s
 
@@ -51,7 +53,7 @@ class plotBufManInfo(object):
        self.init()
 
     k = n%self.Npoints
-    RUNNING, Ntrig, Ttrig, readrate, lifefrac, bufLevel = self.BM.getStatus()
+    RUNNING, Ntrig, Ttrig, readrate, lifefrac, bufLevel = self.Q.get()
     self.R[k] = readrate
       
     self.line1.set_ydata(np.concatenate( (self.R[k+1:], self.R[:k+1]) ))

@@ -47,6 +47,7 @@ class BufferMan(object):
 
   # multiprocessing Queues for data transfer to subprocesses
     self.mpQues = []
+    self.BMInfoQue = None
 
   # producer statistics
     self.Ntrig = 0
@@ -162,7 +163,7 @@ class BufferMan(object):
             else:
               print('!=! manageDataBuffer: invalid request mode', req)
               sys.exit(1)
-# check in other processes want data
+# check if other processes want data
       if len(self.mpQues):
         for Q in self.mpQues:
           if Q.empty(): # put an event in the Queue
@@ -286,6 +287,33 @@ class BufferMan(object):
     bL = (len(self.prod_que)*100)/self.NBuffers
     return self.RUNNING,self.Ntrig,self.Ttrig,self.readrate,self.lifefrac, bL 
 
+  def getBMInfoQue(self):
+    '''multiprocessing Queue for status information 
+
+       starts a background process to fill BMInfoQue
+
+       Returns: multiprocess Queue
+    '''
+
+    self.BMInfoQue = Queue(1) 
+  # start a background thread for reporting
+    thr_BMInfoQ = threading.Thread(target=self.reportStatus)
+    thr_BMInfoQ.daemon = True
+    thr_BMInfoQ.setName('BMreportStatus')
+    thr_BMInfoQ.start()
+
+    if self.verbose:
+      print("*==* BMInfoQue enabled")
+    return self.BMInfoQue
+
+  def reportStatus(self):
+    '''report Buffer manager staus to a multiprocessing Queue'''
+    while self.RUNNING:
+      if self.BMInfoQue is not None and self.BMInfoQue.empty(): 
+        bL = (len(self.prod_que)*100)/self.NBuffers
+        self.BMInfoQue.put( (self.RUNNING, self.Ntrig, self.Ttrig,
+                             self.readrate, self.lifefrac, bL) ) 
+      time.sleep(0.01)
 
   def end(self):
     self.RUNNING = False 

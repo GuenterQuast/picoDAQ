@@ -6,6 +6,13 @@ from __future__ import unicode_literals
 import time, numpy as np
 from scipy.signal import argrelmax
 
+# open a logfile
+datetime=time.strftime('%y%m%d-%H%M')
+logf = open('pF'+datetime+'.dat', 'w', 1)
+def printl(s, logfile=logf):
+  '''print to logfile'''
+  print(s, file=logfile)
+
 def setRefPulse(dT):
   '''generate reference pulse shape for convolution filter'''
   # pulse parameters
@@ -72,55 +79,66 @@ def pulseFilter(BM, verbose=1):
       evcnt+=1
       if verbose > 1:
         print('*==* pulseFilter: event Nr %i, %i events seen'%(evNr,evcnt))
-   # analyze signal data
-      idmxm = []         # time slice of valid maximum
-      vsig = []  # signal height in Volts
+
+# analyze signal data
+  # find signal candidates by convoluting signal with reference pulse
+      idSig = [] # time slice of valid pulse
+      VSig = []  # signal height in Volts
+      TSig = []
+      NSig = []
       for iC in range(NChan):
         cor = np.correlate(evData[iC], refp, mode='valid')
         cor[cor<pthr] = pthr # set all values below threshold to threshold
         idmx, = argrelmax(cor) # find maxima 
-# clean detected pulses: subtract constant offsets
-        idmxm.append([])
-        vsig.append([])
+# clean detected pulse candidates: subtract offsets
+        idSig.append([])
+        VSig.append([])
+        TSig.append([])
         for idx in idmx:
           evd = evData[iC, idx:idx+lref]
           evdm = evd - evd.mean()  # center signal candidate around zero
           cc = np.sum(evdm *refpm) # convolution with mean-corrected reference
           if cc > pthrm:          
-            idmxm[iC].append(idx)
-            vsig[iC].append(min(evd))
+            idSig[iC].append(idx)
+            VSig[iC].append(min(evd)) # signal Voltage
+            TSig[iC].append(idx*dT)   # signal Time in 
    #    -- end loop over pulse candidates
+        NSig.append( len(idSig[iC]) )
    #  -- end for loop over channels
 
    # check for coincidence of the two channels:
-      if( len(idmxm[0]) and len(idmxm[1]) ): 
-        if abs(idmxm[0][0]-idmxm[1][0]) < 2:
-          tevt = (idmxm[0][0]+idmxm[1][0])*dT/2.
+      if( NSig[0] and NSig[1] ): 
+        if abs(idSig[0][0]-idSig[1][0]) <= 2:   # coincidence in time <= 2 counts
+          tevt = (TSig[0][0]+TSig[1][0])/2.
           evacc +=1
           if verbose > 1:
-            print ('*==* pulseFoilter: coincidence seen', 
-                    evacc, tevt, vsig[0][0], vsig[1][0])  
-#      tmx = dT * np.array(idmxm, dtype=np.int32) # relative times of signal pulses
-  #  check for double pulse on either channel
-          if(len(idmxm[0])==2 or len(idmxm[1])==2 ): 
+            print ('*==* pulseFilter: coincidence seen', 
+                    evacc, tevt, VSig[0][0], VSig[1][0])  
+    #  check for double pulse on either channel
+          if(NSig[0] >=2 or NSig[1] >=2 ): 
             Ndble += 1
-          if(len(idmxm[0])>1):
-            deltaT2=dT*idmxm[0][1]-tevt
-            print(" *==* pulseFilter: Ndble, deltaT, V:",
-                   Ndble, deltaT2*1E6, vsig[0])
-          elif(len(idmxm[1])>1):
-            deltaT2=dT*idmxm[1][1]-tevt
-            print(" *==* pulseFilter: Nblde, deltaT, V:",
-                  Ndble, deltaT2*1E6, vsig[1])
+            delT2=np.zeros(NChan)
+            sig2=np.zeros(NChan)
+            for iC in range(NChan):
+              if NSig[iC]==2: 
+                delT2[iC]=(TSig[iC][1]-tevt)*1E6
+                sig2[iC]=VSig[iC][1]
+            s = '%i, %i, %.4g, %.4g, %.3g, %.3g'\
+                   %(evacc, Ndble, delT2[0], delT2[1], sig2[0], sig2[1])
+            if verbose: 
+              print('*==* PulseFilter: evNr, evDble, dT2i, sig2i: ' + s)
+            printl(s)
+         #-- 
      #-- end if coincidence
 
       if(verbose and evcnt%1000==0):
-          print(" *==* pulseFilter: evNR %i, events accepted %i"%(evNr, evacc))
+          print("*==* pulseFilter: evNR %i, events accepted %i"%(evNr, evacc))
 #   -- end if e!=None  
 
 #    introduce random wait time to mimick processing activity
 #    time.sleep(-0.25 * np.log(np.random.uniform(0.,1.)) )
  #-- end BM.RUNNING
+  logf.close()
   return
 #-end def pulseFilter
 

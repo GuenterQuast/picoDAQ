@@ -142,7 +142,8 @@ def animInstruments(opmode, conf, BM):
     if verbose>0: print(' -> Ratemeter starting')
     RMinterval=1000.
     maxR = 10.  # maximum expected rate
-    RM = RMeter(maxR, RMinterval, BM)
+    name = 'trigger rate history'
+    RM = RMeter(maxR, RMinterval, name, BM)
     figRM = RM.fig
     anims.append(anim.FuncAnimation(figRM, RM, yieldRMEvent,
                          interval=RMinterval, init_func=RM.init,
@@ -154,7 +155,7 @@ def animInstruments(opmode, conf, BM):
     if verbose>0: print(' -> plotBufManInfo starting')
     BMinterval=1000.
     maxR = 100.  # maximum expected rate
-    BMi = plotBufManInfo(BM, maxR, BMinterval)
+    BMi = plotBufManInfo(BM.getBMInfoQue(), maxR, BMinterval )
     figBMi = BMi.fig
     anims.append(anim.FuncAnimation(figBMi, BMi, sequence_gen,
                          interval=BMinterval, init_func=BMi.init,
@@ -175,8 +176,9 @@ def animInstruments(opmode, conf, BM):
 # Oscilloscope
     if verbose>0: print(' -> Oscilloscope starting')
     Interval = 50.
-#    Osci = Oscilloscope(conf, BM)
-    Osci = Oscilloscope(conf)
+    name = 'event rate'
+#    Osci = Oscilloscope(conf, name, BM)
+    Osci = Oscilloscope(conf, name)
     figOs = Osci.fig
     anims.append(anim.FuncAnimation(figOs, Osci, yieldOsEvent, interval=Interval,                                         init_func=Osci.init, blit=True,
                          fargs=None, repeat=True, save_count=None))

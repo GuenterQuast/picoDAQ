@@ -137,25 +137,33 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # modules to be run as a subprocess
 #     use multiprocessing.Queue for data transfer
+    if 'mpBufInfo' in mode: 
+      mode_valid= True
+      maxBMrate = 100.
+      BMIinterval = 1000.
+      procs.append(mp.Process(target = picodaqa.mpBufManInfo, 
+           args=(BM.getBMInfoQue(), maxBMrate, BMIinterval) ) )
+#                  BM InfoQue      max. rate  update interval
+
     if 'mpOsci' in mode: 
       mode_valid= True   
       OScidx, OSmpQ = BM.BMregister_mpQ()
       procs.append(mp.Process(target = picodaqa.mpOsci, 
-                              args=(OSmpQ, PSconf, 50.) ) )
+                              args=(OSmpQ, PSconf, 50., 'event rate') ) )
 #                                                interval
     if 'mpRMeter' in mode: # as subprocess,
       mode_valid= True   
       RMcidx, RMmpQ = BM.BMregister_mpQ()
       procs.append(mp.Process(target = picodaqa.mpRMeter, 
-                              args=(RMmpQ, 75., 2500.) ) )
-#                                     maxRate  interval
+                args=(RMmpQ, 75., 2500., 'trigger rate history') ) )
+#                         maxRate interval name
+
 #    if 'test' in mode:
 #      mode_valid= True   
 #      cidx, mpQ = BM.BMregister_mpQ()
 #    procs.append(mp.Process(target = subprocConsumer, 
 #                 args=(mpQ,) ) )
 # 
-
 
 # start background processes   
     for prc in procs:

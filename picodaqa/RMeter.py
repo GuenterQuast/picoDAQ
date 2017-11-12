@@ -14,7 +14,8 @@ class RMeter(object):
       from single events requested at regular intervals
   '''
 
-  def __init__(self, maxRate=20., interval= 2500., BM = None):
+  def __init__(self, 
+         maxRate=20., interval= 2500., name='rate history', BM = None):
     '''
       Args:
         MaxRate: maximum expected rate (for y-scale of plot)
@@ -34,7 +35,7 @@ class RMeter(object):
     self.axes.yaxis.tick_right()
     #self.axes.set_title('')
     self.axes.set_ylabel('rate (HZ)')
-    self.axes.set_xlabel('rate history')
+    self.axes.set_xlabel(name)
     self.axes.set_ylim(0., self.maxRate)
 
   def init(self):

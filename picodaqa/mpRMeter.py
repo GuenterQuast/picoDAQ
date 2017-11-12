@@ -21,7 +21,7 @@ import numpy as np, matplotlib.pyplot as plt, matplotlib.animation as anim
 # import RMeter class
 from .RMeter import *
 
-def mpRMeter(Q, maxRate = 10. , interval = 2500.):
+def mpRMeter(Q, maxRate = 10. , interval = 2500., name='rate history'):
   '''RateMeter: show rate history
     Args:
       conf: picoConfig object
@@ -48,7 +48,7 @@ def mpRMeter(Q, maxRate = 10. , interval = 2500.):
   print(' -> mpRMeter starting')
 
   try:
-    RM = RMeter(maxRate, interval)
+    RM = RMeter(maxRate, interval, name)
     figRM = RM.fig
 
 # generate a simple window for graphics display as a tk.DrawingArea

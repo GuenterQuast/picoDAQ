@@ -9,11 +9,12 @@ import time, numpy as np, matplotlib.pyplot as plt
 class Oscilloscope(object):
   ''' Oscilloscope: display channel readings in time domain'''
 
-  def __init__(self, conf, BM = None):
+  def __init__(self, conf, name='event rate', BM = None):
     ''' Args:
           conf: picoConfig instance 
           BM:   BufferMan instance (optional)
     ''' 
+    self.name = name
 
     self.picoChannels = conf.picoChannels
     self.NChannels = conf.NChannels
@@ -131,7 +132,7 @@ class Oscilloscope(object):
       if self.BM != None: 
         txt='rate: %.3gHz  life: %.0f%%' %(self.BM.readrate, self.BM.lifefrac)
       else:
-        txt='event rate: %.3g Hz' %(rate)
+        txt = self.name + ': %.3g Hz'%(rate)
       self.animtxtOs.set_text(txt)
       self.n0=n
     return self.graphsOs + (self.animtxtOs,)
