@@ -165,6 +165,11 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 #                 args=(mpQ,) ) )
 # 
 
+# pulse shape analysis
+    filtInfoQ = mp.Queue(1) # information queue for Filter
+    procs.append(mp.Process(target = picodaqa.mpRMeter, 
+                args=(filtInfoQ, 12., 2500., 'muon rate history') ) )
+#                     mp.Queue  rate updte interval          
 # start background processes   
     for prc in procs:
       prc.deamon = True
@@ -182,8 +187,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       print ('!!! no valid mode - exiting')
       exit(1)
 
-# pulse shape analysis
-    pulseFilter(BM)
+    pulseFilter(BM, filtInfoQ, verbose=1)
 
 # ---- run until key pressed
     # fist, remove pyhton 2 vs. python 3 incompatibility

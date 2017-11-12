@@ -36,10 +36,12 @@ def mpRMeter(Q, maxRate = 10. , interval = 2500., name='rate history'):
     cnt = 0
     try:
       while True:
-        evNr, evTime, evData = Q.get()
+        e = Q.get()
+        evNr = e[0]
+        evTime = e[1] 
         #print('*==* yieldEvt_fromQ: received event %i' % evNr)
         cnt+=1
-        evt = (cnt, evNr, evTime, evData)
+        evt = (cnt, evNr, evTime)
         yield evt
     except:
       print('*==* yieldEvt_fromQ: termination signal recieved')

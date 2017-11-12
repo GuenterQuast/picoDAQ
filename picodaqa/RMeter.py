@@ -52,7 +52,9 @@ class RMeter(object):
     return self.line1, self.animtxt  
 
   def __call__(self, evt):
-    n, evNr, evTime, evData = evt
+    n = evt[0]
+    evNr = evt[1]
+    evTime = evt[2]
     if n < 3:
       self.init()
       self.T0 = evTime

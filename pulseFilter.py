@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import time, numpy as np
 from scipy.signal import argrelmax
+from multiprocessing import Queue
 
 # open a logfile
 datetime=time.strftime('%y%m%d-%H%M')
@@ -38,7 +39,7 @@ def setRefPulse(dT):
   return l, rp
 
 
-def pulseFilter(BM, verbose=1):
+def pulseFilter(BM, filtInfoQue = None, verbose=1):
   '''
     Find a pulse similar to a template pulse using cross-correlatation
     of signal and template pulse
@@ -73,9 +74,11 @@ def pulseFilter(BM, verbose=1):
   Ndble=0
   T0 = time.time()
   while BM.RUNNING:
+    accepted = False
+    doublePulse = False
     e = BM.getEvent(myId, mode=mode)
     if e != None:
-      evNr, evtime, evData = e
+      evNr, evTime, evData = e
       evcnt+=1
       if verbose > 1:
         print('*==* pulseFilter: event Nr %i, %i events seen'%(evNr,evcnt))
@@ -107,32 +110,44 @@ def pulseFilter(BM, verbose=1):
    #  -- end for loop over channels
 
    # check for coincidence of the two channels:
-      if( NSig[0] and NSig[1] ): 
-        if abs(idSig[0][0]-idSig[1][0]) <= 2:   # coincidence in time <= 2 counts
+      if NChan == 1 and NSig[0]:  # one valid pulse found, accept event
+        tevt = TSig[0][0]
+        evacc +=1
+        accepted = True
+      elif NChan==2 and NSig[0] and NSig[1]: 
+        if abs(idSig[0][0]-idSig[1][0]) <= 2: # coincidence in time <= 2 counts
           tevt = (TSig[0][0]+TSig[1][0])/2.
           evacc +=1
+          accepted = True
           if verbose > 1:
             print ('*==* pulseFilter: coincidence seen', 
                     evacc, tevt, VSig[0][0], VSig[1][0])  
-    #  check for double pulse on either channel
-          if(NSig[0] >=2 or NSig[1] >=2 ): 
-            Ndble += 1
-            delT2=np.zeros(NChan)
-            sig2=np.zeros(NChan)
-            for iC in range(NChan):
-              if NSig[iC]==2: 
-                delT2[iC]=(TSig[iC][1]-tevt)*1E6
-                sig2[iC]=VSig[iC][1]
-            s = '%i, %i, %.4g, %.4g, %.3g, %.3g'\
-                   %(evacc, Ndble, delT2[0], delT2[1], sig2[0], sig2[1])
-            if verbose: 
-              print('*==* PulseFilter: evNr, evDble, dT2i, sig2i: ' + s)
-            printl(s)
-         #-- 
      #-- end if coincidence
+
+      if accepted:
+    #  check for double pulse on either channel
+        delT2=np.zeros(NChan)
+        sig2=np.zeros(NChan)
+        for iC in range(NChan):
+          if NSig[iC]==2: 
+            doublePulse = True
+            delT2[iC]=(TSig[iC][1]-tevt)*1E6
+            sig2[iC]=VSig[iC][1]
+     #-- end if accepted
+      if doublePulse:
+        Ndble += 1
+        s = '%i, %i, %.4g, %.4g, %.3g, %.3g'\
+             %(evacc, Ndble, delT2[0], delT2[1], sig2[0], sig2[1])
+        printl(s)
+        if verbose: 
+          print('*==* PulseFilter: evNr, evDble, dT2i, sig2i: ' + s)
+     #-- end if doublePulse
 
       if(verbose and evcnt%1000==0):
           print("*==* pulseFilter: evNR %i, events accepted %i"%(evNr, evacc))
+      if filtInfoQue is not None and filtInfoQue.empty(): 
+        filtInfoQue.put( (evacc, evTime) ) 
+
 #   -- end if e!=None  
 
 #    introduce random wait time to mimick processing activity

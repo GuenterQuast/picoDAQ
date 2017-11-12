@@ -10,5 +10,5 @@
 "trgTO": 5000,        
 "pretrig": 0.25, 
 "frqSG": 0.0,
-"mode": ["mpBufInfo", "mpOsci", "mpRMeter"]
+"mode": ["mpBufInfo", "mpOsci"]
 }

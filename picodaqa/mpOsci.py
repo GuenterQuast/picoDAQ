@@ -21,7 +21,7 @@ import numpy as np, matplotlib.pyplot as plt, matplotlib.animation as anim
 # import Oscilloscope class
 from .Oscilloscope import *
 
-def mpOsci(Q, conf, interval = 50.):
+def mpOsci(Q, conf, interval = 50., name='event rate'):
   '''Oscilloscpe display of data passed via multiprocessing.Queue
     Args:
       conf: picoConfig object
@@ -49,7 +49,7 @@ def mpOsci(Q, conf, interval = 50.):
 
   try:
 
-    Osci = Oscilloscope(conf)
+    Osci = Oscilloscope(conf, name)
     figOs = Osci.fig
 
 # generate a simple window for graphics display as a tk.DrawingArea
