@@ -1,7 +1,7 @@
 {
     "picoChannels":["A", "B"],
-"ChanRanges":  [0.3, 0.3],
-"ChanOffsets": [0.0, 0.0],
+"ChanRanges":  [0.2, 0.2],
+"ChanOffsets": [0.15, 0.15],
 "Nsamples": 1199,  
 "sampleTime": 5E-6, 
 "trgChan": "A",      

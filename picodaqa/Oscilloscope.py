@@ -22,6 +22,7 @@ class Oscilloscope(object):
     self.TSampling = conf.TSampling
     self.pretrig = conf.pretrig
     self.CRanges = conf.CRanges     # channel voltage ranges (hw settings)
+    self.ChanOffsets = conf.ChanOffsets
     self.ChanColors = conf.ChanColors
     self.trgChan = conf.trgChan
     self.trgActive = conf.trgActive
@@ -51,7 +52,8 @@ class Oscilloscope(object):
     axes=[]
 # channel A
     axes.append(fig.add_subplot(1,1,1, facecolor='ivory'))
-    axes[0].set_ylim(-self.CRanges[0], self.CRanges[0])
+    axes[0].set_ylim(-self.CRanges[0]-self.ChanOffsets[0], 
+                      self.CRanges[0]-self.ChanOffsets[0])
     axes[0].grid(True)
     axes[0].set_ylabel("Chan. A     Voltage (V)",
                    size='x-large',color = self.ChanColors[0])
@@ -59,7 +61,8 @@ class Oscilloscope(object):
 # channel B
     if len(self.picoChannels)>1:
       axes.append(axes[0].twinx())
-      axes[1].set_ylim(-self.CRanges[1], self.CRanges[1])
+      axes[1].set_ylim(-self.CRanges[1]-self.ChanOffsets[1], 
+                        self.CRanges[1]-self.ChanOffsets[1])
       axes[1].set_ylabel("Chan. B     Voltage (V)",
                  size='x-large', color = self.ChanColors[1])
       axes[1].tick_params(axis='y', colors = self.ChanColors[1])
