@@ -100,10 +100,11 @@ class BufferMan(object):
         time.sleep(0.01)
 
 # data acquisition from hardware
-      ttrg, tl = self.rawDAQproducer(self.BMbuf[ibufw])
-      if ttrg == -1: 
+      e = self.rawDAQproducer(self.BMbuf[ibufw])
+      if e == None: 
         if self.verbose: print ('*==* BufMan.acquireData()  ended')
         return
+      ttrg, tl = e
       tlife += tl
       self.timeStamp[ibufw] = ttrg  # store time when data became ready
       self.Ttrig = ttrg

@@ -229,7 +229,7 @@ class PSconfig(object):
     time.sleep(0.001) # set-up time not to be counted as "life time"
     ti=time.time()
     while not picoDevice.isReady():
-      if not self.BM.RUNNING: return -1, -1
+      if not self.BM.ACTIVE: return
       time.sleep(0.001)
     # waiting time for occurence of trigger is counted as life time
     ttrg=time.time()
