@@ -49,7 +49,7 @@ def pulseFilter(BM, filtRateQue = None, verbose=1):
         subtracting the pulse mean to increase sensitivity to the shape     
   '''
 
-  if not BM.RUNNING: sys.exit(1)
+  if not BM.ACTIVE: sys.exit(1)
 # register with Buffer Manager
   myId = BM.BMregister()
   mode = 0    # obligatory consumer, request pointer to Buffer
@@ -73,7 +73,7 @@ def pulseFilter(BM, filtRateQue = None, verbose=1):
   evacc=0
   Ndble=0
   T0 = time.time()
-  while BM.RUNNING:
+  while BM.ACTIVE:
     accepted = False
     doublePulse = False
     e = BM.getEvent(myId, mode=mode)
@@ -153,7 +153,7 @@ def pulseFilter(BM, filtRateQue = None, verbose=1):
 
 #    introduce random wait time to mimick processing activity
 #    time.sleep(-0.25 * np.log(np.random.uniform(0.,1.)) )
- #-- end BM.RUNNING
+ #-- end BM.ACTIVE
   logf.close()
   return
 #-end def pulseFilter

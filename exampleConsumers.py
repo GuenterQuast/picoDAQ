@@ -17,13 +17,13 @@ def obligConsumer(BM):
     for reasons of speed, only a pointer to the event buffer is returned
   '''
 
-  if not BM.RUNNING: sys.exit(1)
+  if not BM.ACTIVE: sys.exit(1)
 # register with Buffer Manager
   myId = BM.BMregister()
   mode = 0    # obligatory consumer, request pointer to Buffer
 
   evcnt=0
-  while BM.RUNNING:
+  while BM.ACTIVE:
     e = BM.getEvent(myId, mode=mode)
     if e != None:
       evNr, evtime, evData = e
@@ -41,13 +41,13 @@ def randConsumer(BM):
       does nothing except requesting random data samples from buffer manager
   '''
 
-  if not BM.RUNNING: sys.exit(1)
+  if not BM.ACTIVE: sys.exit(1)
   # register with Buffer Manager
   myId = BM.BMregister()
   mode = 1    # random consumer, request event copy
 
   evcnt=0
-  while BM.RUNNING:
+  while BM.ACTIVE:
     e = BM.getEvent(myId, mode=mode)
     if e != None:
       evNr, evtime, evData = e 
@@ -63,7 +63,7 @@ def subprocConsumer(Q):
     test consumer in subprocess 
       reads event data from multiprocessing.Queue()
   '''    
-  if not BM.RUNNING: sys.exit(1)
+  if not BM.ACTIVE: sys.exit(1)
 
   cnt = 0  
   try:         

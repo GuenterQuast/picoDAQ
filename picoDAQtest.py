@@ -63,7 +63,6 @@ def cleanup():
     time.sleep(2)    #     and wait for tasks to finish
     PSconf.picoDevice.stop()
     PSconf.picoDevice.close()
-    RUNNING = False  # signal to background threads
     time.sleep(1)
 #    if verbose>0: print('                      -> exit')
 #    sys.exit(0)
@@ -106,8 +105,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # ... and start data acquisition thread.
   if verbose>0:
     print(" -> starting Buffer Manager Threads")   
-  RUNNING = True
-  BM.run()  
+  BM.start() # set up buffer manager processes  
 
 # for this example, mode encodes what to do ...
   mode = PSconf.mode
@@ -193,6 +191,8 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       thrd.daemon = True
       thrd.start()
         
+# start run
+    BM.run()
 
 # -> put your own code here - for the moment, we simply wait ...
     if not mode_valid:

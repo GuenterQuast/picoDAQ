@@ -80,14 +80,14 @@ def animInstruments(opmode, conf, BM):
   def yieldVMEvent():
 # random consumer of Buffer Manager, receives an event copy
    # this is useful for clients accessing only a subset of events
-#    if not BM.RUNNING: sys.exit(1)
-    if not BM.RUNNING: sys.exit(1)
+#    if not BM.ACTIVE: sys.exit(1)
+    if not BM.ACTIVE: sys.exit(1)
 
     myId = BM.BMregister()   # register with Buffer Manager
     mode = 1              # random consumer, request event copy
 
     evCnt=0
-    while BM.RUNNING:
+    while BM.ACTIVE:
       e = BM.getEvent(myId, mode=mode)
       if e != None:
   #    print('*==* yieldEventCopy: received event %i' % evNr)
@@ -96,13 +96,13 @@ def animInstruments(opmode, conf, BM):
 
   def yieldOsEvent():
 # random consumer of Buffer Manager
-    if not BM.RUNNING: sys.exit(1)
+    if not BM.ACTIVE: sys.exit(1)
 
     myId = BM.BMregister()   # register with Buffer Manager
     mode = 1              # random consumer, request event copy
 
     cnt=0
-    while BM.RUNNING:
+    while BM.ACTIVE:
       e = BM.getEvent(myId, mode=mode)
       if e != None:
   #      print('*==* yieldEventCopy: received event %i' % evNr)
@@ -111,12 +111,12 @@ def animInstruments(opmode, conf, BM):
 
   def yieldRMEvent():
 # random consumer of Buffer Manager
-    if not BM.RUNNING: sys.exit(1)
+    if not BM.ACTIVE: sys.exit(1)
     myId = BM.BMregister()   # register with Buffer Manager
     mode = 1              # random consumer, request event copy
 
     cnt=0
-    while BM.RUNNING:
+    while BM.ACTIVE:
       e = BM.getEvent(myId, mode=mode)
       if e != None:
   #    print('*==* yieldEventCopy: received event %i' % evNr)
@@ -126,7 +126,7 @@ def animInstruments(opmode, conf, BM):
   def sequence_gen():
   # generator for sequence of integers
     i=0
-    while BM.RUNNING:
+    while BM.ACTIVE:
       i+=1
       yield i
     return

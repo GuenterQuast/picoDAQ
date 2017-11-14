@@ -37,6 +37,11 @@ class BufferMan(object):
     self.timeStamp = np.empty(NBuf    )
     self.ibufr = -1     # read index, used to synchronize with producer 
 
+  # set up status 
+    self.BMT0 = 0
+    self.ACTIVE = False
+    self.RUNNING = False
+
   # queues (collections.deque() for communication with threads
     self.prod_que = deque(maxlen=NBuf    ) # acquireData <-> manageDataBuffer
     self.request_ques=[] # consumer request to manageDataBuffer
@@ -82,15 +87,18 @@ class BufferMan(object):
     ts = time.time()
   
     ibufw = -1   # buffer index
-    while self.RUNNING:
+    while self.ACTIVE:
   # sample data from Picoscope handled by instance ps
       ibufw = (ibufw + 1) % self.NBuffers # next write buffer
       while ibufw==self.ibufr:  # wait for consumer done with this buffer
-        if not self.RUNNING: 
+        if not self.ACTIVE: 
           if self.verbose: print ('*==* BufMan.acquireData()  ended')
           return
         time.sleep(0.001)
 #
+      while not self.RUNNING:   # wait for running status 
+        time.sleep(0.01)
+
 # data acquisition from hardware
       ttrg, tl = self.rawDAQproducer(self.BMbuf[ibufw])
       if ttrg == -1: 
@@ -104,7 +112,7 @@ class BufferMan(object):
        
 # wait for free buffer       
       while len(self.prod_que) == self.NBuffers:
-        if not self.RUNNING: 
+        if not self.ACTIVE: 
           if self.verbose: print ('*==* BufMan.acquireData()  ended')
           return
         time.sleep(0.001)
@@ -134,9 +142,9 @@ class BufferMan(object):
     t0=time.time()
     n0=0
     n=0
-    while self.RUNNING:
+    while self.ACTIVE:
       while not len(self.prod_que): # wait for data in producer queue
-        if not self.RUNNING:
+        if not self.ACTIVE:
           if self.verbose: print ('*==* BufMan ended')
           return
         time.sleep(0.001)
@@ -172,12 +180,12 @@ class BufferMan(object):
 
 # wait until all obligatory consumers are done
       if len(l_obligatory):
-        while self.RUNNING:
+        while self.ACTIVE:
           done = True
           for i in l_obligatory:
             if not len(self.request_ques[i]): done = False
           if done: break
-          if not self.RUNNING: 
+          if not self.ACTIVE: 
             if self.verbose: print ('*==* BufMan ended')
             return
           time.sleep(0.001)        
@@ -252,7 +260,7 @@ class BufferMan(object):
     self.request_ques[client_index].append(mode)
     cq=self.consumer_ques[client_index]
     while not len(cq):
-        if not self.RUNNING: return
+        if not self.ACTIVE: return
         time.sleep(0.01)
   #print('*==* getEvent: received event %i'%evNr)
     if mode !=0: # received copy of the event data
@@ -263,8 +271,8 @@ class BufferMan(object):
       evData = self.BMbuf[ibr]
       return evNr, evTime, evData
 #
-  def run(self):
-    self.RUNNING = True  
+  def start(self):
+    self.ACTIVE = True  
     thr_acquireData=threading.Thread(target=self.acquireData)
     thr_acquireData.daemon=True
     thr_acquireData.setName('acquireData')
@@ -273,9 +281,15 @@ class BufferMan(object):
     thr_manageDataBuffer=threading.Thread(target=self.manageDataBuffer)
     thr_manageDataBuffer.daemon=True
     thr_manageDataBuffer.setName('manageDataBuffer')
-    self.BMT0 = time.time()
     thr_manageDataBuffer.start()
 
+  def run(self):
+    self.RUNNING = True  
+    if self.BMT0==0: self.BMT0 = time.time() # remember start time
+
+  def pause(self):
+    self.RUNNING = False  
+  
   def setverbose(self, vlevel):
     self.verbose = vlevel
 
@@ -308,7 +322,7 @@ class BufferMan(object):
 
   def reportStatus(self):
     '''report Buffer manager staus to a multiprocessing Queue'''
-    while self.RUNNING:
+    while self.ACTIVE:
       if self.BMInfoQue is not None and self.BMInfoQue.empty(): 
         bL = (len(self.prod_que)*100)/self.NBuffers
         self.BMInfoQue.put( (self.RUNNING, self.Ntrig, self.Ttrig,
@@ -317,7 +331,10 @@ class BufferMan(object):
 
   def end(self):
     self.RUNNING = False 
+    time.sleep(0.1)
+    self.ACTIVE = False 
 
   def __del__(self):
     self.RUNNING = False
+    self.ACTIVE = False
 # - end class BufferMan

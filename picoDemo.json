@@ -12,5 +12,5 @@
 "pretrig": 0.05, 
 "frqSG": 100E3,
 "swpSG": "UpDown",
-"mode": ["BufInfo", "mpOsci", "test", "VMeter", "mpRMeter"]
+"mode": ["mpBufInfo", "mpOsci", "test", "VMeter", "mpRMeter"]
 }
