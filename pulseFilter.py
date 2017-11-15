@@ -7,13 +7,6 @@ import time, numpy as np
 from scipy.signal import argrelmax
 from multiprocessing import Queue
 
-# open a logfile
-datetime=time.strftime('%y%m%d-%H%M')
-logf = open('pF'+datetime+'.dat', 'w', 1)
-def printl(s, logfile=logf):
-  '''print to logfile'''
-  print(s, file=logfile)
-
 def setRefPulse(dT):
   '''generate reference pulse shape for convolution filter'''
   # pulse parameters
@@ -48,6 +41,13 @@ def pulseFilter(BM, filtRateQue = None, verbose=1):
       - cleaning of detected pulses in second step by
         subtracting the pulse mean to increase sensitivity to the shape     
   '''
+
+# open a logfile
+  datetime=time.strftime('%y%m%d-%H%M')
+  logf = open('pF'+datetime+'.dat', 'w', 1)
+  def printl(s, logfile=logf):
+    '''print to logfile'''
+    print(s, file=logfile)
 
   if not BM.ACTIVE: sys.exit(1)
 # register with Buffer Manager

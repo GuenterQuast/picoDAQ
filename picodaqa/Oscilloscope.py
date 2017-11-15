@@ -45,30 +45,37 @@ class Oscilloscope(object):
     self.BM = BM
 
 # set up a figure to plot samplings from Picoscope
-                 # !!! code will need revision for more than 2 channels 
-    fig=plt.figure("Oscilloscope", figsize=(6., 4.) )
-    fig.subplots_adjust(left=0.13, bottom=0.125, right=0.87, top=0.925,
-                    wspace=None, hspace=.25)
     axes=[]
-# channel A
-    axes.append(fig.add_subplot(1,1,1, facecolor='ivory'))
-    axes[0].set_ylim(-self.CRanges[0]-self.ChanOffsets[0], 
-                      self.CRanges[0]-self.ChanOffsets[0])
-    axes[0].grid(True)
-    axes[0].set_ylabel("Chan. A     Voltage (V)",
-                   size='x-large',color = self.ChanColors[0])
-    axes[0].tick_params(axis='y', colors = self.ChanColors[0])
-# channel B
-    if len(self.picoChannels)>1:
+    if self.NChannels <= 2:
+      fig=plt.figure("Oscilloscope", figsize=(6., 4.) )
+      axes.append(fig.add_subplot(1,1,1, facecolor='ivory'))
+      if len(self.picoChannels)>1:
+        axes.append(axes[0].twinx())
+      fig.subplots_adjust(left=0.13, bottom=0.125, right=0.87, top=0.925,
+                    wspace=0., hspace=.25)
+    else:
+      fig=plt.figure("Oscilloscope", figsize=(6., 6.) )
+      axes.append(fig.add_subplot(2, 1, 1, facecolor='ivory'))
       axes.append(axes[0].twinx())
-      axes[1].set_ylim(-self.CRanges[1]-self.ChanOffsets[1], 
-                        self.CRanges[1]-self.ChanOffsets[1])
-      axes[1].set_ylabel("Chan. B     Voltage (V)",
-                 size='x-large', color = self.ChanColors[1])
-      axes[1].tick_params(axis='y', colors = self.ChanColors[1])
+      axes.append(fig.add_subplot(2, 1, 2, facecolor='ivory'))
+      if self.NChannels > 3:
+        axes.append(axes[2].twinx())
+      fig.subplots_adjust(left=0.13, bottom=0.1, right=0.87, top=0.925,
+                    wspace=-0.1, hspace=.25)
+        
+    for i in range(self.NChannels):
+      axes[i].set_ylim(-self.CRanges[i]-self.ChanOffsets[i], 
+                      self.CRanges[i]-self.ChanOffsets[i])
+      axes[i].grid(True)
+      axes[i].set_ylabel(self.picoChannels[i] + "     Voltage (V)",
+                   size='x-large',color = self.ChanColors[i])
+      axes[i].tick_params(axis='y', color = self.ChanColors[i])
 
 # time base
-    axes[0].set_xlabel("Time "+self.TUnit, size='x-large') 
+    if self.NChannels <=2:
+      axes[0].set_xlabel("Time "+self.TUnit, size='x-large') 
+    else:
+      axes[2].set_xlabel("Time "+self.TUnit, size='x-large') 
 
 # trigger settings
     trgidx=self.picoChannels.index(self.trgChan)
@@ -90,6 +97,7 @@ class Oscilloscope(object):
             color='lightgrey', fontstyle='italic', 
             fontname='arial', family='monospace',
             horizontalalignment='right')
+
     # store graphics objects in class instance
     self.fig = fig
     self.axes=axes
