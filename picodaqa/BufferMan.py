@@ -97,6 +97,9 @@ class BufferMan(object):
         time.sleep(0.001)
 #
       while not self.RUNNING:   # wait for running status 
+        if not self.ACTIVE: 
+          if self.verbose: print ('*==* BufMan.acquireData()  ended')
+          return
         time.sleep(0.01)
 
 # data acquisition from hardware
