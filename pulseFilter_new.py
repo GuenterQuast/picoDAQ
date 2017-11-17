@@ -24,7 +24,7 @@ def setRefPulse(dT):
     else:
       return pheight * ((t-taur)/tauf - 1.)
 
-  l = np.int32( (taur+tauf)/dT +0.5) + 1  
+  l = np.int32( (taur+tauf)/dT +0.5 ) + 1  
   ti = np.linspace(0, taur+tauf, l)    
   rp = np.zeros(l)
   for i, t in enumerate(ti):
@@ -68,10 +68,11 @@ def pulseFilter(BM, fileout = False, filtRateQue = None, verbose=1):
     print('  thresholds: %.2g, %2g ' %(pthr, pthrm))
 
 # start event loop
-  evcnt=0
-  evacc=0
-  evval=0
-  Ndble=0
+  evcnt=0  # events seen
+  Nval=0  # events with valid pulse shape on trigger channel
+  Nacc2=0  # dual coincidences
+  Nacc3=0     # triple coincidences
+  Ndble=0  # double pulses
   T0 = time.time()
   while BM.ACTIVE:
     validated = False
@@ -104,7 +105,7 @@ def pulseFilter(BM, fileout = False, filtRateQue = None, verbose=1):
           cc = np.sum(evdm *refpm) # convolution with mean-corrected reference
           if cc > pthrm:          
             idSig[iC].append(idx)
-            VSig[iC].append(min(evd)) # signal Voltage
+            VSig[iC].append( max(abs(evd)) ) # signal Voltage 
             TSig[iC].append(idx*dT)   # signal Time in 
    #    -- end loop over pulse candidates
         NSig.append( len(idSig[iC]) )
@@ -112,28 +113,32 @@ def pulseFilter(BM, fileout = False, filtRateQue = None, verbose=1):
 
       if NSig[0]:
         validated = True
-        evval +=1
+        Nval +=1
 
   # check for coincidence of two channels:
       if NChan == 1 and validated:  # one valid pulse found, accept event
         tevt = TSig[0][0]
-        evacc +=1
         accepted = True
       # coincidence of two channles if more than one counter
       elif NChan==2 and validated and NSig[1] and\
             abs(idSig[0][0]-idSig[1][0]) < 3: 
         tevt = (TSig[0][0]+TSig[1][0])/2.
-        evacc +=1
+        Nacc2 +=1
         accepted = True
       elif NChan==3 and validated:
-        if NSig[1] and abs(idSig[0][0]-idSig[1][0]) <= 2: 
+        if NSig[1] and NSig[2] and\
+            abs(idSig[0][0]-idSig[1][0])<3 and abs(idSig[0][0]-idSig[2][0])<3:
+          accepted = True      
+          tevt = (TSig[0][0]+TSig[1][0]+TSig[2][0])/3.
+          Nacc3 +=1
+        elif NSig[1] and abs(idSig[0][0]-idSig[1][0]) <= 2: 
+          accepted = True
           tevt = (TSig[0][0]+TSig[1][0])/2.
-          evacc +=1
-          accepted = True
+          Nacc2 +=1
         elif NSig[2] and abs(idSig[0][0]-idSig[2][0]) <= 2: 
-          tevt = (TSig[0][0]+TSig[2][0])/2.
-          evacc +=1
           accepted = True
+          tevt = (TSig[0][0]+TSig[2][0])/2.
+          Nacc2 +=1
      #-- end if dual coincidence
      
       if accepted:
@@ -149,22 +154,30 @@ def pulseFilter(BM, fileout = False, filtRateQue = None, verbose=1):
         if doublePulse: Ndble += 1
 
 # eventually store results in file(s)
-# 1. validated trigger signal
+# 1. all data with validated trigger signal
 #      if fileout and validated:
 #        print(evNr, evTime, *VSig, *TSig, sep=', ', file=logf)
 # 2. double pulse 
       if fileout and doublePulse:
         s = '%1, %i, %.4g, %.4g, %.3g, %.3g'\
-             %(evacc, Ndble, delT2[0], delT2[1], sig2[0], sig2[1])
+             %(Nacc2, Ndble, delT2[0], delT2[1], sig2[0], sig2[1])
         print('*==* double pulse: evNr, evDble, dT2i, sig2i: ' + s,
                 file=logf)
 # print to screen 
       if accepted and verbose > 1:
-        print ('*==* pulseFilter  %i, %.2f, %.3g, %.3g'\
-                %(evacc, tevt, VSig[0][0], VSig[1][0]) )
+        if NChan ==1:
+          print ('*==* pulseFilter  %i, %i, %.2f, %.3g, %.3g'\
+                %(evcnt, Nval, tevt, VSig[0][0]) )
+        elif NChan ==2:
+          print ('*==* pulseFilter  %i, %i, i%, %.3g, %.3g, %.3g'\
+                %(evcnt, Nval, Nacc2, tevt, VSig[0][0], VSig[1][0]) )
+        elif NChan ==3:
+          print ('*==* pulseFilter  %i, %i, %i, %1, %.3g'\
+                %(evcnt, Nval, Nacc2, Nacc3, tevt) )
+
       if(verbose and evcnt%1000==0):
-          print("*==* pulseFilter: evNR %i, valid and accepted %i, %i"\
-                %(evNr, evval, evacc))
+          print("*==* pulseFilter: evNR %i, Nval, Nacc2, Nacc3 %i, %i"\
+                %(evcnt, Nval, Nacc2, Nacc3))
       if verbose and doublePulse:
           s = '%1, %i, %.4g, %.4g, %.3g, %.3g'\
               %(evacc, Ndble, delT2[0], delT2[1], sig2[0],sig2[1])
@@ -172,7 +185,7 @@ def pulseFilter(BM, fileout = False, filtRateQue = None, verbose=1):
 
 # provide information mecessary for RateMeter
       if filtRateQue is not None and filtRateQue.empty(): 
-        filtRateQue.put( (evacc, evTime) ) 
+        filtRateQue.put( (Nacc2+Nacc3, evTime) ) 
 
 #   -- end if e!=None  
 
