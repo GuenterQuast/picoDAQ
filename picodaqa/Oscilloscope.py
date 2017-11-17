@@ -90,8 +90,11 @@ class Oscilloscope(object):
       axes[0].axhline(0., color='k', linestyle='-.', lw=2, alpha = 0.7)
       trgax.axhline(self.trgThr, color=trgcol, 
          linestyle='--', alpha = 0.7)
-      trgax.axvline(0., color=trgcol, 
+      axes[0].axvline(0., color=trgcol, 
          linestyle='--', alpha = 0.5)
+      if self.NChannels>2:
+        axes[2].axvline(0., color=trgcol, 
+           linestyle='--', alpha = 0.5)
     else:
       axes[0].set_title("Trigger: none",
             color='lightgrey', fontstyle='italic', 
