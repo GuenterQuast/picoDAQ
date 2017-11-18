@@ -12,7 +12,7 @@ def setRefPulse(dT):
   # pulse parameters
   taur = 20E-9 # rise time in sec
   tauf = 140E-9 # fall-off time in sec
-  pheight = 0.025 # pulse height in Volt
+  pheight = 0.030 # pulse height in Volt
 
   # helper function 
   def sigshape(t):
@@ -32,7 +32,7 @@ def setRefPulse(dT):
   return l, rp
 
 
-def pulseFilter(BM, filtRateQue = None, verbose=1, fileout = None):
+def pulseFilter(BM, filtRateQue = None, fileout = None, verbose=1):
   '''
     Find a pulse similar to a template pulse using cross-correlatation
     of signal and template pulse
@@ -42,14 +42,18 @@ def pulseFilter(BM, filtRateQue = None, verbose=1, fileout = None):
         subtracting the pulse mean to increase sensitivity to the shape     
   '''
 
+# buffermanager must be active
+  if not BM.ACTIVE: 
+    if verbose: print("*==* pulseFilter: Buffer Manager not active, exiting")
+    sys.exit(1)
+
 # open a logfile
   if fileout:
     datetime=time.strftime('%y%m%d-%H%M')
-    logf = open('pFilter_' + datetime+'.dat', 'w')
-    logf2 = open('pFilter2_' + datetime+'.dat', 'w', 1)
-
-  if not BM.ACTIVE: sys.exit(1)
-# register with Buffer Manager
+#    logf = open('pFilt_' + datetime+'.dat', 'w')
+    logf2 = open('dpFilt_' + datetime+'.dat', 'w', 1)
+    
+# register this client with Buffer Manager
   myId = BM.BMregister()
   mode = 0    # obligatory consumer, request pointer to Buffer
 
@@ -115,7 +119,7 @@ def pulseFilter(BM, filtRateQue = None, verbose=1, fileout = None):
         validated = True
         Nval +=1
 
-  # check for coincidence of two channels:
+# count validated and accepted events
       if NChan == 1 and validated:  # one valid pulse found, accept event
         tevt = TSig[0][0]
         accepted = True
@@ -146,11 +150,11 @@ def pulseFilter(BM, filtRateQue = None, verbose=1, fileout = None):
         delT2=np.zeros(NChan)
         sig2=np.zeros(NChan)
         for iC in range(NChan):
-          if NSig[iC] == 2: 
+          if NSig[iC] == 2 and TSig[iC][1] > tevt:
             doublePulse = True
             delT2[iC]=(TSig[iC][1]-tevt)*1E6
             sig2[iC]=VSig[iC][1]
-     #-- end if accepted
+   #-- end if accepted
         if doublePulse: Ndble += 1
 
 # eventually store results in file(s)
@@ -159,10 +163,9 @@ def pulseFilter(BM, filtRateQue = None, verbose=1, fileout = None):
 #        print(evNr, evTime, *VSig, *TSig, sep=', ', file=logf)
 # 2. double pulse 
       if fileout and doublePulse:
-        s = '%1, %i, %.4g, %.4g, %.3g, %.3g'\
-             %(Nacc2+Nacc3, Ndble, delT2[0], delT2[1], sig2[0], sig2[1])
-        print('*==* double pulse: Nacc, Ndble, dT2i, sig2i: ' + s,
-                file=logf)
+        print('%i, %i, %.4g, %.4g, %.3g, %.3g'\
+          %(Nacc2+Nacc3, Ndble, delT2[0], delT2[1], sig2[0], sig2[1]),
+                file=logf2)
 # print to screen 
       if accepted and verbose > 1:
         if NChan ==1:

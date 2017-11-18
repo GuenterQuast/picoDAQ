@@ -175,8 +175,8 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       mode_valid= True   
       if 'filtRMeter' not in mode: filtRateQ = None
       thrds.append(threading.Thread(target=pulseFilter,
-                                    args=(BM, filtRateQ, 1 ) ) )
-#                                             RateMeter Q   verbose    
+                                    args=(BM, filtRateQ, True, 1) ) )
+#                                              RMeterQ fileout  verbose    
 #   could also run this in main thread
 #     pulseFilter(BM, filtRateQ, verbose=1) 
 
