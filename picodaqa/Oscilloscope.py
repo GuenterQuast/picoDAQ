@@ -66,7 +66,7 @@ class Oscilloscope(object):
     for i in range(self.NChannels):
       axes[i].set_ylim(-self.CRanges[i]-self.ChanOffsets[i], 
                       self.CRanges[i]-self.ChanOffsets[i])
-      axes[i].grid(True)
+      axes[i].grid(True, color=self.ChanColors[i], linestyle = '--', alpha=0.5)
       axes[i].set_ylabel(self.picoChannels[i] + "     Voltage (V)",
                    size='x-large',color = self.ChanColors[i])
       axes[i].tick_params(axis='y', color = self.ChanColors[i])
@@ -82,20 +82,19 @@ class Oscilloscope(object):
     trgax=axes[trgidx]
     trgcol=self.ChanColors[trgidx]
     if self.trgActive:      
-      axes[0].set_title("Trigger: %s, %.3gV %s" \
+      trgax.set_title("Trigger: %s, %.3gV %s" \
               % (self.trgChan, self.trgThr, self.trgTyp),
             color=trgcol,
             fontstyle='italic', fontname='arial', family='monospace',
             horizontalalignment='right')
-      axes[0].axhline(0., color='k', linestyle='-.', lw=2, alpha = 0.7)
       trgax.axhline(self.trgThr, color=trgcol, 
          linestyle='--', alpha = 0.7)
       axes[0].axvline(0., color=trgcol, 
-         linestyle='--', alpha = 0.5)
+           linestyle='--', alpha = 0.5)
       if self.NChannels>2:
         axes[2].axvline(0., color=trgcol, 
            linestyle='--', alpha = 0.5)
-    else:
+    else: # no active trigger channel 
       axes[0].set_title("Trigger: none",
             color='lightgrey', fontstyle='italic', 
             fontname='arial', family='monospace',
