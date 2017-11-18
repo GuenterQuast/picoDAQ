@@ -10,12 +10,12 @@ but - most importantly for this project - also with a software development kit
 high-level languages. 
 
 Provided here is a data acquisition system as is needed to record, 
-analyse, classify and count the occurrence of wave forms such as provided 
+analyze, classify and count the occurrence of wave forms such as provided 
 for example by single-photon counters or typical detectors common in 
 nuclear, particle physics and astro particle-physics.
 
 This project is a first prototype towards the goal of acquiring,
-analysing and counting the occurrence of typical electrical waveforms
+analyzing and counting the occurrence of typical electrical waveforms
 resulting from the registered occurrence of an 'event' in a one-channel,
 single particle detector such as photo tubes, Geiger counters, avalanche
 photo diodes or SiPMs.
@@ -23,7 +23,7 @@ photo diodes or SiPMs.
 The random nature of such processes and the need to keep read-out dead 
 times low requires an input buffer and a buffer manager running as a 
 background process. Data are provided via the buffer manager 
-interface to several consumer processes to analyse, check or visualise 
+interface to several consumer processes to analyze, check or visualize 
 data and analysis results. Such consumers may be obligatory ones, 
 i. e. data acquisition pauses if all input buffers are full and an 
 obligatory consumer is still busy processing. A second type of random 
@@ -32,13 +32,13 @@ without pausing the data acquisition process. Typical examples of
 random consumers are displays of a subset of the wave forms or of 
 intermediate analysis results. Examples for such consumers are provided
 as part of this package, running either as a 'thread' within the python  
-interpreter or as subprocesses using the 'multiprocessing' package.
+interpreter or as sub-processes using the 'multiprocessing' package.
 
 
-This project originated as a demonstration to analyse pulses from a 
+This project originated as a demonstration to analyze pulses from a 
 photomultiplier (PM) or a Silicon Photo Multiplier (SiPM) registering  
-optical signals from  a detector - a coffeepot with water in the 
-simplest case. 
+optical signals from  a detector, in the simplest case a coffeepot
+with water equipped with am PM. 
 
 
 **Requirements**:
@@ -80,21 +80,27 @@ implemented **Functions**:
          (class *RMeter*). The module must run as a *python* *thread* in
          the same *python* interpreter as *BufferMan*
 
+  module *mpBufManInfo*
+  
+      - this subprocess receives status information from the Buffer Manager  
+        via a multiprocessing Queue and displays input rate history,   
+        filling level of the buffers and the life time of the  
+        data acquisition 
+      
   module *mpOsci*
 
       - runs an instance of *Oscilloscpe* as a subprocess, and receives
         data from *BufferMan* via a multiprocessing Queue.
 
- module *mpRMeter* 
+  module *mpRMeter* 
 
       - runs an instance of the *RMeter* class as a subprocess, receiving
         data from *BufferMan* via a multiprocessing Queue.
 
+The script *picoDACtest.py* gives an example of how to use all of the above. For a full demo, connect the output of a PicoScope's signal generator to channel B, and eventually an open cable to Channel A to see random noise. Use the configuration file *picoDemo.json*. 
 
-The example *picoDACtest.py* gives an example of how to use all of the
-above. For a full demo, connect the output of a PicoScope's signal 
-generator to channel B, and eventually an open cable to Channel A to 
-see random noise. Use the configuration file *picoDemo.json*. 
+The consumer *pulseFilter.py* is an implementation of a convolution filter to search for characteristic signals in an input waveform. 
+
 
 **Installation**
 
