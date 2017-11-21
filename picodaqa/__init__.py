@@ -17,7 +17,8 @@
 """
 
 # Import version info
-import _version_info
+#import ._version_info
+from ._version_info import *
 
 # Import main components
 from .picoConfig import *
