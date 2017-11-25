@@ -27,6 +27,7 @@ from .AnimatedInstruments import *
 from .mpOsci import *
 from .mpRMeter import *
 from .mpLogWin import *
+from .mpHist import *
 from .mpBufManInfo import *
 
 _version_suffix = 'beta'  # for suffixes such as 'rc' or 'beta' or 'alpha'
