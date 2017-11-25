@@ -118,6 +118,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     mode_valid = False
     thrds = []
     procs =[]
+    
     if ('osci' in mode) or ('VMeter' in mode) or\
        ('RMeter' in mode) or ('BufInfo' in mode):
       mode_valid= True
@@ -135,6 +136,12 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # modules to be run as a subprocess
 #     use multiprocessing.Queue for data transfer
+
+  # logging window for buffer manager
+    logQ = mp.Queue()
+    procs.append(mp.Process(target = picodaqa.mpLogWin, 
+                        args=(logQ, ) ) )
+
     if 'mpBufInfo' in mode: 
       mode_valid= True
       maxBMrate = 100.
@@ -192,7 +199,8 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       thrd.start()
         
 # start run
-    BM.run()
+    BM.setLogQ(logQ) # redirect output to loggin Queue
+    BM.run() 
 
 # -> put your own code here - for the moment, we simply wait ...
     if not mode_valid:

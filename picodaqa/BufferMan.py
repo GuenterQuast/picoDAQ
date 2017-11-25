@@ -62,6 +62,7 @@ class BufferMan(object):
     self.BMlock = threading.Lock() 
 
     self.verbose = 1
+    self.logQ = None
     
   def acquireData(self):
     '''
@@ -76,7 +77,7 @@ class BufferMan(object):
      Communicates with consumer via collections.deque()
 
     '''
-#    print ('*==* BufMan:  !!! acquireData starting')
+#    self.prlog('*==* BufMan:  !!! acquireData starting')
     self.Ntrig = 0    # count number of readings
     self.Ttrig = 0    # time of last event
     self.readrate = 0.
@@ -92,20 +93,20 @@ class BufferMan(object):
       ibufw = (ibufw + 1) % self.NBuffers # next write buffer
       while ibufw==self.ibufr:  # wait for consumer done with this buffer
         if not self.ACTIVE: 
-          if self.verbose: print ('*==* BufMan.acquireData()  ended')
+          if self.verbose: self.prlog ('*==* BufMan.acquireData()  ended')
           return
         time.sleep(0.001)
 #
       while not self.RUNNING:   # wait for running status 
         if not self.ACTIVE: 
-          if self.verbose: print ('*==* BufMan.acquireData()  ended')
+          if self.verbose: self.prlog('*==* BufMan.acquireData()  ended')
           return
         time.sleep(0.01)
 
 # data acquisition from hardware
       e = self.rawDAQproducer(self.BMbuf[ibufw])
       if e == None: 
-        if self.verbose: print ('*==* BufMan.acquireData()  ended')
+        if self.verbose: self.prlog('*==* BufMan.acquireData()  ended')
         return
       ttrg, tl = e
       tlife += tl
@@ -117,7 +118,7 @@ class BufferMan(object):
 # wait for free buffer       
       while len(self.prod_que) == self.NBuffers:
         if not self.ACTIVE: 
-          if self.verbose: print ('*==* BufMan.acquireData()  ended')
+          if self.verbose: self.prlog('*==* BufMan.acquireData()  ended')
           return
         time.sleep(0.001)
       
@@ -130,7 +131,7 @@ class BufferMan(object):
         tlife = 0.
         ni=self.Ntrig
     # --- end while  
-    if self.verbose: print ('*==* BufMan.acquireData()  ended')
+    if self.verbose: self.prlog('*==* BufMan.acquireData()  ended')
     return
 # -- end def acquireData
 
@@ -149,12 +150,12 @@ class BufferMan(object):
     while self.ACTIVE:
       while not len(self.prod_que): # wait for data in producer queue
         if not self.ACTIVE:
-          if self.verbose: print ('*==* BufMan ended')
+          if self.verbose: self.prlog('*==* BufMan ended')
           return
         time.sleep(0.001)
       evNr, self.ibufr = self.prod_que.popleft()
 
-# !debug    print('ibufr=', self.ibufr,'request_ques',self.request_ques)
+# !debug    self.prlog('ibufr=', self.ibufr,'request_ques',self.request_ques)
 
 # check if other threads want data
       l_obligatory=[]
@@ -173,7 +174,7 @@ class BufferMan(object):
               self.consumer_ques[i].append( (evNr, evTime, np.copy(BMbuf[self.ibufr]) ) )
               l_obligatory.append(i)
             else:
-              print('!=! manageDataBuffer: invalid request mode', req)
+              self.prlog('!=! manageDataBuffer: invalid request mode', req)
               sys.exit(1)
 # check if other processes want data
       if len(self.mpQues):
@@ -190,7 +191,7 @@ class BufferMan(object):
             if not len(self.request_ques[i]): done = False
           if done: break
           if not self.ACTIVE: 
-            if self.verbose: print ('*==* BufMan ended')
+            if self.verbose: self.prlog('*==* BufMan ended')
             return
           time.sleep(0.001)        
 #  now signal to producer that all consumers are done with this event
@@ -198,14 +199,14 @@ class BufferMan(object):
 
 # print event rate
       n+=1
-      if time.time()-t0 >= 10:
+      if time.time()-t0 >= 60:
         t0=time.time()
-        if self.verbose>1:
-          print('evt %i:  rate: %.3gHz   life: %.2f%%' % (n, self.readrate, self.lifefrac))
+        if self.verbose:
+          self.prlog('evt %i:  rate: %.3gHz   life: %.2f%%' % (n, self.readrate, self.lifefrac))
         if(evNr != n): 
-          print ("!!! manageDataBuffer error: ncnt != Ntrig: %i, %i"%(n,evNr) )
+          self.prlog("!!! manageDataBuffer error: ncnt != Ntrig: %i, %i"%(n,evNr) )
 #   - end while True  
-    if self.verbose: print ('*==* BufMan ended')
+    if self.verbose: self.prlog('*==* BufMan ended')
     return
 # -end def manageDataBuffer()
 
@@ -224,7 +225,7 @@ class BufferMan(object):
     self.BMlock.release()
   
     if self.verbose:
-      print("*==* BMregister: new client id=%i" % client_index)
+      self.prlog("*==* BMregister: new client id=%i" % client_index)
     return client_index
 
   def BMregister_mpQ(self):
@@ -242,7 +243,7 @@ class BufferMan(object):
     cid=len(self.mpQues)-1
   
     if self.verbose:
-      print("*==* BMregister_mpQ: new subprocess client id=%i" % cid)
+      self.prlog("*==* BMregister_mpQ: new subprocess client id=%i" % cid)
     return cid, self.mpQues[-1]
 
   def getEvent(self, client_index, mode=1):
@@ -266,7 +267,7 @@ class BufferMan(object):
     while not len(cq):
         if not self.ACTIVE: return
         time.sleep(0.01)
-  #print('*==* getEvent: received event %i'%evNr)
+    #self.prlog('*==* getEvent: received event %i'%evNr)
     if mode !=0: # received copy of the event data
       return cq.popleft()
     else: # received pointer to event buffer
@@ -276,6 +277,7 @@ class BufferMan(object):
       return evNr, evTime, evData
 #
   def start(self):
+    if self.verbose: self.prlog('*==* BufferMan  starting acquisition threads')
     self.ACTIVE = True  
     thr_acquireData=threading.Thread(target=self.acquireData)
     thr_acquireData.daemon=True
@@ -288,10 +290,14 @@ class BufferMan(object):
     thr_manageDataBuffer.start()
 
   def run(self):
+    if self.BMT0==0: 
+       if self.verbose: self.prlog('*==* BufferMan T0')
+       self.BMT0 = time.time()        # remember start time
+    if self.verbose: self.prlog('*==* BufferMan start running')
     self.RUNNING = True  
-    if self.BMT0==0: self.BMT0 = time.time() # remember start time
 
   def pause(self):
+    if self.verbose: self.prlog('*==* BufferMan  pause')
     self.RUNNING = False  
   
   def setverbose(self, vlevel):
@@ -321,7 +327,7 @@ class BufferMan(object):
     thr_BMInfoQ.start()
 
     if self.verbose:
-      print("*==* BMInfoQue enabled")
+      self.prlog("*==* BMInfoQue enabled")
     return self.BMInfoQue
 
   def reportStatus(self):
@@ -333,10 +339,24 @@ class BufferMan(object):
                              self.readrate, self.lifefrac, bL) ) 
       time.sleep(0.01)
 
+  def setLogQ(self, Q):
+    '''set a Queue for log messages'''
+    self.logQ = Q
+
+  def prlog(self, m):
+    ''' send a Message, to screen or to LogQ'''
+    t = time.time() - self.BMT0 # add time stamp to message
+    s = '%.2f '%(t) + m  
+    if self.logQ is None:
+      print(s)
+    else:
+      self.logQ.put(s)
+
   def end(self):
     self.RUNNING = False 
     time.sleep(0.1)
     self.ACTIVE = False 
+    if self.verbose: self.prlog('*==* BufferMan ending')
 
   def __del__(self):
     self.RUNNING = False
