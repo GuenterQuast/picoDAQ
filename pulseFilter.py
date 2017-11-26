@@ -47,6 +47,8 @@ def pulseFilter(BM, filtRateQue = None, fileout = None, verbose=1):
     if verbose: print("*==* pulseFilter: Buffer Manager not active, exiting")
     sys.exit(1)
 
+# print information to log-window via BufferManager prlog
+  prlog = BM.prlog
 # open a logfile
   if fileout:
     datetime=time.strftime('%y%m%d-%H%M')
@@ -67,9 +69,9 @@ def pulseFilter(BM, filtRateQue = None, fileout = None, verbose=1):
   pthr = np.sum(refp * refp) # norm of reference pulse
   pthrm = np.sum(refpm * refpm) # norm of mean-subtracted reference pulse
   if verbose > 1:
-    print('*==* pulse Filter: reference pulse')
-    print(refp)
-    print('  thresholds: %.2g, %2g ' %(pthr, pthrm))
+    prlog('*==* pulse Filter: reference pulse')
+    prlog(np.array_str(refp) )
+    prlog('  thresholds: %.2g, %2g ' %(pthr, pthrm))
 
 # start event loop
   evcnt=0  # events seen
@@ -87,7 +89,7 @@ def pulseFilter(BM, filtRateQue = None, fileout = None, verbose=1):
       evNr, evTime, evData = e
       evcnt+=1
       if verbose > 1:
-        print('*==* pulseFilter: event Nr %i, %i events seen'%(evNr,evcnt))
+        prlog('*==* pulseFilter: event Nr %i, %i events seen'%(evNr,evcnt))
 
 # analyze signal data
   # find signal candidates by convoluting signal with reference pulse
@@ -169,22 +171,22 @@ def pulseFilter(BM, filtRateQue = None, fileout = None, verbose=1):
 # print to screen 
       if accepted and verbose > 1:
         if NChan ==1:
-          print ('*==* pulseFilter  %i, %i, %.2f, %.3g, %.3g'\
+          prlog ('*==* pulseFilter  %i, %i, %.2f, %.3g, %.3g'\
                 %(evcnt, Nval, tevt, VSig[0][0]) )
         elif NChan ==2:
-          print ('*==* pulseFilter  %i, %i, i%, %.3g, %.3g, %.3g'\
+          prlog ('*==* pulseFilter  %i, %i, i%, %.3g, %.3g, %.3g'\
                 %(evcnt, Nval, Nacc2, tevt, VSig[0][0], VSig[1][0]) )
         elif NChan ==3:
-          print ('*==* pulseFilter  %i, %i, %i, %1, %.3g'\
+          prlog ('*==* pulseFilter  %i, %i, %i, %1, %.3g'\
                 %(evcnt, Nval, Nacc2, Nacc3, tevt) )
 
       if(verbose and evcnt%1000==0):
-          print("*==* pulseFilter: evNR %i, Nval, Nacc2, Nacc3: %i, %i, %i"\
+          prlog("*==* pulseFilter: evNR %i, Nval, Nacc2, Nacc3: %i, %i, %i"\
                 %(evcnt, Nval, Nacc2, Nacc3))
       if verbose and doublePulse:
           s = '%i, %i, %.4g, %.4g, %.3g, %.3g'\
               %(Nacc2+Nacc3, Ndble, delT2[0], delT2[1], sig2[0],sig2[1])
-          print('*==* double pulse: Nacc, Ndble, dT2i, sig2i: ' + s)
+          prlog('*==* double pulse: Nacc, Ndble, dT2i, sig2i: ' + s)
 
 # provide information necessary for RateMeter
       if filtRateQue is not None and filtRateQue.empty(): 
