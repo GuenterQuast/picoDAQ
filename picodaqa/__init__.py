@@ -11,18 +11,20 @@
 **picodaqa**
     *PicoScope: data qcquisition and analysis*  
 
-    a collction of toos to aquire data from a hardware device, buffer
-    and distribute data to consumer processes 
+    a collction of toos to aquire data from a hardware device, 
+    buffer and distribute data to consumer processes, and analyse
+    waveform data 
 
 """
 
 # Import version info
-#import ._version_info
 from ._version_info import *
+# and set version 
+_version_suffix = 'beta'  # for suffixes such as 'rc' or 'beta' or 'alpha'
+__version__ = _version_info._get_version_string()
+__version__ += _version_suffix
 
-# Import main components
-from .picoConfig import *
-from .BufferMan import *
+# Import components to be callabel at package level
 from .AnimatedInstruments import *
 from .mpOsci import *
 from .mpRMeter import *
@@ -30,6 +32,3 @@ from .mpLogWin import *
 from .mpHist import *
 from .mpBufManInfo import *
 
-_version_suffix = 'beta'  # for suffixes such as 'rc' or 'beta' or 'alpha'
-__version__ = _version_info._get_version_string()
-__version__ += _version_suffix

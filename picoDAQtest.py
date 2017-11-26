@@ -27,7 +27,9 @@
       - randomConsumer     test concurrent access
       - VMeter             average Voltages with bar graph display
       - Osci               simple waveform display
-  
+      - RMeter             displays event rate as a function of time
+      - Histogram          histogramms event variables
+
   graphics implemented with matplotlib
 
   For Demo Mode: Connect output of signal gnerator to channel B, 
@@ -42,9 +44,20 @@ from __future__ import unicode_literals
 import sys, time, json, numpy as np, threading
 #from multiprocessing import Process, Queue
 import multiprocessing as mp
-import picodaqa
-#  contais picoConfig, BufferMan, AnimatedInstruments, mpOSci, mpRMeter, ...
 
+# import relevant pieces from picodaqa
+import picodaqa.picoConfig
+import picodaqa.BufferMan
+
+# animated displays running as background processes/threads
+import picodaqa.mpBufManInfo
+import picodaqa.mpOsci
+import picodaqa.mpRMeter
+import picodaqa.mpLogWin
+import picodaqa.mpHist
+import picodaqa.AnimatedInstruments
+
+# examples of consumers and analysers
 from exampleConsumers import *
 from pulseFilter import *
 

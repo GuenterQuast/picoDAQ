@@ -1,7 +1,7 @@
 '''
 .. module:: _version_info
    :platform: python 2.7, 3.4
-   :synopsis: Version 0.5beta of picodaq, rel. October 2017
+   :synopsis: Version 0.6.1 of picodaq, rel. November 2017
 
 .. moduleauthor:: Guenter Quast <guenter.quast@online.de>
 '''
