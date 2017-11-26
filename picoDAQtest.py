@@ -108,7 +108,6 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   TSampling = PSconf.TSampling # sampling interval
   NSamples = PSconf.NSamples   # number of samples
 
-
 # configure Buffer Manager  ...
   NBuffers= 16 # number of buffers for Buffer Manager
   BM = picodaqa.BufferMan(NBuffers, NChannels, NSamples, TSampling,
@@ -191,12 +190,21 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
                 args=(filtRateQ, 12., 2500., 'muon rate history') ) )
 #                      mp.Queue  rate  update interval          
 
+    if 'mpHist' in mode:  # Rate Meter for event filter as sub-process
+      mode_valid= True   
+      histQ = mp.Queue(1) # information queue for Filter
+      procs.append(mp.Process(target = picodaqa.mpHist, 
+                args=(histQ, 0., 0.5,  50,  2500., 'pulse height (V)') ) )
+#                  mp.Queue min  max  bins interval  name    
+
     if 'pulseFilter' in mode: # event filter as thread 
       mode_valid= True   
       if 'filtRMeter' not in mode: filtRateQ = None
+      if 'mpHist' not in mode: histQ = None
       thrds.append(threading.Thread(target=pulseFilter,
-                                    args=(BM, filtRateQ, True, 1) ) )
-#                                              RMeterQ fileout  verbose    
+            args = ( BM, filtRateQ, histQ, True, 1) ) )
+#                        RMeterQ   histQ  fileout verbose    
+
 #   could also run this in main thread
 #     pulseFilter(BM, filtRateQ, verbose=1) 
 
@@ -212,7 +220,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       thrd.start()
         
 # start run
-    BM.setLogQ(logQ) # redirect output to loggin Queue
+    BM.setLogQ(logQ) # redirect output to logging Queue
     BM.run() 
 
 # -> put your own code here - for the moment, we simply wait ...

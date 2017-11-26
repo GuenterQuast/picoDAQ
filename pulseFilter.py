@@ -32,7 +32,7 @@ def setRefPulse(dT):
   return l, rp
 
 
-def pulseFilter(BM, filtRateQue = None, fileout = None, verbose=1):
+def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
   '''
     Find a pulse similar to a template pulse using cross-correlatation
     of signal and template pulse
@@ -73,13 +73,15 @@ def pulseFilter(BM, filtRateQue = None, fileout = None, verbose=1):
     prlog(np.array_str(refp) )
     prlog('  thresholds: %.2g, %2g ' %(pthr, pthrm))
 
-# start event loop
+# initialise event loop
   evcnt=0  # events seen
   Nval=0  # events with valid pulse shape on trigger channel
   Nacc2=0  # dual coincidences
   Nacc3=0     # triple coincidences
   Ndble=0  # double pulses
   T0 = time.time()
+  VSigs = [] # store pulse heights for histogramming
+# event loop
   while BM.ACTIVE:
     validated = False
     accepted = False
@@ -111,7 +113,9 @@ def pulseFilter(BM, filtRateQue = None, fileout = None, verbose=1):
           cc = np.sum(evdm *refpm) # convolution with mean-corrected reference
           if cc > pthrm:          
             idSig[iC].append(idx)
-            VSig[iC].append( max(abs(evd)) ) # signal Voltage 
+            V = max(abs(evd)) # signal Voltage 
+            VSig[iC].append(V) 
+            VSigs.append(V)
             TSig[iC].append(idx*dT)   # signal Time in 
    #    -- end loop over pulse candidates
         NSig.append( len(idSig[iC]) )
@@ -189,8 +193,11 @@ def pulseFilter(BM, filtRateQue = None, fileout = None, verbose=1):
           prlog('*==* double pulse: Nacc, Ndble, dT2i, sig2i: ' + s)
 
 # provide information necessary for RateMeter
-      if filtRateQue is not None and filtRateQue.empty(): 
-        filtRateQue.put( (Nacc2+Nacc3, evTime) ) 
+      if filtRateQ is not None and filtRateQ.empty(): 
+        filtRateQ.put( (Nacc2+Nacc3, evTime) ) 
+      if len(VSigs) and histQ is not None and histQ.empty(): 
+        histQ.put( VSigs )
+        VSigs = [] 
 
 #   -- end if e!=None  
 

@@ -11,5 +11,5 @@
 "trgTO": 5000,        
 "pretrig": 0.25, 
 "frqSG": 0.0,
-"mode": ["mpBufInfo", "mpOsci", "pulseFilter", "filtRMeter"]
+"mode": ["mpBufInfo", "mpOsci", "pulseFilter", "filtRMeter", "mpHist"]
 }
