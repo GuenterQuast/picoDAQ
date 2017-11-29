@@ -54,7 +54,7 @@ import picodaqa.mpBufManInfo
 import picodaqa.mpOsci
 import picodaqa.mpRMeter
 import picodaqa.mpLogWin
-import picodaqa.mpHist
+import picodaqa.mpHists
 import picodaqa.AnimatedInstruments
 
 # examples of consumers and analysers
@@ -193,9 +193,15 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     if 'mpHist' in mode:  # Rate Meter for event filter as sub-process
       mode_valid= True   
       histQ = mp.Queue(1) # information queue for Filter
-      procs.append(mp.Process(target = picodaqa.mpHist, 
-                args=(histQ, 0., 0.5,  50,  2500., 'pulse height (V)') ) )
-#                  mp.Queue min  max  bins interval  name    
+#  book histograms and start histogrammer
+      Hdescriptors = []
+      Hdescriptors.append([0., 0.4, 50, 10., 'noise Trg. Pulse (V)', 0] )
+      Hdescriptors.append([0., 0.4, 50, 10., 'valid Trg. Pulse (V)', 0] )
+      Hdescriptors.append([0., 0.4, 50, 10., 'Pulse height (V)', 0] )
+      Hdescriptors.append([0., 7., 35, 7.5, 'Tau (µs)', 1] )
+      procs.append(mp.Process(target = picodaqa.mpHists, 
+                              args=(histQ, Hdescriptors, 2000.) ) )
+#                                data Queu, Hist.Desrc  interval    
 
     if 'pulseFilter' in mode: # event filter as thread 
       mode_valid= True   

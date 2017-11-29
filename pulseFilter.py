@@ -80,7 +80,11 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
   Nacc3=0     # triple coincidences
   Ndble=0  # double pulses
   T0 = time.time()
-  VSigs = [] # store pulse heights for histogramming
+# arrays for quantities to be histogrammed
+  nTrsigs = [] #  pulse height of noise signals
+  vTrsigs = [] #  pulse height of valid triggers
+  VSigs = [] # pulse heights non-triggering channels
+  Taus = []  # deltaT of double pulses
 # event loop
   while BM.ACTIVE:
     validated = False
@@ -111,11 +115,16 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
           evd = evData[iC, idx:idx+lref]
           evdm = evd - evd.mean()  # center signal candidate around zero
           cc = np.sum(evdm *refpm) # convolution with mean-corrected reference
-          if cc > pthrm:          
+          if cc < pthrm:
+            if iC == 0: nTrsigs.append( max(abs(evd)) )
+          else :    # valid pulse      
             idSig[iC].append(idx)
             V = max(abs(evd)) # signal Voltage 
             VSig[iC].append(V) 
-            VSigs.append(V)
+            if iC == 0: 
+              vTrsigs.append(V)
+            else: 
+              VSigs.append(V)
             TSig[iC].append(idx*dT)   # signal Time in 
    #    -- end loop over pulse candidates
         NSig.append( len(idSig[iC]) )
@@ -161,7 +170,9 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
             delT2[iC]=(TSig[iC][1]-tevt)*1E6
             sig2[iC]=VSig[iC][1]
    #-- end if accepted
-        if doublePulse: Ndble += 1
+        if doublePulse:
+          Ndble += 1
+          Taus.append(max(delT2))
 
 # eventually store results in file(s)
 # 1. all data with validated trigger signal
@@ -195,9 +206,14 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
 # provide information necessary for RateMeter
       if filtRateQ is not None and filtRateQ.empty(): 
         filtRateQ.put( (Nacc2+Nacc3, evTime) ) 
-      if len(VSigs) and histQ is not None and histQ.empty(): 
-        histQ.put( VSigs )
-        VSigs = [] 
+      #if len(VSigs) and histQ is not None and histQ.empty(): 
+      #  histQ.put( VSigs )
+      if len(vTrsigs) and histQ is not None and histQ.empty(): 
+        histQ.put( [nTrsigs, vTrsigs, VSigs, Taus] )
+        nTrsigs = []
+        vTrsigs = []
+        VSigs = []
+        Taus = []
 
 #   -- end if e!=None  
 
