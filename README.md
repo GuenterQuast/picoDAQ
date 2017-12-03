@@ -38,7 +38,7 @@ interpreter or as sub-processes using the 'multiprocessing' package.
 This project originated as a demonstration to analyze pulses from a 
 photomultiplier (PM) or a Silicon Photo Multiplier (SiPM) registering  
 optical signals from  a detector, in the simplest case a coffeepot
-with water equipped with am PM. 
+with water equipped with a PM. 
 
 
 **Requirements**:
@@ -72,7 +72,7 @@ implemented **Functions**:
       *random* consumers: receive a copy of one event, data acquisition 
       continues
 
-  module *AnimatedInstruments*
+  module *AnimatedInstruments* (deprecated, to be removed soon)
 
       - examples of animated graphical devices: a Buffer Manager display
         (using class *plotBufManInfo), a VoltMeter (class *VoltMeter*),
@@ -97,9 +97,17 @@ implemented **Functions**:
       - runs an instance of the *RMeter* class as a subprocess, receiving
         data from *BufferMan* via a multiprocessing Queue.
 
+  module *mpHists* 
+    
+     - runs an instance of the *animHists* class as a subprocess; recieves  
+       input data via a multiprocessing Queue. Data are formatted as lists  
+       of values. A normalized frequency distrbution is then updated and    
+       displayed
+       
+
 The script *picoDACtest.py* gives an example of how to use all of the above. For a full demo, connect the output of a PicoScope's signal generator to channel B, and eventually an open cable to Channel A to see random noise. Use the configuration file *picoDemo.json*. 
 
-The consumer *pulseFilter.py* is an implementation of a convolution filter to search for characteristic signals in an input waveform. 
+The consumer *pulseFilter.py* is an implementation of a convolution filter to search for characteristic signal shapes in an input waveform. 
 
 
 **Installation**
