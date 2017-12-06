@@ -50,7 +50,7 @@ class PSconfig(object):
     if "trgThr" in confdict:
       self.trgThr = confdict["trgThr"]
     else:
-      self.trgThr = ChanRanges[0]/2.  #  threshold
+      self.trgThr = self.ChanRanges[0]/2.  #  threshold
     if "trgTyp" in confdict:
       self.trgTyp = confdict["trgTyp"]
     else:
