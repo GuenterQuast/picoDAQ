@@ -80,6 +80,7 @@ class BufferMan(object):
 #    self.prlog('*==* BufMan:  !!! acquireData starting')
     self.Ntrig = 0    # count number of readings
     self.Ttrig = 0    # time of last event
+    self.Tlife = 0.
     self.readrate = 0.
     self.lifefrac = 0.
     tlife = 0.
@@ -110,6 +111,7 @@ class BufferMan(object):
         return
       ttrg, tl = e
       tlife += tl
+      self.Tlife += tl
       self.timeStamp[ibufw] = ttrg  # store time when data became ready
       self.Ttrig = ttrg
       self.Ntrig += 1
@@ -202,7 +204,7 @@ class BufferMan(object):
       if time.time()-t0 >= 60:
         t0=time.time()
         if self.verbose:
-          self.prlog('evt %i:  rate: %.3gHz   life: %.2f%%' % (n, self.readrate, self.lifefrac))
+          self.prlog('evt %i:  rate: %.3gHz   life: %.2f%%' %(n, self.readrate, self.lifefrac))
         if(evNr != n): 
           self.prlog("!!! manageDataBuffer error: ncnt != Ntrig: %i, %i"%(n,evNr) )
 #   - end while True  
@@ -321,7 +323,8 @@ class BufferMan(object):
 
     self.BMInfoQue = Queue(1) 
   # start a background thread for reporting
-    thr_BMInfoQ = threading.Thread(target=self.reportStatus)
+    thr_BMInfoQ = threading.Thread(target=self.reportStatus,
+                                   args=(self.BMInfoQue,)  )
     thr_BMInfoQ.daemon = True
     thr_BMInfoQ.setName('BMreportStatus')
     thr_BMInfoQ.start()
@@ -330,12 +333,12 @@ class BufferMan(object):
       self.prlog("*==* BMInfoQue enabled")
     return self.BMInfoQue
 
-  def reportStatus(self):
+  def reportStatus(self, Q):
     '''report Buffer manager staus to a multiprocessing Queue'''
     while self.ACTIVE:
-      if self.BMInfoQue is not None and self.BMInfoQue.empty(): 
+      if Q is not None and Q.empty(): 
         bL = (len(self.prod_que)*100)/self.NBuffers
-        self.BMInfoQue.put( (self.RUNNING, self.Ntrig, self.Ttrig,
+        Q.put( (self.RUNNING, self.Ntrig, self.Ttrig,
                              self.readrate, self.lifefrac, bL) ) 
       time.sleep(0.01)
 
@@ -353,10 +356,14 @@ class BufferMan(object):
       self.logQ.put(s)
 
   def end(self):
-    self.RUNNING = False 
-    time.sleep(0.1)
+    self.pause()
+    if self.verbose: 
+      self.prlog('*==* BufferMan ending')
+      print('*==* BufferMan ending')
+      print('  Run Summary: Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
+        %(time.time()-self.BMT0, self.Ntrig, self.Tlife) )
+    time.sleep(0.3)
     self.ACTIVE = False 
-    if self.verbose: self.prlog('*==* BufferMan ending')
 
   def __del__(self):
     self.RUNNING = False
