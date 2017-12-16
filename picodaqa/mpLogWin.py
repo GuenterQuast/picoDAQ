@@ -14,7 +14,7 @@ if sys.version_info[0] < 3:
   import Tkinter as Tk
 else:
   import tkinter as Tk
-import numpy as np, matplotlib.pyplot as plt, matplotlib.animation as anim
+import matplotlib.pyplot as plt, matplotlib.animation as anim
 
 def mpLogWin(Q, name='Buffer Manager Logging Window'):
   '''RateMeter: show logging information
@@ -29,7 +29,8 @@ def mpLogWin(Q, name='Buffer Manager Logging Window'):
       T.see("end")
       time.sleep(0.01)
 
-  print(' -> mpLogWin starting')
+# ------- executable part -------- 
+#  print(' -> mpLogWin starting')
 
 # generate a simple window for graphics display as a tk.DrawingArea
   root = Tk.Tk()

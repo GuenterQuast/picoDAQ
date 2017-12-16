@@ -40,7 +40,7 @@ class plotBufManInfo(object):
   def init(self):
     self.line1, = self.axes.plot(self.xplt, self.R, 
       marker = '.', markerfacecolor='b', linestyle='dashed', color='grey', )
-    self.animtxt = self.axes.text(0.05, 0.925 , ' ',
+    self.animtxt = self.axes.text(0.015, 0.925 , ' ',
               transform=self.axes.transAxes,
               size='small', color='darkblue')
     self.ro = 0.

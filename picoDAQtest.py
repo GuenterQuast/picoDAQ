@@ -151,27 +151,31 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
   # logging window for buffer manager
     logQ = mp.Queue()
-    procs.append(mp.Process(target = picodaqa.mpLogWin, 
+    procs.append(mp.Process(name='LogWin', 
+                        target = picodaqa.mpLogWin, 
                         args=(logQ, ) ) )
 
     if 'mpBufInfo' in mode: 
       mode_valid= True
       maxBMrate = 100.
       BMIinterval = 1000.
-      procs.append(mp.Process(target = picodaqa.mpBufManInfo, 
-           args=(BM.getBMInfoQue(), maxBMrate, BMIinterval) ) )
-#                  BM InfoQue      max. rate  update interval
+      procs.append(mp.Process(name='BufManInfo',
+                   target = picodaqa.mpBufManInfo, 
+                   args=(BM.getBMInfoQue(), maxBMrate, BMIinterval) ) )
+#                           BM InfoQue      max. rate  update interval
 
     if 'mpOsci' in mode: 
       mode_valid= True   
       OScidx, OSmpQ = BM.BMregister_mpQ()
-      procs.append(mp.Process(target = picodaqa.mpOsci, 
+      procs.append(mp.Process(name='Osci',
+                              target = picodaqa.mpOsci, 
                               args=(OSmpQ, PSconf, 50., 'event rate') ) )
 #                                                interval
-    if 'mpRMeter' in mode: # as subprocess,
+    if 'mpRMeter' in mode:
       mode_valid= True   
       RMcidx, RMmpQ = BM.BMregister_mpQ()
-      procs.append(mp.Process(target = picodaqa.mpRMeter, 
+      procs.append(mp.Process(name='RMeter',
+                target = picodaqa.mpRMeter, 
                 args=(RMmpQ, 75., 2500., 'trigger rate history') ) )
 #                         maxRate interval name
 
@@ -186,7 +190,8 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     if 'filtRMeter' in mode:  # Rate Meter for event filter as sub-process
       mode_valid= True   
       filtRateQ = mp.Queue(1) # information queue for Filter
-      procs.append(mp.Process(target = picodaqa.mpRMeter, 
+      procs.append(mp.Process(name='RMeter',
+                target = picodaqa.mpRMeter, 
                 args=(filtRateQ, 12., 2500., 'muon rate history') ) )
 #                      mp.Queue  rate  update interval          
 
@@ -196,10 +201,11 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 #  book histograms and start histogrammer
       Hdescriptors = []
       Hdescriptors.append([0., 0.4, 50, 10., 'noise Trg. Pulse (V)', 0] )
-      Hdescriptors.append([0., 0.4, 50, 10., 'valid Trg. Pulse (V)', 0] )
-      Hdescriptors.append([0., 0.4, 50, 10., 'Pulse height (V)', 0] )
+      Hdescriptors.append([0., 0.8, 50, 10., 'valid Trg. Pulse (V)', 0] )
+      Hdescriptors.append([0., 0.8, 50, 10., 'Pulse height (V)', 0] )
       Hdescriptors.append([0., 7., 35, 7.5, 'Tau (µs)', 1] )
-      procs.append(mp.Process(target = picodaqa.mpHists, 
+      procs.append(mp.Process(name='Hists',
+                              target = picodaqa.mpHists, 
                               args=(histQ, Hdescriptors, 2000.) ) )
 #                                data Queu, Hist.Desrc  interval    
 
@@ -218,6 +224,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     for prc in procs:
       prc.deamon = True
       prc.start()
+      print(' -> starting process ', prc.name, ', PID=', prc.pid)
     time.sleep(1.)
 
 # start threads

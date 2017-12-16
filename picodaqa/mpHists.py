@@ -7,11 +7,11 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import sys, time, numpy as np
+import sys, numpy as np
 
 import matplotlib
 matplotlib.use('TkAgg')
-import numpy as np, matplotlib.pyplot as plt, matplotlib.animation as anim
+import matplotlib.pyplot as plt, matplotlib.animation as anim
 
 # import Histogram class
 from .animHists import *
@@ -45,7 +45,7 @@ def mpHists(Q, Hdescripts, interval):
 
 
 # ------- executable part -------- 
-  print(' -> mpHist starting')
+#  print(' -> mpHist starting')
 
   try:
     H = animHists(Hdescripts)

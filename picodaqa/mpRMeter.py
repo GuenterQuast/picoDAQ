@@ -7,7 +7,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import sys, time, numpy as np
+import sys, numpy as np
 
 import matplotlib
 matplotlib.use('TkAgg')
@@ -16,7 +16,7 @@ if sys.version_info[0] < 3:
   import Tkinter as Tk
 else:
   import tkinter as Tk
-import numpy as np, matplotlib.pyplot as plt, matplotlib.animation as anim
+import matplotlib.pyplot as plt, matplotlib.animation as anim
 
 # import RMeter class
 from .RMeter import *
@@ -47,7 +47,7 @@ def mpRMeter(Q, maxRate = 10. , interval = 2500., name='rate history'):
       print('*==* yieldEvt_fromQ: termination signal recieved')
   
 # ------- executable part -------- 
-  print(' -> mpRMeter starting')
+#  print(' -> mpRMeter starting')
 
   try:
     RM = RMeter(maxRate, interval, name)
