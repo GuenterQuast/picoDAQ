@@ -42,7 +42,7 @@ def mpOsci(Q, conf, interval = 50., name='event rate'):
         evt = (cnt, evNr, evTime, evData)
         yield evt
     except:
-      print('*==* yieldEvt_fromQ: termination signal recieved')
+      print('*==* yieldEvt_fromQ: termination signal received')
   
 # ------- executable part -------- 
 #  print(' -> mpOsci starting')

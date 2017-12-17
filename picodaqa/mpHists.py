@@ -7,7 +7,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import sys, numpy as np
+import sys, time, numpy as np
 
 import matplotlib
 matplotlib.use('TkAgg')
@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt, matplotlib.animation as anim
 # import Histogram class
 from .animHists import *
 
-def mpHists(Q, Hdescripts, interval):
+def mpHists(Q, Hdescripts, interval, name = 'Histograms'):
   ''' show animated histogram(s)
     Args:
       Q:    multiprocessing.Queue() 
@@ -36,11 +36,13 @@ def mpHists(Q, Hdescripts, interval):
     cnt = 0
     try:
       while True:
+        while not Q.qsize(): 
+          time.sleep(0.1)
         valueslist = Q.get()
         cnt+=1
         yield valueslist
     except:
-      print('*==* yieldData_fromQ: termination signal recieved')
+      print('*==* yieldData_fromQ: termination signal received')
       return
 
 
@@ -48,7 +50,7 @@ def mpHists(Q, Hdescripts, interval):
 #  print(' -> mpHist starting')
 
   try:
-    H = animHists(Hdescripts)
+    H = animHists(Hdescripts, name)
     figH = H.fig
 # set up matplotlib animation
     HAnim = anim.FuncAnimation(figH, H, yieldData_fromQ, 

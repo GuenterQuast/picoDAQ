@@ -205,9 +205,9 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       Hdescriptors.append([0., 0.8, 50, 10., 'Pulse height (V)', 0] )
       Hdescriptors.append([0., 7., 35, 7.5, 'Tau (µs)', 1] )
       procs.append(mp.Process(name='Hists',
-                              target = picodaqa.mpHists, 
-                              args=(histQ, Hdescriptors, 2000.) ) )
-#                                data Queu, Hist.Desrc  interval    
+                target = picodaqa.mpHists, 
+                args=(histQ, Hdescriptors, 2000., 'Filter Histograms') ) )
+#                     data Queue, Hist.Desrc  interval    
 
     if 'pulseFilter' in mode: # event filter as thread 
       mode_valid= True   

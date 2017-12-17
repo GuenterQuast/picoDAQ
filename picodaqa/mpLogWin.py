@@ -56,5 +56,5 @@ def mpLogWin(Q, name='Buffer Manager Logging Window'):
     Tk.mainloop()
    
   except:
-    print('*==* mpLogWindow: termination signal recieved')
+    print('*==* mpLogWindow: termination signal received')
   sys.exit()

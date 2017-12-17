@@ -251,7 +251,7 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
       if len(VTrsigs) and histQ is not None and histQ.empty(): 
         histQ.put( [nTrsigs, VTrsigs, VSigs, Taus] )
         nTrsigs = []
-        vTrsigs = []
+        VTrsigs = []
         VSigs = []
         Taus = []
 

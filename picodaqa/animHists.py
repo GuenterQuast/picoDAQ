@@ -14,7 +14,7 @@ class animHists(object):
       requency distribution of a scalar quantity
   '''
 
-  def __init__(self, Hdescr):
+  def __init__(self, Hdescr, name='Histograms'):
     ''' 
       Args:
         list of histogram descriptors, 
@@ -25,6 +25,7 @@ class animHists(object):
         ymax:  scale factor for bin with highest number of entries
         name: name of the quantity being histogrammed
         type: 0 linear, 1 for logarithmic y scale
+        name forfigure window
     '''
   
     self.nHist = len(Hdescr)
@@ -60,6 +61,7 @@ class animHists(object):
     if ncols * nrows < self.nHist: ncols +=1
     self.fig, axarray = plt.subplots(nrows=nrows, ncols=ncols,
                                           figsize=(3.*ncols, 2.*nrows) )
+    self.fig.canvas.set_window_title(name)
     self.fig.subplots_adjust(left=0.25/ncols, bottom=0.25/nrows, right=0.975, top=0.95,
                              wspace=0.35, hspace=0.35)
 # sort axes in linear array
@@ -95,7 +97,7 @@ class animHists(object):
       self.rects.append(self.axes[ih].bar( self.bcents[ih], self.frqs[ih], 
            align='center', width=self.widths[ih], facecolor='b', alpha=0.7) )       
     # emty text
-      self.animtxts.append(self.axes[ih].text(0.6, 0.925 , ' ',
+      self.animtxts.append(self.axes[ih].text(0.5, 0.925 , ' ',
               transform=self.axes[ih].transAxes,
               size='small', color='darkred') )
 

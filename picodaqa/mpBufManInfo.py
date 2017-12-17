@@ -63,5 +63,5 @@ def mpBufManInfo(Q, maxRate = 100. , interval = 1000.):
     Tk.mainloop()
    
   except:
-    print('*==* mpBufManInfo: termination signal recieved')
+    print('*==* mpBufManInfo: termination signal received')
   sys.exit()

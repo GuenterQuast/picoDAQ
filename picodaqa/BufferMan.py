@@ -311,7 +311,8 @@ class BufferMan(object):
                  time of last event, rate, life fraction and buffer level
     '''
     bL = (len(self.prod_que)*100)/self.NBuffers
-    return self.RUNNING,self.Ntrig,self.Ttrig,self.readrate,self.lifefrac, bL 
+    return (self.RUNNING,time.time()-self.BMT0,self.Ntrig,self.Ttrig,self.Tlife, 
+           self.readrate, self.lifefrac, bL) 
 
   def getBMInfoQue(self):
     '''multiprocessing Queue for status information 
@@ -337,10 +338,11 @@ class BufferMan(object):
     '''report Buffer manager staus to a multiprocessing Queue'''
     while self.ACTIVE:
       if Q is not None and Q.empty(): 
-        bL = (len(self.prod_que)*100)/self.NBuffers
-        Q.put( (self.RUNNING, self.Ntrig, self.Ttrig,
-                             self.readrate, self.lifefrac, bL) ) 
-      time.sleep(0.01)
+       #bL = (len(self.prod_que)*100)/self.NBuffers
+       # self.RUNNING,time.time()-self.BMT0,self.Ntrig,self.Ttrig,self.Tlife, 
+       # self.readrate, self.lifefrac, bL) ) 
+        Q.put( self.getStatus()) 
+      time.sleep(0.1)
 
   def setLogQ(self, Q):
     '''set a Queue for log messages'''

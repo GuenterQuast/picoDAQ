@@ -72,5 +72,5 @@ def mpRMeter(Q, maxRate = 10. , interval = 2500., name='rate history'):
     Tk.mainloop()
    
   except:
-    print('*==* mpRMeter: termination signal recieved')
+    print('*==* mpRMeter: termination signal received')
   sys.exit()
