@@ -9,7 +9,7 @@ from scipy.interpolate import interp1d
 from multiprocessing import Queue
 
   # helper function to generate general unipolar or bipolar 
-def trapeziodPulse(t, tr, ton, tf, toff=0., tf2=0., mode=0):
+def trapezoidPulse(t, tr, ton, tf, toff=0., tf2=0., mode=0):
   '''
     create a single or double trapezoidal plulse, 
     normalised to pulse height one
@@ -45,7 +45,7 @@ def setRefPulse(dT, taur=20E-9, tauon=12E-9, tauf=128E-9, pheight=-0.030):
 
   l = np.int32( (taur+tauon+tauf)/dT +0.5 ) + 1  
   ti = np.linspace(0, taur+tauf, l)    
-  rp = trapeziodPulse(ti, taur, tauon, tauf)
+  rp = trapezoidPulse(ti, taur, tauon, tauf)
   rp = pheight * rp   # normalize to pulse height
 
   return rp

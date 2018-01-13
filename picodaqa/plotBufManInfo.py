@@ -27,7 +27,7 @@ class plotBufManInfo(object):
     self.xplt = np.linspace(-self.Npoints*self.interval, 0., self.Npoints)
 
   # create figure 
-    self.fig = plt.figure("BufManInfo", figsize=(5.,1.75))
+    self.fig = plt.figure("BufManInfo", figsize=(5.,2.))
     self.fig.subplots_adjust(left=0.05, bottom=0.25, right=0.925, top=0.95,
                wspace=None, hspace=.25)
     self.axtext=plt.subplot2grid((7,1),(0,0), rowspan=2) 
@@ -39,7 +39,8 @@ class plotBufManInfo(object):
     self.axrate.yaxis.tick_right()
     self.axrate.set_ylabel('DAQ rate (HZ)')
     self.axrate.set_xlabel('rate history')
-    self.axrate.set_ylim(0., self.maxRate)
+    self.axrate.set_ylim(0.1, self.maxRate)
+    self.axrate.set_yscale('log')
     self.axrate.grid(True, alpha=0.5)
 
   def init(self):
@@ -60,7 +61,7 @@ class plotBufManInfo(object):
 
     k = n%self.Npoints
     RUNNING,TRun,Ntrig,Ttrig,Tlife,readrate,lifefrac,bufLevel = self.Q.get()
-    self.R[k] = readrate
+    self.R[k] = np.log(max(0.1, readrate) )
       
     self.line1.set_ydata(np.concatenate( (self.R[k+1:], self.R[:k+1]) ))
     self.animtxt1.set_text( \
