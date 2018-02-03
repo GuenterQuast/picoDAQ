@@ -6,12 +6,6 @@ from __future__ import unicode_literals
 
 import numpy as np, time, sys
 
-# class for PicoScope device
-from picoscope import ps2000a
-picoDevice = ps2000a.PS2000a()  
-#from picoscope import ps4000
-#picoDevice = ps4000a.PS4000()  
-
 class PSconfig(object):
   '''set PicoScope configuration'''
 
@@ -19,6 +13,12 @@ class PSconfig(object):
     if confdict==None: confdict={}
 
 # set configuration parameters
+# -- PicoScope model
+    if "PSmodel" in confdict: 
+      self.PSmodel = confdict["PSmodel"]
+    else:
+      self.PSmodel = '2000a' 
+# -- channels to be used
     if "picoChannels" in confdict: 
       self.picoChannels = confdict["picoChannels"]
     else:
@@ -128,12 +128,14 @@ class PSconfig(object):
       self.ChanColors = ['darkblue', 'darkslategrey', 'darkred', 'darkgreen']   
 
 # configuration parameters only known after initialisation
+    # import libraries relevant to PS model
+    exec('from picoscope import ps'+self.PSmodel)
+    exec('self.picoDevice = ps'+self.PSmodel+'.PS'+self.PSmodel+'()')  
+
     self.TSampling = 0.
     self.NSamples = 0.
     self.CRanges = [0., 0., 0., 0.]
    
-    self.picoDevice = picoDevice
-
     try: 
       self.picoIni() # run initialisation routine for device  
     except:
@@ -172,7 +174,7 @@ class PSconfig(object):
 # 2) Channel Ranges
       CRanges=[]
       for i, Chan in enumerate(self.picoChannels):
-        CRanges.append(picoDevice.setChannel(Chan, self.ChanModes[i], 
+        CRanges.append(self.picoDevice.setChannel(Chan, self.ChanModes[i], 
                    self.ChanRanges[i], VOffset=self.ChanOffsets[i], 
                    enabled=True, BWLimited=False) )
         if verbose>0:
@@ -181,7 +183,7 @@ class PSconfig(object):
           print("  > channel offset %s: %.3gV" % (self.picoChannels[i],
                   self.ChanOffsets[i]))
 # 3) enable trigger
-    picoDevice.setSimpleTrigger(self.trgChan, self.trgThr, self.trgTyp,
+    self.picoDevice.setSimpleTrigger(self.trgChan, self.trgThr, self.trgTyp,
           self.trgDelay, self.trgTO, enabled=self.trgActive)    
     if verbose>0:
       if self.trgActive:
@@ -192,7 +194,7 @@ class PSconfig(object):
 
 # 4) enable Signal Generator 
     if self.frqSG !=0. :
-      picoDevice.setSigGenBuiltInSimple(frequency=self.frqSG, 
+      self.picoDevice.setSigGenBuiltInSimple(frequency=self.frqSG, 
          pkToPk=self.PkToPkSG, waveType=self.waveTypeSG, 
          offsetVoltage=self.offsetVoltageSG, sweepType=self.swpSG, 
          dwellTime=self.dwellTimeSG, stopFreq=self.stopFreqSG)
@@ -220,11 +222,11 @@ class PSconfig(object):
         ttrg: time when device became ready
         tlife life time of device
   '''
-    picoDevice.runBlock(pretrig=self.pretrig) #
+    self.picoDevice.runBlock(pretrig=self.pretrig) #
     # wait for PicoScope to set up (~1ms)
     time.sleep(0.001) # set-up time not to be counted as "life time"
     ti=time.time()
-    while not picoDevice.isReady():
+    while not self.picoDevice.isReady():
       if not self.BM.ACTIVE: return
       time.sleep(0.001)
     # waiting time for occurence of trigger is counted as life time
@@ -232,9 +234,9 @@ class PSconfig(object):
     tlife = ttrg - ti       # account life time
   # store raw data in global array 
     for i, C in enumerate(self.picoChannels):
-      picoDevice.getDataRaw(C, self.NSamples, data=self.rawBuf[i])
-      picoDevice.rawToV(C, self.rawBuf[i], buffer[i], dtype=np.float32)
+      self.picoDevice.getDataRaw(C, self.NSamples, data=self.rawBuf[i])
+      self.picoDevice.rawToV(C, self.rawBuf[i], buffer[i], dtype=np.float32)
 # alternative:
-     # picoDevice.getDataV(C, NSamples, dataV=VBuf[ibufw,i], dtype=np.float32)
+     # self.picoDevice.getDataV(C, NSamples, dataV=VBuf[ibufw,i], dtype=np.float32)
     return ttrg, tlife
 # - end def acquirePicoData()

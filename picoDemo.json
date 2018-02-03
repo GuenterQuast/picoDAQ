@@ -1,4 +1,7 @@
+# configuration settings for Picoscpope
 {
+"PSmodel":"2000a",
+#
 "picoChannels":["A", "B"],
 "ChanRanges":  [0.03, 0.2],
 "Nsamples": 200,  

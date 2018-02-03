@@ -1,5 +1,7 @@
 # configuration for Picoscpope
 {
+"PSmodel":"2000a",
+#
 "picoChannels": ["A", "B"],
 "ChanRanges":  [500E-3, 500E-3], 
 "ChanModes":  ["DC", "DC"],
