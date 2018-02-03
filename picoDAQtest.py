@@ -41,7 +41,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import sys, time, json, numpy as np, threading
+import sys, time, numpy as np, threading
 #from multiprocessing import Process, Queue
 import multiprocessing as mp
 
@@ -70,6 +70,34 @@ from pulseFilter import *
 #     scope settings defined in .json-File, see picoConfig
 # --------------------------------------------------------------
 
+def read_config(j):
+  '''read a json file (with comments marked with '#')
+  '''
+  import json
+
+# -- helper function to filter input lines
+  def filter_lines(f, cc='#'):
+    """ remove charcters after comment character cc from file  
+      Args:
+        * file f:  file 
+        * char cc:   comment character
+      Yields:
+        * string 
+    """
+    jtxt=''
+    while True:
+      line=f.readline()
+      if (not line): return jtxt # EOF
+      if cc in line:
+        line=line.split(cc)[0] # ignore everything after comment character    
+        if (not line): continue # ignore comment lines
+      if (not line.isspace()):  # ignore empty lines
+        jtxt += line        
+#   -- end filter_lines
+
+  jsontxt = filter_lines(f)
+  return json.loads(jsontxt) 
+
 def cleanup():
     if verbose: print('  ending  -> cleaning up ')
     BM.end()         # tell buffer manager that we're done
@@ -80,28 +108,38 @@ def cleanup():
 #    if verbose>0: print('                      -> exit')
 #    sys.exit(0)
 
+
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
   print('\n*==* script ' + sys.argv[0] + ' executing')
 
 # check for / read command line arguments
   if len(sys.argv)==2:
-    jsonfname = sys.argv[1]
-    print('     scope configurtion from file ' + jsonfname)
+    PSconfFile = sys.argv[1]
+    print('     scope configuration from file ' + PSconfFile)
     try:
-      with open(jsonfname) as f:
-        confdict=json.load(f)
+      with open(PSconfFile) as f:
+        PSconfdict=read_config(f)
     except:
-      print('     failed to read input file ' + jsonfname)
+      print('     failed to read scope configuration file ' + PSconfFile)
       exit(1)
   else:
-    confdict=None
+    PSconfdict=None
+
+  try:
+    BMconfFile='BMConfig.json'
+    with open(BMconfFile) as f:
+        BMconfdict=read_config(f)
+  except:
+    print('     failed to read BM input file ' + BMconfFile)
+    exit(1)
+
 
 # initialisation
   print(' -> initializing PicoScope')
 
 # configure and initialize PicoScope
-  PSconf=picodaqa.picoConfig.PSconfig(confdict)
+  PSconf=picodaqa.picoConfig.PSconfig(PSconfdict)
   # copy some of the important configuration variables
   verbose=PSconf.verbose
   NChannels = PSconf.NChannels # number of channels in use
@@ -109,7 +147,10 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   NSamples = PSconf.NSamples   # number of samples
 
 # configure Buffer Manager  ...
-  NBuffers= 16 # number of buffers for Buffer Manager
+  if "NBuffers" in BMconfdict: 
+    NBuffers = BMconfdict["NBuffers"] # number of buffers for Buffer Manager
+  else:
+    NBuffers= 16
   BM = picodaqa.BufferMan(NBuffers, NChannels, NSamples, TSampling,
         PSconf.acquirePicoData)
 # ... tell device what its buffer manager is ...
@@ -118,11 +159,15 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   if verbose>0:
     print(" -> starting Buffer Manager Threads")   
   BM.start() # set up buffer manager processes  
+  if "BMmodules" in BMconfdict: 
+    BMmodules = BMconfdict["BMmodules"] # display modules to start
+  else:
+    BMmodules = ["mpBufInfo"]
 
 # for this example, mode encodes what to do ...
-  mode = PSconf.mode
-  if type(mode) != list:  
-    mode = [mode]
+  modules = BMmodules
+  if type(modules) != list:  
+    modules = [modules]
 #
 
 # --- infinite LOOP
@@ -131,15 +176,15 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     thrds = []
     procs =[]
     
-    if ('osci' in mode) or ('VMeter' in mode) or\
-       ('RMeter' in mode) or ('BufInfo' in mode):
+    if ('osci' in modules) or ('VMeter' in modules) or\
+       ('RMeter' in modules) or ('BufInfo' in modules):
       mode_valid= True
       # print('calling AnimatedInstruments')
       thrds.append(threading.Thread(target=picodaqa.animInstruments,
-                                           args=(mode, PSconf, BM) ) )
+                                           args=(modules, PSconf, BM) ) )
       mode_valid= True   
 
-    if 'test' in mode: # test consumers
+    if 'test' in modules: # test consumers
       thrds.append(threading.Thread(target=randConsumer,
                                     args=(BM,) ) )
       thrds.append(threading.Thread(target=obligConsumer,
@@ -155,7 +200,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
                         target = picodaqa.mpLogWin, 
                         args=(logQ, ) ) )
 
-    if 'mpBufInfo' in mode: 
+    if 'mpBufInfo' in modules: 
       mode_valid= True
       maxBMrate = 100.
       BMIinterval = 1000.
@@ -164,14 +209,14 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
                    args=(BM.getBMInfoQue(), maxBMrate, BMIinterval) ) )
 #                           BM InfoQue      max. rate  update interval
 
-    if 'mpOsci' in mode: 
+    if 'mpOsci' in modules: 
       mode_valid= True   
       OScidx, OSmpQ = BM.BMregister_mpQ()
       procs.append(mp.Process(name='Osci',
                               target = picodaqa.mpOsci, 
                               args=(OSmpQ, PSconf, 50., 'event rate') ) )
 #                                                interval
-    if 'mpRMeter' in mode:
+    if 'mpRMeter' in modules:
       mode_valid= True   
       RMcidx, RMmpQ = BM.BMregister_mpQ()
       procs.append(mp.Process(name='RMeter',
@@ -179,7 +224,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
                 args=(RMmpQ, 75., 2500., 'trigger rate history') ) )
 #                         maxRate interval name
 
-#    if 'test' in mode:
+#    if 'test' in modules:
 #      mode_valid= True   
 #      cidx, mpQ = BM.BMregister_mpQ()
 #    procs.append(mp.Process(target = subprocConsumer, 
@@ -187,7 +232,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # 
 
 # pulse shape analysis
-    if 'filtRMeter' in mode:  # Rate Meter for event filter as sub-process
+    if 'filtRMeter' in modules:  # Rate Meter for event filter as sub-process
       mode_valid= True   
       filtRateQ = mp.Queue(1) # information queue for Filter
       procs.append(mp.Process(name='RMeter',
@@ -195,7 +240,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
                 args=(filtRateQ, 12., 2500., 'muon rate history') ) )
 #                      mp.Queue  rate  update interval          
 
-    if 'mpHist' in mode:  # Rate Meter for event filter as sub-process
+    if 'mpHist' in modules:  # Rate Meter for event filter as sub-process
       mode_valid= True   
       histQ = mp.Queue(1) # information queue for Filter
 #  book histograms and start histogrammer
@@ -209,10 +254,10 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
                 args=(histQ, Hdescriptors, 2000., 'Filter Histograms') ) )
 #                     data Queue, Hist.Desrc  interval    
 
-    if 'pulseFilter' in mode: # event filter as thread 
+    if 'pulseFilter' in modules: # event filter as thread 
       mode_valid= True   
-      if 'filtRMeter' not in mode: filtRateQ = None
-      if 'mpHist' not in mode: histQ = None
+      if 'filtRMeter' not in modules: filtRateQ = None
+      if 'mpHist' not in modules: histQ = None
       thrds.append(threading.Thread(target=pulseFilter,
             args = ( BM, filtRateQ, histQ, True, 1) ) )
 #                        RMeterQ   histQ  fileout verbose    

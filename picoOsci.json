@@ -1,7 +1,8 @@
 {
 "picoChannels":["A", "B"],
-"ChanRanges":  [30E-3, 0.35],
-"Nsamples": 200,  
+"ChanRanges":  [0.05, 0.05, 0.05],
+"ChanColors":  ["darkblue", "sienna", "indigo"],
+"Nsamples": 400,  
 "sampleTime": 10E-6, 
 "trgChan": "B",      
 "trgThr": 0.0,       
@@ -12,5 +13,5 @@
 "pretrig": 0.05, 
 "frqSG": 10E3,
 "swpSG": "UpDown",
-"mode": "mpOsci" 
+"mode": ["mpBufInfo", "mpOsci"] 
 }

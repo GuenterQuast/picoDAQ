@@ -1,14 +1,15 @@
+# configuration for Picoscpope
 {
 "picoChannels": ["A", "B"],
-"ChanRanges":  [50E-3, 50E-3],
+"ChanRanges":  [500E-3, 500E-3], 
 "ChanModes":  ["DC", "DC"],
-"Nsamples": 120,  
+"Nsamples": 200,  # short data sample 
 "sampleTime": 25E-3, 
 "trgChan": "A",      
-"trgThr": 15E-3,       
+"trgThr": -15E-3,       
 "trgTyp": "Rising",   
 "trgTO": 10000,        
 "pretrig": 0.15, 
 "frqSG": 0.0,
-"mode": ["osci","RMeter"]
+"mode": ["mpBufInfo", "mpOsci","mpRMeter"]
 }

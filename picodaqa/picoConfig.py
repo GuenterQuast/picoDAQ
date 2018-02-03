@@ -126,10 +126,6 @@ class PSconfig(object):
       self.ChanColors=confdict["ChanColors"]
     else:
       self.ChanColors = ['darkblue', 'darkslategrey', 'darkred', 'darkgreen']   
-    if "mode" in confdict: 
-      self.mode = confdict["mode"]
-    else:
-      self.mode="osci"   # "osci" "demo" "VMeter" "test" 
 
 # configuration parameters only known after initialisation
     self.TSampling = 0.
