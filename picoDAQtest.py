@@ -150,8 +150,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
   # read scope configuration file
   try:
-    BMconfFile='BMConfig.json'
-    with open(BMconfFile) as f:
+    with open(BMfile) as f:
         BMconfdict=read_config(f)
   except:
     print('     failed to read BM input file ' + BMconfFile)
