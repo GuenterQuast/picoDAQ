@@ -164,6 +164,12 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   else:
     BMmodules = ["mpBufInfo"]
 
+# temporary for backward compatibility ("modes" defined in PSconfig)
+  try: 
+    BMmodules = BMmodules + PSconf.mode
+  except:
+    pass
+
 # for this example, mode encodes what to do ...
   modules = BMmodules
   if type(modules) != list:  

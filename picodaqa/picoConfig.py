@@ -127,6 +127,9 @@ class PSconfig(object):
     else:
       self.ChanColors = ['darkblue', 'darkslategrey', 'darkred', 'darkgreen']   
 
+    if "mode" in confdict: 
+      self.mode = confdict["mode"] # "VMeter" "test"
+
 # configuration parameters only known after initialisation
     # import libraries relevant to PS model
     exec('from picoscope import ps'+self.PSmodel)
