@@ -114,18 +114,41 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   print('\n*==* script ' + sys.argv[0] + ' executing')
 
 # check for / read command line arguments
+  # read DAQ configuration file
   if len(sys.argv)==2:
-    PSconfFile = sys.argv[1]
-    print('     scope configuration from file ' + PSconfFile)
-    try:
-      with open(PSconfFile) as f:
-        PSconfdict=read_config(f)
-    except:
-      print('     failed to read scope configuration file ' + PSconfFile)
-      exit(1)
-  else:
-    PSconfdict=None
+    DAQconfFile = sys.argv[1]
+  else: 
+    DAQconfFile = 'DAQconfig.json'
+  print('     DAQconfiguration from file ' + DAQconfFile)
+  try:
+    with open(DAQconfFile) as f:
+      DAQconfdict=read_config(f)
+  except:
+    print('     failed to DAQ configuration file ' + DAQconfFile)
+    exit(1)
 
+  if "DeviceFile" in DAQconfdict: 
+    DeviceFile = DAQconfdict["DeviceFile"] # configuration file for scope
+  else:
+    print('     no device configuration file - exiting')
+    exit(1)
+
+  if "BMfile" in DAQconfdict: 
+    BMfile = DAQconfdict["BMfile"] # Buffer Manager configuration file 
+  else:
+    print('     no BM configuration file - exiting')
+    exit(1)
+
+  # read scope configuration file
+  print('     scope configuration from file ' + DeviceFile)
+  try:
+    with open(DeviceFile) as f:
+      PSconfdict=read_config(f)
+  except:
+    print('     failed to read scope configuration file ' + DeviceFile)
+    exit(1)
+
+  # read scope configuration file
   try:
     BMconfFile='BMConfig.json'
     with open(BMconfFile) as f:

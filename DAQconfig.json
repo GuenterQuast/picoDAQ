@@ -1,0 +1,9 @@
+# configuration for runDAQ.py
+{
+"DeviceFile": "PSconfig.json",
+"BMfile": "BMconfig.json",
+"DAQmodules": []
+# next line is for pulseFilter configuration
+# "DAQmodules": ["pulseFilter", "filtRMeter", "mpHist"]
+
+}
