@@ -209,8 +209,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # <---
 
     if len(procs)==0 and len(thrds)==0 :
-      print ('!!! nothing to do - exiting')
-      exit(1)
+      print ('!!! nothing to do - running BM only')
 # start all background processes   
     for prc in procs:
       prc.deamon = True
