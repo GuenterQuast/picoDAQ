@@ -117,7 +117,7 @@ class VoltMeter(object):
     txt_t='Time  %.1fs' %(evTime-self.t0)            
     txt=[]
     for i, C in enumerate(self.picoChannels):
-      self.V[i] = np.inner(evData[i], evData[i]).mean()
+      self.V[i] = np.sqrt (np.inner(evData[i], evData[i])/len(evData[i]) )
       self.Vhist[i, k] = self.V[i]
       self.stdV[i] = evData[i].std()
       self.stdVhist[i, k] = self.stdV[i]
