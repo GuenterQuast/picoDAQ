@@ -299,7 +299,8 @@ class BufferMan(object):
       return evNr, evTime, evData
 #
   def start(self):
-    if self.verbose: self.prlog('*==* BufferMan  starting acquisition threads')
+    if self.verbose > 1: 
+      self.prlog('*==* BufferMan  starting acquisition threads')
     self.ACTIVE = True  
     thr_acquireData=threading.Thread(target=self.acquireData)
     thr_acquireData.daemon=True
@@ -335,7 +336,7 @@ class BufferMan(object):
 #      prc.deamon = True
       prc.start()
       if self.verbose:
-        print(' -> starting process ', prc.name, ', PID=', prc.pid)
+        print('      BufferMan: starting process ', prc.name, ' PID =', prc.pid)
 
   def run(self):
     if self.BMT0==0: 
@@ -417,7 +418,7 @@ class BufferMan(object):
     self.ACTIVE = False 
   # stop all sub-processes
     for prc in self.procs:
-      if self.verbose: print('*==* BufferMan: terminating '+prc.name)
+      if self.verbose: print('    BufferMan: terminating '+prc.name)
       prc.terminate()
     time.sleep(0.3)
     self.RUNNING = False

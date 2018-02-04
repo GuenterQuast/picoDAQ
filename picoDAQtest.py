@@ -49,10 +49,9 @@ import picodaqa.picoConfig
 import picodaqa.BufferMan
 
 # animated displays running as background processes/threads
-import picodaqa.mpBufManInfo
 import picodaqa.mpOsci
+import picodaqa.mpVMeter
 import picodaqa.mpRMeter
-import picodaqa.mpLogWin
 import picodaqa.mpHists
 import picodaqa.AnimatedInstruments # deprecated !!!
 
@@ -89,7 +88,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     DAQconfFile = sys.argv[1]
   else: 
     DAQconfFile = 'DAQconfig.json'
-  print('     DAQconfiguration from file ' + DAQconfFile)
+  print('    DAQconfiguration from file ' + DAQconfFile)
   try:
     with open(DAQconfFile) as f:
       DAQconfdict=read_config(f)
@@ -115,7 +114,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     ANAscript = None
 
   # read scope configuration file
-  print('     scope configuration from file ' + DeviceFile)
+  print('    Device configuration from file ' + DeviceFile)
   try:
     with open(DeviceFile) as f:
       PSconfdict=read_config(f)
@@ -149,7 +148,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   PSconf.setBufferManagerPointer(BM)
 
 # ... and start data acquisition thread.
-  if verbose>0:
+  if verbose:
     print(" -> starting Buffer Manager Threads")   
   BM.start() # set up buffer manager processes  
 
@@ -186,22 +185,25 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       thrds.append(threading.Thread(target=obligConsumer,
                                     args=(BM,) ) )
 
-# modules to be run as a subprocess
-#     use multiprocessing.Queue for data transfer
-
+# modules to be run as subprocesses
+#                  these use multiprocessing.Queue for data transfer
   # rate display
     if 'mpRMeter' in modules:
       RMcidx, RMmpQ = BM.BMregister_mpQ()
-      procs.append(mp.Process(name='RMeter',
-                target = picodaqa.mpRMeter, 
+      procs.append(mp.Process(name='RMeter', target = picodaqa.mpRMeter, 
                 args=(RMmpQ, 75., 2500., 'trigger rate history') ) )
 #                         maxRate interval name
-
+  # Voltmeter display
+    if 'mpVMeter' in modules:
+      VMcidx, VMmpQ = BM.BMregister_mpQ()
+      procs.append(mp.Process(name='VMeter', target = picodaqa.mpVMeter, 
+                args=(VMmpQ, PSconf, 500., 'effective Voltage') ) )
+#                           config interval name
 
 # ---> put your own code here 
     if ANAscript:
       try:
-        print('     including user analysis from file ' + ANAscript )
+        print('    including user analysis from file ' + ANAscript )
         execfile(ANAscript)
       except:
         print('     failed to read analysis script ' + ANAscript)
@@ -209,13 +211,12 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # <---
 
     if len(procs)==0 and len(thrds)==0 :
-      print ('!!! nothing to do - exiting')
-      exit(1)
+      print ('!!! nothing to do - running BM only')
 # start all background processes   
     for prc in procs:
       prc.deamon = True
       prc.start()
-      print(' -> starting process ', prc.name, ', PID=', prc.pid)
+      print(' -> starting process ', prc.name, ' PID=', prc.pid)
     time.sleep(1.)
 # start threads
     for thrd in thrds:
@@ -232,10 +233,9 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     else: 
       get_input = input
 
-    print('\n')
 # ->> wait here until key pressed <<- 
     while True:
-      A=get_input('                 type -> E(nd), P(ause) or R(esume) + <ret> ')
+      A=get_input(40*' '+'type -> E(nd), P(ause) or R(esume) + <ret> ')
       if A=='P':
         BM.pause()
       elif A=='R':

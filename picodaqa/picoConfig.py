@@ -142,7 +142,7 @@ class PSconfig(object):
     try: 
       self.picoIni() # run initialisation routine for device  
     except:
-      print("Error initialising device - exit")
+      print("PSconfig: Error initialising device - exit")
       sys.exit(1)
 # - end picoConf.__init__()
 
@@ -159,20 +159,21 @@ class PSconfig(object):
     verbose = self.verbose
 
     if verbose>1: print(__doc__)
-    if verbose>0: print("  Opening PicsoScope device ...")
+    if verbose>1: print("  Opening PicoScope device ...")
     if verbose>1:
       print("Found the following picoscope:")
       print(self.picoDevice.getAllUnitInfo())
 
+    prompt=6*' ' +'picoIni: '
 # configure oscilloscope
 # 1) Time Base
     TSampling, NSamples, maxSamples = \
-      self.picoDevice.setSamplingInterval(\
+       self.picoDevice.setSamplingInterval(\
        self.sampleTime/self.Nsamples, self.sampleTime)
     if verbose>0:
-      print("  > sampling interval = %.1g µs (%.1g µs)" \
+      print(prompt+"sampling interval = %.1g µs (%.1g µs)" \
                    % (TSampling*1E6, self.sampleTime*1E6/self.Nsamples ) )
-      print("  > number of samples = %d (%d)" % (NSamples, self.Nsamples))
+      print(prompt+"number of samples = %d (%d)" % (NSamples, self.Nsamples))
       #print("  > maximum samples = %d" % maxSamples)
 # 2) Channel Ranges
       CRanges=[]
@@ -181,19 +182,19 @@ class PSconfig(object):
                    self.ChanRanges[i], VOffset=self.ChanOffsets[i], 
                    enabled=True, BWLimited=False) )
         if verbose>0:
-          print("  > range channel %s: %.3gV (%.3gV)" % (self.picoChannels[i],
-                  CRanges[i], self.ChanRanges[i]))
-          print("  > channel offset %s: %.3gV" % (self.picoChannels[i],
-                  self.ChanOffsets[i]))
+          print(prompt+"range channel %s: %.3gV (%.3gV)" \
+          %(self.picoChannels[i], CRanges[i], self.ChanRanges[i]))
+          print(prompt+"channel offset %s: %.3gV"\
+          %(self.picoChannels[i], self.ChanOffsets[i]))
 # 3) enable trigger
     self.picoDevice.setSimpleTrigger(self.trgChan, self.trgThr, self.trgTyp,
           self.trgDelay, self.trgTO, enabled=self.trgActive)    
     if verbose>0:
       if self.trgActive:
-        print("  > trigger channel %s enabled: %.3gV %s" % (self.trgChan, 
-          self.trgThr, self.trgTyp))
+        print(prompt+"trigger channel %s enabled: %.3gV %s" %\
+          (self.trgChan, self.trgThr, self.trgTyp))
       else:
-        print("  > trigger inactive")
+        print(prompt+"picoIni: trigger inactive")
 
 # 4) enable Signal Generator 
     if self.frqSG !=0. :
@@ -202,10 +203,10 @@ class PSconfig(object):
          offsetVoltage=self.offsetVoltageSG, sweepType=self.swpSG, 
          dwellTime=self.dwellTimeSG, stopFreq=self.stopFreqSG)
       if verbose>0:
-        print("  > signal generator enabled: %.3gHz, +/-%.3g V %s"\
+        print(prompt+"signal generator enabled: %.3gHz, +/-%.3g V %s"\
             % (self.frqSG, self.PkToPkSG, self.waveTypeSG) )
-        print("       sweep type %s, stop %.3gHz, Tdwell %.3gs" %\
-            (self.swpSG, self.stopFreqSG, self.dwellTimeSG) )
+        print(prompt+"sweep type %s, stop %.3gHz, Tdwell %.3gs"\
+            %(self.swpSG, self.stopFreqSG, self.dwellTimeSG) )
 
     self.setSamplingPars(TSampling, NSamples, CRanges) # store in config class
     # reserve static buffer for picoscope driver for storing raw data
