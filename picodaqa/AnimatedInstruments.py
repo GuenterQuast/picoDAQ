@@ -165,7 +165,7 @@ def animInstruments(opmode, conf, BM):
 # Voltmeter
     if verbose>0: print(' -> Voltmeter starting')
     WaitTime=500.
-    VM=VoltMeter(WaitTime, conf)
+    VM=VoltMeter(conf)
     figVM = VM.fig
     anims.append(anim.FuncAnimation(figVM, VM, yieldVMEvent,
                          interval=WaitTime, init_func=VM.init,

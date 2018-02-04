@@ -49,10 +49,9 @@ import picodaqa.picoConfig
 import picodaqa.BufferMan
 
 # animated displays running as background processes/threads
-import picodaqa.mpBufManInfo
 import picodaqa.mpOsci
+import picodaqa.mpVMeter
 import picodaqa.mpRMeter
-import picodaqa.mpLogWin
 import picodaqa.mpHists
 import picodaqa.AnimatedInstruments # deprecated !!!
 
@@ -192,11 +191,16 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   # rate display
     if 'mpRMeter' in modules:
       RMcidx, RMmpQ = BM.BMregister_mpQ()
-      procs.append(mp.Process(name='RMeter',
-                target = picodaqa.mpRMeter, 
+      procs.append(mp.Process(name='RMeter', target = picodaqa.mpRMeter, 
                 args=(RMmpQ, 75., 2500., 'trigger rate history') ) )
 #                         maxRate interval name
 
+  # Voltmeter display
+    if 'mpVMeter' in modules:
+      VMcidx, VMmpQ = BM.BMregister_mpQ()
+      procs.append(mp.Process(name='VMeter', target = picodaqa.mpVMeter, 
+                args=(VMmpQ, PSconf, 500., 'effective Voltage') ) )
+#                           config interval name
 
 # ---> put your own code here 
     if ANAscript:

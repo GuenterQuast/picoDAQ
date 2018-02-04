@@ -28,6 +28,7 @@ __version__ += _version_suffix
 from .AnimatedInstruments import *
 from .mpOsci import *
 from .mpRMeter import *
+from .mpVMeter import *
 from .mpLogWin import *
 from .mpHists import *
 from .mpBufManInfo import *
