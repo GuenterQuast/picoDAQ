@@ -7,7 +7,10 @@
 # - class BufferMan
 import numpy as np, sys, time, threading
 from collections import deque
-from multiprocessing import Queue
+from multiprocessing import Queue, Process
+from .mpLogWin import * 
+from .mpBufManInfo import *
+from .mpOsci import * 
 
   
 class BufferMan(object):
@@ -22,20 +25,32 @@ class BufferMan(object):
   of the consumers' progress)
   '''
 
-  def __init__(self, NBuf, NChan, NSamp, TSamp, rawDAQproducer):
-    ''' data structure for BufferManager '''
-    self.NBuffers = NBuf
-    self.NChannels = NChan
-    self.NSamples = NSamp
-    self.TSampling = TSamp
+  def __init__(self, BMdict, DevConf):
+    '''Args:  configuration dictionary
+              Device Class             
+    '''
+    self.DevConf = DevConf  
+    self.NChannels = DevConf.NChannels # number of channels in use
+    self.NSamples = DevConf.NSamples   # number of samples 
+    self.TSampling = DevConf.TSampling # sampling interval
+    # function collecting data from hardware device
+    self.rawDAQproducer = DevConf.acquireData 
 
-  # function collecting data from hardware device
-    self.rawDAQproducer = rawDAQproducer  
+    if "NBuffers" in BMdict: 
+      self.NBuffers = BMdict["NBuffers"] # number of buffers
+    else:
+      self.NBuffers= 16
+    if "BMmodules" in BMdict: 
+      self.BMmodules = BMdict["BMmodules"] # display modules to start
+    else:
+      self.BMmodules = ["mpBufInfo"]
 
-  # set up event buffer
-    self.BMbuf = np.empty([NBuf, NChan, NSamp], dtype=np.float32 )
-    self.timeStamp = np.empty(NBuf    )
+  # set up data structure for BufferManager
+    self.BMbuf = np.empty([self.NBuffers, self.NChannels, self.NSamples], 
+          dtype=np.float32 )
+    self.timeStamp = np.empty(self.NBuffers    )
     self.ibufr = -1     # read index, used to synchronize with producer 
+    self.procs=[] # list of sub-processes started by BufferMan
 
   # set up status 
     self.BMT0 = 0
@@ -43,7 +58,7 @@ class BufferMan(object):
     self.RUNNING = False
 
   # queues (collections.deque() for communication with threads
-    self.prod_que = deque(maxlen=NBuf    ) # acquireData <-> manageDataBuffer
+    self.prod_que = deque(maxlen=self.NBuffers) # acquireData <-> manageDataBuffer
     self.request_ques=[] # consumer request to manageDataBuffer
                 # 0:  request event pointer, obligatory consumer
                 # 1:  request event data, random consumer 
@@ -291,6 +306,32 @@ class BufferMan(object):
     thr_manageDataBuffer.setName('manageDataBuffer')
     thr_manageDataBuffer.start()
 
+  # logging window for buffer manager
+    self.logQ = Queue()
+    self.procs.append(Process(name='LogWin', 
+                        target = mpLogWin, args=(self.logQ, ) ) )
+  # Buffer Info
+    if 'mpBufInfo' in self.BMmodules: 
+      maxBMrate = 100.
+      BMIinterval = 1000.
+      self.procs.append(Process(name='BufManInfo',
+                   target = mpBufManInfo, 
+                   args=(self.getBMInfoQue(), maxBMrate, BMIinterval) ) )
+#                           BM InfoQue      max. rate  update interval
+  # waveform display 
+    if 'mpOsci' in self.BMmodules: 
+      OScidx, OSmpQ = self.BMregister_mpQ()
+      self.procs.append(Process(name='Osci',
+                              target = mpOsci, 
+                              args=(OSmpQ, self.DevConf, 50., 'event rate') ) )
+#                                               interval
+# start BufferMan background processes   
+    for prc in self.procs:
+#      prc.deamon = True
+      prc.start()
+      if self.verbose:
+        print(' -> starting process ', prc.name, ', PID=', prc.pid)
+
   def run(self):
     if self.BMT0==0: 
        if self.verbose: self.prlog('*==* BufferMan T0')
@@ -301,6 +342,11 @@ class BufferMan(object):
   def pause(self):
     if self.verbose: self.prlog('*==* BufferMan  pause')
     self.RUNNING = False  
+    self.readrate = 0.
+
+  def resume(self):
+    if self.verbose: self.prlog('*==* BufferMan  resume')
+    self.RUNNING = True
   
   def setverbose(self, vlevel):
     self.verbose = vlevel
@@ -311,7 +357,8 @@ class BufferMan(object):
                  time of last event, rate, life fraction and buffer level
     '''
     bL = (len(self.prod_que)*100)/self.NBuffers
-    return (self.RUNNING,time.time()-self.BMT0,self.Ntrig,self.Ttrig,self.Tlife, 
+    return (self.RUNNING,time.time()-self.BMT0, 
+           self.Ntrig, self.Ttrig, self.Tlife, 
            self.readrate, self.lifefrac, bL) 
 
   def getBMInfoQue(self):
@@ -338,9 +385,6 @@ class BufferMan(object):
     '''report Buffer manager staus to a multiprocessing Queue'''
     while self.ACTIVE:
       if Q is not None and Q.empty(): 
-       #bL = (len(self.prod_que)*100)/self.NBuffers
-       # self.RUNNING,time.time()-self.BMT0,self.Ntrig,self.Ttrig,self.Tlife, 
-       # self.readrate, self.lifefrac, bL) ) 
         Q.put( self.getStatus()) 
       time.sleep(0.1)
 
@@ -366,6 +410,12 @@ class BufferMan(object):
         %(time.time()-self.BMT0, self.Ntrig, self.Tlife) )
     time.sleep(0.3)
     self.ACTIVE = False 
+  # stop all sub-processes
+    for prc in self.procs:
+      if self.verbose: print('*==* BufferMan: terminating '+prc.name)
+      prc.terminate()
+    time.sleep(0.3)
+    self.RUNNING = False
 
   def __del__(self):
     self.RUNNING = False

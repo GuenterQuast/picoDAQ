@@ -9,6 +9,6 @@
 "trgTO": 1000,        
 "trgActive": false,
 "pretrig": 0.05, 
-"frqSG": 100E3,
-"mode": ["test"] 
+"frqSG": 100E3 #,
+# "mode": ["test"] 
 }

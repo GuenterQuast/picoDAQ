@@ -213,7 +213,7 @@ class PSconfig(object):
 
 # -- end def picoIni
 
-  def acquirePicoData(self, buffer):
+  def acquireData(self, buffer):
     '''
     read data from device
       this part is hardware (i.e. driver) specific code for PicoScope device
