@@ -49,8 +49,8 @@ with water equipped with a PM.
 
   Graphical displays are implemented with *matplotlib*.
 
-  Code was tested with PicoScope device classes PS2000a and PS4000
-  under Ubuntu and openSUSE Leap.
+  Code was tested with PicoScope device classes PS2000a, PS3000a and 
+  PS4000 under Ubuntu and openSUSE Leap.
 
 
 implemented **Functions**:
@@ -76,9 +76,14 @@ implemented **Functions**:
 
       - examples of animated graphical devices: a Buffer Manager display
         (using class *plotBufManInfo), a VoltMeter (class *VoltMeter*),
-         an Oscilloscope (class *Ocscilloscope* and a Ratemeter
+         an Oscilloscope (class *Ocscilloscope* and a ratemeter
          (class *RMeter*). The module must run as a *python* *thread* in
          the same *python* interpreter as *BufferMan*
+
+  module *mpLogWin* 
+
+      - receives information from the Buffer Manager via a multiprocessing 
+        Queue and displays Buffer Manager logging information in a text window 
 
   module *mpBufManInfo*
   
@@ -97,6 +102,11 @@ implemented **Functions**:
       - runs an instance of the *RMeter* class as a subprocess, receiving
         data from *BufferMan* via a multiprocessing Queue.
 
+  module *mpVMeter* 
+
+      - runs an instance of the *VoltMeter* class as a subprocess, receiving
+        data from *BufferMan* via a multiprocessing Queue.
+
   module *mpHists* 
     
      - runs an instance of the *animHists* class as a subprocess; recieves  
@@ -105,9 +115,13 @@ implemented **Functions**:
        displayed
        
 
-The script *picoDACtest.py* gives an example of how to use all of the above. For a full demo, connect the output of a PicoScope's signal generator to channel B, and eventually an open cable to Channel A to see random noise. Use the configuration file *picoDemo.json*. 
+The script *picoDACtest.py* gives an example of how to use all of the above. 
+For a full demo, connect the output of a PicoScope's signal generator to 
+channel B, and eventually an open cable to Channel A to see random noise. 
+Use the configuration file *picoDemo.json*. 
 
-The consumer *pulseFilter.py* is an implementation of a convolution filter to search for characteristic signal shapes in an input waveform. 
+The consumer *pulseFilter.py* is an implementation of a convolution 
+filter to search for characteristic signal shapes in an input waveform. 
 
 
 **Installation**
@@ -116,6 +130,10 @@ This python code is compatible with *python* versions 2.7 and 3.5.
 The low-level drivers and C-libraries contained in the Pico Technology
 Software Development Kit are required, together with the *python* bindings
 of the *pico-python* project, see the installation instructions there.
-*picoDAQ* presently consists of an example *python* script (*picoDAQtest.py*),
-*.json* files with configuration examples and the modules in directory *picodaqa* mentioned above. After downloading, start from the command line, e. g. *python picoDAQtest picoDemo.json*.
+*picoDAQ* presently consists of an example *python* script (*runDAQ.py*),
+*.json* files with configuration examples for the data acquisition
+(*DAQconfig.json), the PicoScope Device (*PSconfig.json*) and for the 
+Buffer Mananger (*BMconfig.json*), and the modules in directory *picodaqa* 
+mentioned above. After downloading, start from the command line, e. g. 
+*python picoDAQtest picoDemo.json*. The code is compatible to *python3*.
 

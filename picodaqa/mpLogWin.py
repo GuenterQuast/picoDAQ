@@ -17,7 +17,7 @@ else:
 import matplotlib.pyplot as plt, matplotlib.animation as anim
 
 def mpLogWin(Q, name='Buffer Manager Logging Window'):
-  '''RateMeter: show logging information
+  '''show logging information
     Args:
       Q:    multiprocessing.Queue()
       name: string, Window Title   
