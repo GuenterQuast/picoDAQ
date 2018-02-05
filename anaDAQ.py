@@ -26,7 +26,7 @@ Hdescriptors.append([0., 0.4, 50, 10., 'noise Trg. Pulse (V)', 0] )
 #                   min max nbins ymax    title               lin/log
 Hdescriptors.append([0., 0.8, 50, 10., 'valid Trg. Pulse (V)', 0] )
 Hdescriptors.append([0., 0.8, 50, 10., 'Pulse height (V)', 0] )
-Hdescriptors.append([0., 7., 35, 7.5, 'Tau (µs)', 1] )
+Hdescriptors.append([0., 15., 45, 7.5, 'Tau (µs)', 1] )
 procs.append(mp.Process(name='Hists',
           target = picodaqa.mpHists, 
           args=(histQ, Hdescriptors, 2000., 'Filter Histograms') ) )

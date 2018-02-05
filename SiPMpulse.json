@@ -1,15 +1,14 @@
 {
-"picoChannels":["A", "B"],
+"picoChannels":["A", "B", "C"],
 "ChanRanges":  [0.2, 0.2, 0.2],
 "ChanOffsets": [0.14, 0.16, 0.15],
-"Nsamples": 1199,  
-"sampleTime": 5E-6, 
-"trgChan": "A",      
+"Nsamples": 2900,
+"sampleTime": 16E-6,
+"trgChan": "A",
 "ChanColors": ["darkblue", "sienna", "indigo"],
-"trgThr": -50E-3,       
-"trgTyp": "Falling",   
-"trgTO": 5000,        
-"pretrig": 0.25, 
-"frqSG": 0.0,
-"mode": ["mpBufInfo", "mpOsci", "pulseFilter", "filtRMeter", "mpHist"]
+"trgThr": -50E-3,
+"trgTyp": "Falling",
+"trgTO": 5000,
+"pretrig": 0.05,
+"frqSG": 0.0
 }
