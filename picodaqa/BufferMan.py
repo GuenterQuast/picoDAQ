@@ -407,8 +407,17 @@ class BufferMan(object):
     else:
       self.logQ.put(s)
 
+  def print_summary(self):
+    datetime=time.strftime('%y%m%d-%H%M',time.gmtime(self.BMT0))
+    fsum = open('BMsummary_' + datetime+'.sum', 'w', 1)
+    print('Run Summary: started ' + datetime, file=fsum )
+    print('  Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
+        %(time.time()-self.BMT0, self.Ntrig, self.Tlife), file=fsum )
+    fsum.close()
+
   def end(self):
     self.pause()
+    self.print_summary()
     if self.verbose: 
       self.prlog('*==* BufferMan ending')
       print('*==* BufferMan ending')

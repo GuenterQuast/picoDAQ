@@ -70,7 +70,7 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
   prlog = BM.prlog
 # open a logfile
   if fileout:
-    datetime=time.strftime('%y%m%d-%H%M')
+    datetime=time.strftime('%y%m%d-%H%M',time.gmtime(BM.BMT0))
     logf=None
 #    logf = open('pFilt_' + datetime+'.dat', 'w')
     logf2 = open('dpFilt_' + datetime+'.dat', 'w', 1)
