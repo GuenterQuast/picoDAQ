@@ -8,7 +8,7 @@ from scipy.signal import argrelmax
 from scipy.interpolate import interp1d
 from multiprocessing import Queue
 
-  # helper function to generate general unipolar or bipolar 
+  # helper function to generate general unipolar or bipolar template
 def trapezoidPulse(t, tr, ton, tf, toff=0., tf2=0., mode=0):
   '''
     create a single or double trapezoidal plulse, 
@@ -53,8 +53,7 @@ def setRefPulse(dT, taur=20E-9, tauon=12E-9, tauf=128E-9, pheight=-0.030):
 
 def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
   '''
-    Find a pulse similar to a template pulse using cross-correlatation
-    of signal and template pulse
+    Find a pulse similar to a template pulse by cross-correlatation
 
       - implemented as an obligatory consumer, i.e.  sees all data
       - cleaning of detected pulses in second step by
@@ -70,10 +69,12 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
   prlog = BM.prlog
 # open a logfile
   if fileout:
-    datetime=time.strftime('%y%m%d-%H%M',time.gmtime(BM.BMT0))
+    datetime=time.strftime('%y%m%d-%H%M', time.gmtime())
     logf=None
 #    logf = open('pFilt_' + datetime+'.dat', 'w')
     logf2 = open('dpFilt_' + datetime+'.dat', 'w', 1)
+    print("# Nacc, Ndble, Tau, delT(iChan), ... V(iChan)", 
+      file=logf2)
 
 # register this client with Buffer Manager
   myId = BM.BMregister()
@@ -259,8 +260,21 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
 
  #-- end BM.ACTIVE
   if fileout:
-    if logf: logf.close()
-    if logf2: logf2.close()
+    tag = "# pulseFilter Summary: " 
+    if logf: 
+      print(tag+"last evNR %i, Nval, Nacc, Nacc2, Nacc3: %i, %i, %i, %i"\
+        %(evcnt, Nval, Nacc, Nacc2, Nacc3),
+          file=logf )
+      logf.close()
+
+    if logf2: 
+      print(tag+"last evNR %i, Nval, Nacc, Nacc2, Nacc3: %i, %i, %i, %i"\
+        %(evcnt, Nval, Nacc, Nacc2, Nacc3),
+          file=logf2 )
+      print("#                       %i double pulses"%(Ndble), 
+          file=logf2 )
+      logf2.close()
+
   return
 #-end def pulseFilter
 
