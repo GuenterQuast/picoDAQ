@@ -42,6 +42,7 @@ from __future__ import unicode_literals
 import sys, time, numpy as np, threading
 #from multiprocessing import Process, Queue
 import multiprocessing as mp
+import traceback
 
 # import relevant pieces from picodaqa
 from picodaqa.read_config import *
@@ -204,9 +205,11 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     if ANAscript:
       try:
         print('    including user analysis from file ' + ANAscript )
-        execfile(ANAscript)
+        with open(ANAscript) as f:
+          exec(compile(f.read(), ANAscript, 'exec'))
       except:
         print('     failed to read analysis script ' + ANAscript)
+        traceback.print_exc()
         exit(1)
 # <---
 
