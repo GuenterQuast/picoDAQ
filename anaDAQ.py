@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# script runDAQ.py
+# code fragment  anaDAQ.py to run inside runDAQ.py
 '''
   code fragment to embed user code (in pulsfilter.py) into
    script runDAQ.py

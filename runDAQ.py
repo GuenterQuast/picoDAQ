@@ -56,8 +56,6 @@ import picodaqa.mpHists
 import picodaqa.AnimatedInstruments # deprecated !!!
 
 
-# examples of consumers and analysers
-from exampleConsumers import *
 
 # !!!!
 # import matplotlib.pyplot as plt
@@ -178,12 +176,6 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       # print('calling AnimatedInstruments')
       thrds.append(threading.Thread(target=picodaqa.animInstruments,
                                            args=(modules, PSconf, BM) ) )
-
-    if 'test' in modules: # test consumers
-      thrds.append(threading.Thread(target=randConsumer,
-                                    args=(BM,) ) )
-      thrds.append(threading.Thread(target=obligConsumer,
-                                    args=(BM,) ) )
 
 # modules to be run as subprocesses
 #                  these use multiprocessing.Queue for data transfer

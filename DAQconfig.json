@@ -2,7 +2,7 @@
 {
 
 "DeviceFile": "PSconfig.json",
-"BMfile": "BMconfig.json"
-#"ANAscript": "anaDAQ.py"
+"BMfile": "BMconfig.json",
+"ANAscript": "testDAQ.py"
 
 }

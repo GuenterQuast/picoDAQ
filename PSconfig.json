@@ -1,14 +1,14 @@
 {
 "picoChannels": ["A", "B"],
-"ChanRanges":  [0.5, 0.5],
+"ChanRanges":  [30E-3, 0.35],
 "Nsamples": 200,  
-"sampleTime": 50E-3, 
-"trgChan": "A",      
-"trgThr": 0.02,       
+"sampleTime": 10E-6, 
+"trgChan": "B",      
+"trgThr": 0.1,       
 "trgTyp": "Rising",   
-"trgTO": 1000,   
-#"trgActive": false,
+"trgTO": 1000,        
+"trgActive": false,
 "pretrig": 0.05, 
-"frqSG": 0.0 #,
-# "mode": ["test"] 
+"frqSG": 100E3,
+"mode": "test" 
 }
