@@ -23,7 +23,7 @@
 
       - obligatoryConsumer test speed of data acquisition
       - randomConsumer     test concurrent access
-      - VMeter             average Voltages with bar graph display
+      - VMeter             effective Voltages with bar graph display
       - Osci               simple waveform display
       - RMeter             displays event rate as a function of time
       - Histogram          histogramms event variables
@@ -111,6 +111,12 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   else:
     ANAscript = None
 
+  if 'DAQmodules' in DAQconfdict:
+    modules = DAQconfdict["DAQmodules"]
+  else:
+    modules = [] 
+
+    
   # read scope configuration file
   print('    Device configuration from file ' + DeviceFile)
   try:
@@ -151,16 +157,8 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   BM.start() # set up buffer manager processes  
 
   if 'DAQmodules' in BMconfdict:
-    modules = BMconfdict["DAQmodules"]
-  else:
-    modules = [] 
+    modules = modules + BMconfdict["DAQmodules"]
                        
-# temporary for backward compatibility ("modes" defined in PSconfig)
-  try: 
-    modules = BM.BMmodules + PSconf.mode
-  except:
-    pass
-
 # list of modules (= backgound processes) to start
   if type(modules) != list:  
     modules = [modules]

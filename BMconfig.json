@@ -2,7 +2,6 @@
 {
 
 "NBuffers": 16,    # mumber of buffers to store raw waveforms
-"BMmodules": ["mpBufInfo", "mpOsci"],  #BufferMan modules to start
-"DAQmodules": ["mpRMeter", "mpVMeter"] # other modules to start
+"BMmodules": ["mpBufInfo", "mpOsci"]  #BufferMan modules to start
 
 }
