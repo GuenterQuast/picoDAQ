@@ -204,7 +204,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     if ANAscript:
       try:
         print('    including user analysis from file ' + ANAscript )
-        execfile(ANAscript)
+        exec( open(ANAscript).read() )
       except:
         print('     failed to read analysis script ' + ANAscript)
         exit(1)
