@@ -115,6 +115,11 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     modules = DAQconfdict["DAQmodules"]
   else:
     modules = [] 
+  if "verbose" in DAQconfdict: 
+    verbose = DAQconfdict["verbose"]
+  else:
+    verbose = 1   # print (detailed) info if >0 
+
 
     
   # read scope configuration file
@@ -140,7 +145,6 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # configure and initialize PicoScope
   PSconf=picodaqa.picoConfig.PSconfig(PSconfdict)
   # copy some of the important configuration variables
-  verbose=PSconf.verbose
   NChannels = PSconf.NChannels # number of channels in use
   TSampling = PSconf.TSampling # sampling interval
   NSamples = PSconf.NSamples   # number of samples

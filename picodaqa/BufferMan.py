@@ -52,6 +52,19 @@ class BufferMan(object):
       self.BMmodules = BMdict["BMmodules"] # display modules to start
     else:
       self.BMmodules = ["mpBufInfo"]
+    if "verbose" in BMdict: 
+      self.verbose = BMdict["verbose"]
+    else:
+      self.verbose=1   # print (detailed) info if >0 
+
+
+    if "logTime" in BMdict: 
+      self.logTime = BMdict["logTime"] # display modules to start
+    else:
+      self.logTime = 60 # logging information once per 60 sec
+
+
+
 
   # set up data structure for BufferManager
     self.BMbuf = np.empty([self.NBuffers, self.NChannels, self.NSamples], 
@@ -89,8 +102,6 @@ class BufferMan(object):
     self.lifefrac = 0.
 
     self.BMlock = threading.Lock() 
-
-    self.verbose = 1
     self.logQ = None
     
   def acquireData(self):
@@ -230,13 +241,15 @@ class BufferMan(object):
 
 # print event rate
       n+=1
-      if time.time()-t0 >= 60:
+      if time.time()-t0 >= self.logTime:
         t0=time.time()
         if self.verbose:
-          self.prlog('evt %i:  rate: %.3gHz   life: %.2f%%' %(n, self.readrate, self.lifefrac))
+          self.prlog('evt %i:  rate: %.3gHz   life: %.2f%%' %(n, 
+              self.readrate, self.lifefrac))
         if(evNr != n): 
-          self.prlog("!!! manageDataBuffer error: ncnt != Ntrig: %i, %i"%(n,evNr) )
-#   - end while True  
+          self.prlog("!!! manageDataBuffer error: ncnt != Ntrig: %i, %i"%(n,
+          evNr) )
+#   - end while ACTIVE  
     if self.verbose: self.prlog('*==* BufMan ended')
     return
 # -end def manageDataBuffer()

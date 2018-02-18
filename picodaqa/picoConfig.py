@@ -115,13 +115,12 @@ class PSconfig(object):
       self.offsetVoltageSG = confdict["offsetVoltageSG"] 
     else:
       self.offsetVoltageSG = 0.  
-
-# control printout, colors, ...
     if "verbose" in confdict: 
       self.verbose = confdict["verbose"]
     else:
       self.verbose=1   # print (detailed) info if >0 
 
+# control printout, colors, ...
     if "ChanColors" in confdict: 
       self.ChanColors=confdict["ChanColors"]
     else:
