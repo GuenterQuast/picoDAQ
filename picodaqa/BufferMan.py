@@ -59,7 +59,8 @@ class BufferMan(object):
     self.timeStamp = np.empty(self.NBuffers)
 #(
 # eventually use shared c-type memory (would need adjustmens in picoDevice) 
-#    self.BMbuf = RaWArray('f', (self.NBuffers, self.NChannels, self.NSamples) )#    self.timeStamp = RawArray('f', self.NBuffers )
+#    self.BMbuf = RaWArray('f', (self.NBuffers, self.NChannels, self.NSamples) )
+#    self.timeStamp = RawArray('f', self.NBuffers )
 #)
     self.ibufr = -1     # read index, used to synchronize with producer 
 
@@ -67,8 +68,8 @@ class BufferMan(object):
 
   # set up status 
     self.BMT0 = 0.
-    self.ACTIVE = RawValue('b', 0).value 
-    self.RUNNING = RawValue('b', 0).value
+    self.ACTIVE = RawValue('b', 0) 
+    self.RUNNING = RawValue('b', 0)
 
   # queues (collections.deque() for communication with threads
     self.prod_que = deque(maxlen=self.NBuffers) # acquireData <-> manageDataBuffer
@@ -117,17 +118,17 @@ class BufferMan(object):
     ts = time.time()
   
     ibufw = -1   # buffer index
-    while self.ACTIVE:
+    while self.ACTIVE.value:
   # sample data from Picoscope handled by instance ps
       ibufw = (ibufw + 1) % self.NBuffers # next write buffer
       while ibufw==self.ibufr:  # wait for consumer done with this buffer
-        if not self.ACTIVE: 
+        if not self.ACTIVE.value: 
           if self.verbose: self.prlog ('*==* BufMan.acquireData()  ended')
           return
         time.sleep(0.001)
 #
-      while not self.RUNNING:   # wait for running status 
-        if not self.ACTIVE: 
+      while not self.RUNNING.value:   # wait for running status 
+        if not self.ACTIVE.value: 
           if self.verbose: self.prlog('*==* BufMan.acquireData()  ended')
           return
         time.sleep(0.01)
@@ -147,7 +148,7 @@ class BufferMan(object):
        
 # wait for free buffer       
       while len(self.prod_que) == self.NBuffers:
-        if not self.ACTIVE: 
+        if not self.ACTIVE.value: 
           if self.verbose: self.prlog('*==* BufMan.acquireData()  ended')
           return
         time.sleep(0.001)
@@ -177,9 +178,9 @@ class BufferMan(object):
     t0=time.time()
     n0=0
     n=0
-    while self.ACTIVE:
+    while self.ACTIVE.value:
       while not len(self.prod_que): # wait for data in producer queue
-        if not self.ACTIVE:
+        if not self.ACTIVE.value:
           if self.verbose: self.prlog('*==* BufMan ended')
           return
         time.sleep(0.001)
@@ -215,12 +216,12 @@ class BufferMan(object):
 
 # wait until all obligatory consumers are done
       if len(l_obligatory):
-        while self.ACTIVE:
+        while self.ACTIVE.value:
           done = True
           for i in l_obligatory:
             if not len(self.request_ques[i]): done = False
           if done: break
-          if not self.ACTIVE: 
+          if not self.ACTIVE.value: 
             if self.verbose: self.prlog('*==* BufMan ended')
             return
           time.sleep(0.001)        
@@ -295,7 +296,7 @@ class BufferMan(object):
     self.request_ques[client_index].append(mode)
     cq=self.consumer_ques[client_index]
     while not len(cq):
-        if not self.ACTIVE: return
+        if not self.ACTIVE.value: return
         time.sleep(0.01)
     #self.prlog('*==* getEvent: received event %i'%evNr)
     if mode !=0: # received copy of the event data
@@ -309,7 +310,7 @@ class BufferMan(object):
   def start(self):
     if self.verbose > 1: 
       self.prlog('*==* BufferMan  starting acquisition threads')
-    self.ACTIVE = True 
+    self.ACTIVE.value = True 
     thr_acquireData=threading.Thread(target=self.acquireData)
     thr_acquireData.daemon=True
     thr_acquireData.setName('acquireData')
@@ -351,16 +352,16 @@ class BufferMan(object):
        if self.verbose: self.prlog('*==* BufferMan T0')
        self.BMT0 = time.time()        # remember start time
     if self.verbose: self.prlog('*==* BufferMan start running')
-    self.RUNNING = True  
+    self.RUNNING.value = True  
 
   def pause(self):
     if self.verbose: self.prlog('*==* BufferMan  pause')
-    self.RUNNING = False  
+    self.RUNNING.value = False  
     self.readrate = 0.
 
   def resume(self):
     if self.verbose: self.prlog('*==* BufferMan  resume')
-    self.RUNNING = True
+    self.RUNNING.value = True
   
   def setverbose(self, vlevel):
     self.verbose = vlevel
@@ -371,7 +372,8 @@ class BufferMan(object):
                  time of last event, rate, life fraction and buffer level
     '''
     bL = (len(self.prod_que)*100)/self.NBuffers
-    return (self.RUNNING, time.time()-self.BMT0, 
+    stat = self.RUNNING.value
+    return (stat, time.time()-self.BMT0, 
            self.Ntrig, self.Ttrig, self.Tlife, 
            self.readrate, self.lifefrac, bL) 
 
@@ -397,7 +399,7 @@ class BufferMan(object):
 
   def reportStatus(self, Q):
     '''report Buffer manager staus to a multiprocessing Queue'''
-    while self.ACTIVE:
+    while self.ACTIVE.value:
       if Q is not None and Q.empty(): 
         Q.put( self.getStatus()) 
       time.sleep(0.1)
@@ -431,7 +433,7 @@ class BufferMan(object):
       print('*==* BufferMan ending')
       print('  Run Summary: Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
         %(time.time()-self.BMT0, self.Ntrig, self.Tlife) )
-    self.ACTIVE = False 
+    self.ACTIVE.value = False 
     time.sleep(0.3)
   # stop all sub-processes
     for prc in self.procs:
@@ -440,6 +442,6 @@ class BufferMan(object):
     time.sleep(0.3)
 
   def __del__(self):
-    self.RUNNING = False
-    self.ACTIVE  = False
+    self.RUNNING.value = False
+    self.ACTIVE.value  = False
 # - end class BufferMan

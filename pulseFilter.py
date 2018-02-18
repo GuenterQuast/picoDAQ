@@ -61,7 +61,7 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
   '''
 
 # buffermanager must be active
-  if not BM.ACTIVE: 
+  if not BM.ACTIVE.value: 
     if verbose: print("*==* pulseFilter: Buffer Manager not active, exiting")
     sys.exit(1)
 
@@ -111,7 +111,7 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
   Taus = []  # deltaT of double pulses
 
 # event loop
-  while BM.ACTIVE:
+  while BM.ACTIVE.value:
     validated = False
     accepted = False
     doublePulse = False
