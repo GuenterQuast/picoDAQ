@@ -12,7 +12,10 @@ from __future__ import unicode_literals
 # - class BufferMan
 import numpy as np, sys, time, threading
 from collections import deque
-from multiprocessing import Queue, Process
+
+from multiprocessing import Queue, Process, Array
+from multiprocessing.sharedctypes import RawValue, RawArray
+
 from .mpLogWin import * 
 from .mpBufManInfo import *
 from .mpOsci import * 
@@ -53,14 +56,19 @@ class BufferMan(object):
   # set up data structure for BufferManager
     self.BMbuf = np.empty([self.NBuffers, self.NChannels, self.NSamples], 
           dtype=np.float32 )
-    self.timeStamp = np.empty(self.NBuffers    )
+    self.timeStamp = np.empty(self.NBuffers)
+#(
+# eventually use shared c-type memory (would need adjustmens in picoDevice) 
+#    self.BMbuf = RaWArray('f', (self.NBuffers, self.NChannels, self.NSamples) )#    self.timeStamp = RawArray('f', self.NBuffers )
+#)
     self.ibufr = -1     # read index, used to synchronize with producer 
+
     self.procs=[] # list of sub-processes started by BufferMan
 
   # set up status 
-    self.BMT0 = 0
-    self.ACTIVE = False
-    self.RUNNING = False
+    self.BMT0 = 0.
+    self.ACTIVE = RawValue('b', 0).value 
+    self.RUNNING = RawValue('b', 0).value
 
   # queues (collections.deque() for communication with threads
     self.prod_que = deque(maxlen=self.NBuffers) # acquireData <-> manageDataBuffer
@@ -301,7 +309,7 @@ class BufferMan(object):
   def start(self):
     if self.verbose > 1: 
       self.prlog('*==* BufferMan  starting acquisition threads')
-    self.ACTIVE = True  
+    self.ACTIVE = True 
     thr_acquireData=threading.Thread(target=self.acquireData)
     thr_acquireData.daemon=True
     thr_acquireData.setName('acquireData')
@@ -363,7 +371,7 @@ class BufferMan(object):
                  time of last event, rate, life fraction and buffer level
     '''
     bL = (len(self.prod_que)*100)/self.NBuffers
-    return (self.RUNNING,time.time()-self.BMT0, 
+    return (self.RUNNING, time.time()-self.BMT0, 
            self.Ntrig, self.Ttrig, self.Tlife, 
            self.readrate, self.lifefrac, bL) 
 
@@ -423,16 +431,15 @@ class BufferMan(object):
       print('*==* BufferMan ending')
       print('  Run Summary: Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
         %(time.time()-self.BMT0, self.Ntrig, self.Tlife) )
-    time.sleep(0.3)
     self.ACTIVE = False 
+    time.sleep(0.3)
   # stop all sub-processes
     for prc in self.procs:
       if self.verbose: print('    BufferMan: terminating '+prc.name)
       prc.terminate()
     time.sleep(0.3)
-    self.RUNNING = False
 
   def __del__(self):
     self.RUNNING = False
-    self.ACTIVE = False
+    self.ACTIVE  = False
 # - end class BufferMan

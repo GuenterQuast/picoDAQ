@@ -30,7 +30,7 @@
 
   graphics implemented with matplotlib
 
-  For Demo Mode: Connect output of signal gnerator to channel B, 
+  For Demo Mode: Connect output of signal generator to channel B, 
   and an open cable to Channel A
 '''
 
