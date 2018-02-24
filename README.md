@@ -12,13 +12,9 @@ high-level languages.
 Provided here is a data acquisition system as is needed to record, 
 analyze, classify and count the occurrence of wave forms such as provided 
 for example by single-photon counters or typical detectors common in 
-nuclear, particle physics and astro particle physics.
-
-This project is a first prototype towards the goal of acquiring,
-analyzing and counting the occurrence of typical electrical waveforms
-resulting from the registered occurrence of an 'event' in a one-channel,
-single particle detector such as photo tubes, Geiger counters, avalanche
-photo diodes or SiPMs.
+quantum mechanical measurements or in nuclear, particle physics and astro
+particle physics, e.g. photo tubes, Geiger counters, avalanche photo-diodes
+or modern SiPMs.
 
 The random nature of such processes and the need to keep read-out dead 
 times low requires an input buffer and a buffer manager running as a 
@@ -31,26 +27,13 @@ consumers receives an event copy from the buffer manager upon request,
 without pausing the data acquisition process. Typical examples of 
 random consumers are displays of a subset of the wave forms or of 
 intermediate analysis results. Examples for such consumers are provided
-as part of this package, running either as a 'thread' within the python  
+as part of this package, running either as a 'thread' within the python
 interpreter or as sub-processes using the 'multiprocessing' package.
 
 This project originated as a demonstration to analyze pulses from a 
-photomultiplier (PM) or a Silicon Photo Multiplier (SiPM) registering  
+photomultiplier (PM) or a Silicon Photo Multiplier (SiPM) registering
 optical signals from  a detector, in the simplest case a coffeepot
 filled with water and equipped with a PM to count muons from cosmic rays. 
-
-
-## Requirements:
-
-  - *SDK* by Pico Technology, https://www.picotech.com/downloads
-  - *python* bindings of the *pico-python* project by Colin O'Flynn
-    and Mark Harfouche, https://github.com/colinoflynn/pico-python
-
-  Graphical displays are implemented with *matplotlib*.
-
-  Code was tested with PicoScope device classes PS2000, PS2000a,   
-  PS3000a and PS4000 under Ubuntu, openSUSE Leap and on RaspberryPi
-
 
 ## List of implemented **Functions**:
 
@@ -116,38 +99,28 @@ filled with water and equipped with a PM to count muons from cosmic rays.
 
   - runs an instance of class BarDisplay and shows one (signed or unsigned)
        value per Channel (e.g. peak Voltage, effective Voltage etc.). Values 
-       are passed to the sub-process via a  multiprocessing Queue.
+       are passed to the sub-process via a multiprocessing Queue.
 
-The script *runDAQ.py* gives an example of how to use all of the above. 
-For a full demo, connect the output of a PicoScope's signal generator to 
-channel *B*, and eventually an open cable to Channel *A* to see random noise. 
-Use the configuration file *DAQconfig.json*, which contains the configuration 
-files *BMconfig.json* for the Buffer Manager and *PSConfig.json* for the 
-picoScope. As a hook for own extensions, a python code my be included. An 
-example for this is the configuration *DAQ_Cosmo.json*, which includes
-a code sniplet *anaDAQ.py* to start a dedicated consumer for signal filtering 
-and analysis (see *pulseFilter* below). 
+The script *runDAQ.py* gives an example of how to use all of the above. For a full demo, connect the output of a PicoScope's signal generator to channel *B*, and eventually an open cable to Channel *A* to see random noise. Use the configuration file *DAQconfig.json*, which contains the configuration files *BMconfig.json* for the Buffer Manager and *PSConfig.json* for the picoScope. As a hook for own extensions, own python code may be included. An example for this is the configuration *DAQ_Cosmo.json*, which includes a code sniplet *anaDAQ.py* to start a dedicated consumer for signal filtering and analysis (see *pulseFilter* below). 
 
-The consumer *pulseFilter.py* is an implementation of a convolution 
-filter to search for characteristic signal shapes in an input waveform. 
-The present example is tailored to identify short pulses from muon detectors 
-and also searches for double-pulses with short distance in time, indicating
-the decay of a stopped muon in or near the detector. This simple set-up 
-allows to measure the mean life time in the muon rest frame (2.2 µs). 
+The consumer *pulseFilter.py* is an implementation of a convolution filter to search for characteristic signal shapes in an input waveform. The present example is tailored to identify short pulses from muon detectors and also searches for double-pulses with short distance in time, indicating the decay of a stopped muon in or near the detector. This simple set-up allows to measure the mean life time in the muon rest frame (2.2 µs). 
 
 
-## Installation
+## Installation of the package
 
 This python code is compatible with *python* versions 2.7 and 3.5.
-The low-level drivers and C-libraries contained in the Pico Technology
-Software Development Kit are required, together with the *python* bindings
-of the *pico-python* project, see the installation instructions there.
-*picoDAQ* presently consists of an example *python* script (*runDAQ.py*),
-*.json* files with configuration examples for the data acquisition
-(*DAQconfig.json), the PicoScope Device (*PSconfig.json*) and for the 
-Buffer Mananger (*BMconfig.json*), and the modules in directory *picodaqa* 
-mentioned above. After downloading, connect your PicoScope and start 
-from the command line, e. g. *python runDAQ.py. 
+**Requirements:**
 
-The code is compatible to *python3*.
+  - The low-level drivers and C-libraries contained in the Pico Technology Software Development Kit are required, *SDK* by Pico Technology, see  https://www.picotech.com/downloads
+  - *python* bindings of the *pico-python* project by Colin O'Flynn
+    and Mark Harfouche, https://github.com/colinoflynn/pico-python
+
+Graphical displays are implemented with *matplotlib*.
+
+The code was tested with PicoScope device classes PS2000, PS2000a,   
+PS3000a and PS4000 under Ubuntu, openSUSE Leap and on RaspberryPi
+
+*picoDAQ* presently consists of an example *python* script (*runDAQ.py*), configuration examples (*.json* files) for the data acquisition (*DAQconfig.json), the PicoScope Device (*PSconfig.json*) and for the Buffer Mananger (*BMconfig.json*), and the modules in directory *picodaqa* mentioned above. 
+
+After downloading, connect your PicoScope and start from the command line, e. g. `python runDAQ.py`. 
 
