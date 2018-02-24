@@ -195,6 +195,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 #                           config interval name
 
 # ---> put your own code here 
+
     if ANAscript:
       try:
         print('    including user analysis from file ' + ANAscript )
@@ -202,6 +203,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       except:
         print('     failed to read analysis script ' + ANAscript)
         exit(1)
+
 # <---
 
     if len(procs)==0 and len(thrds)==0 :

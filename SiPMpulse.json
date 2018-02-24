@@ -1,5 +1,6 @@
 {
 "picoChannels":["A", "B", "C"],
+# "picoChannels":["A", "B"],
 "ChanRanges":  [0.2, 0.2, 0.2],
 "ChanOffsets": [0.14, 0.16, 0.15],
 "Nsamples": 2900,

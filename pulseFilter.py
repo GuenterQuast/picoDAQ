@@ -51,7 +51,7 @@ def setRefPulse(dT, taur=20E-9, tauon=12E-9, tauf=128E-9, pheight=-0.030):
   return rp
 
 
-def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
+def pulseFilter(BM, filtRateQ = None, histQ = None, VSigQ = None, fileout = None, verbose=1):
   '''
     Find a pulse similar to a template pulse by cross-correlatation
 
@@ -144,7 +144,7 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
           cc = np.sum(evdm *refpm) # convolution with mean-corrected reference
           if cc < pthrm:
             if iC == 0: nTrsigs.append( max(abs(evd)) )
-          else:
+          else:   # valid pulse
             idSig[iC].append(idx)
             V = max(abs(evd)) # signal Voltage 
             VSig[iC].append(V) 
@@ -155,6 +155,8 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
             TSig[iC].append(idx*dT)   # signal time
    #    -- end loop over pulse candidates
         NSig.append( len(idSig[iC]) )
+        if NSig[iC] == 0:
+          VSig[iC].append(0.) # Volts=0 if no Signal on Channel
    #  -- end for loop over channels
 
       if NSig[0]:   # valid signal on trigger channel
@@ -249,13 +251,17 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, fileout = None, verbose=1):
 # provide information necessary for RateMeter
       if filtRateQ is not None and filtRateQ.empty(): 
         filtRateQ.put( (Nacc, evTime) ) 
+# provide information necessary for histograms
       if len(VTrsigs) and histQ is not None and histQ.empty(): 
         histQ.put( [nTrsigs, VTrsigs, VSigs, Taus] )
         nTrsigs = []
         VTrsigs = []
         VSigs = []
         Taus = []
-
+# provide information necessary for Panel Display
+      if VSigQ is not None and VSigQ.empty(): 
+        peaks = [VSig[iC][0] for iC in range(NChan) ]
+        VSigQ.put( peaks ) 
 #   -- end if e!=None  
 
  #-- end BM.ACTIVE

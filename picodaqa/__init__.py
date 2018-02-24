@@ -29,6 +29,7 @@ from .AnimatedInstruments import *
 from .mpOsci import *
 from .mpRMeter import *
 from .mpVMeter import *
+from .mpBDisplay import *
 from .mpLogWin import *
 from .mpHists import *
 from .mpBufManInfo import *
