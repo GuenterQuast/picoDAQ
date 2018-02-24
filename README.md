@@ -12,7 +12,7 @@ high-level languages.
 Provided here is a data acquisition system as is needed to record, 
 analyze, classify and count the occurrence of wave forms such as provided 
 for example by single-photon counters or typical detectors common in 
-nuclear, particle physics and astro particle-physics.
+nuclear, particle physics and astro particle physics.
 
 This project is a first prototype towards the goal of acquiring,
 analyzing and counting the occurrence of typical electrical waveforms
@@ -34,14 +34,13 @@ intermediate analysis results. Examples for such consumers are provided
 as part of this package, running either as a 'thread' within the python  
 interpreter or as sub-processes using the 'multiprocessing' package.
 
-
 This project originated as a demonstration to analyze pulses from a 
 photomultiplier (PM) or a Silicon Photo Multiplier (SiPM) registering  
 optical signals from  a detector, in the simplest case a coffeepot
-with water equipped with a PM. 
+filled with water and equipped with a PM to count muons from cosmic rays. 
 
 
-**Requirements**:
+## Requirements:
 
   - *SDK* by Pico Technology, https://www.picotech.com/downloads
   - *python* bindings of the *pico-python* project by Colin O'Flynn
@@ -49,23 +48,23 @@ with water equipped with a PM.
 
   Graphical displays are implemented with *matplotlib*.
 
-  Code was tested with PicoScope device classes PS2000a, PS3000a and 
-  PS4000 under Ubuntu and openSUSE Leap.
+  Code was tested with PicoScope device classes PS2000, PS2000a,   
+  PS3000a and PS4000 under Ubuntu, openSUSE Leap and on RaspberryPi
 
 
-implemented **Functions**:
+## List of implemented **Functions**:
 
    class *picoConfig*:
 
-      - set up PicoScope channel ranges and trigger
-      - set up the internal signal generator
-      - PicoScope configuration read from *json* file
-      - data acquisition of raw data from device
+   - set up PicoScope channel ranges and trigger
+   - set up the internal signal generator
+   - PicoScope configuration read from *json* file
+   - data acquisition of raw data from device
 
   class *BufferMan*:
 
-      - acquire data (implemented as background thread)
-      - manage event data buffer and distribute to consumers
+   - acquire data (implemented as background thread)
+   - manage event data buffer and distribute to consumers
 
       *obligatory* consumers: data acquisition pauses until consumer done
 
@@ -74,7 +73,7 @@ implemented **Functions**:
 
   module *AnimatedInstruments* (deprecated, to be removed soon)
 
-      - examples of animated graphical devices: a Buffer Manager display
+   - examples of animated graphical devices: a Buffer Manager display
         (using class *plotBufManInfo), a VoltMeter (class *VoltMeter*),
          an Oscilloscope (class *Ocscilloscope* and a ratemeter
          (class *RMeter*). The module must run as a *python* *thread* in
@@ -82,49 +81,62 @@ implemented **Functions**:
 
   module *mpLogWin* 
 
-      - receives information from the Buffer Manager via a multiprocessing 
+   - receives information from the Buffer Manager via a multiprocessing 
         Queue and displays Buffer Manager logging information in a text window 
 
   module *mpBufManInfo*
-  
-      - this subprocess receives status information from the Buffer Manager  
-        via a multiprocessing Queue and displays input rate history,   
-        filling level of the buffers and the life time of the  
-        data acquisition 
-      
+
+   - this subprocess receives status information from the Buffer Manager  
+        via a multiprocessing Queue and displays input rate history, filling  
+        level of the buffers and the data-acquisition live-time
+
   module *mpOsci*
 
-      - runs an instance of *Oscilloscpe* as a subprocess, and receives
+   - runs an instance of *Oscilloscpe* as a sub-process, and receives
         data from *BufferMan* via a multiprocessing Queue.
 
   module *mpRMeter* 
 
-      - runs an instance of the *RMeter* class as a subprocess, receiving
+   - runs an instance of the *RMeter* class as a sub-process, receiving
         data from *BufferMan* via a multiprocessing Queue.
 
   module *mpVMeter* 
 
-      - runs an instance of the *VoltMeter* class as a subprocess, receiving
+   - runs an instance of the *VoltMeter* class as a sub-process, receiving
         data from *BufferMan* via a multiprocessing Queue.
 
   module *mpHists* 
-    
-     - runs an instance of the *animHists* class as a subprocess; recieves  
-       input data via a multiprocessing Queue. Data are formatted as lists  
-       of values. A normalized frequency distrbution is then updated and    
-       displayed
-       
+ 
+  - runs an instance of the *animHists* class as a sub-process; receives 
+       input data via a multiprocessing Queue. Data are formatted as lists 
+       of values. A normalized frequency distribution is then updated and 
+       displayed.
 
-The script *picoDACtest.py* gives an example of how to use all of the above. 
+  module *mpBDisplay* 
+
+  - runs an instance of class BarDisplay and shows one (signed or unsigned)
+       value per Channel (e.g. peak Voltage, effective Voltage etc.). Values 
+       are passed to the sub-process via a  multiprocessing Queue.
+
+The script *runDAQ.py* gives an example of how to use all of the above. 
 For a full demo, connect the output of a PicoScope's signal generator to 
-channel B, and eventually an open cable to Channel A to see random noise. 
-Use the configuration file *picoDemo.json*. 
+channel *B*, and eventually an open cable to Channel *A* to see random noise. 
+Use the configuration file *DAQconfig.json*, which contains the configuration 
+files *BMconfig.json* for the Buffer Manager and *PSConfig.json* for the 
+picoScope. As a hook for own extensions, a python code my be included. An 
+example for this is the configuration *DAQ_Cosmo.json*, which includes
+a code sniplet *anaDAQ.py* to start a dedicated consumer for signal filtering 
+and analysis (see *pulseFilter* below). 
 
 The consumer *pulseFilter.py* is an implementation of a convolution 
 filter to search for characteristic signal shapes in an input waveform. 
+The present example is tailored to identify short pulses from muon detectors 
+and also searches for double-pulses with short distance in time, indicating
+the decay of a stopped muon in or near the detector. This simple set-up 
+allows to measure the mean life time in the muon rest frame (2.2 µs). 
 
 
-**Installation**
+## Installation
 
 This python code is compatible with *python* versions 2.7 and 3.5.
 The low-level drivers and C-libraries contained in the Pico Technology
@@ -134,6 +146,8 @@ of the *pico-python* project, see the installation instructions there.
 *.json* files with configuration examples for the data acquisition
 (*DAQconfig.json), the PicoScope Device (*PSconfig.json*) and for the 
 Buffer Mananger (*BMconfig.json*), and the modules in directory *picodaqa* 
-mentioned above. After downloading, start from the command line, e. g. 
-*python picoDAQtest picoDemo.json*. The code is compatible to *python3*.
+mentioned above. After downloading, connect your PicoScope and start 
+from the command line, e. g. *python runDAQ.py. 
+
+The code is compatible to *python3*.
 

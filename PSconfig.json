@@ -1,4 +1,6 @@
 {
+# example of a configuration file for PicoScope 2000 Series
+"PSmodel": "2000a",  # set model type here (2000a is default)
 "picoChannels": ["A", "B"],
 "ChanRanges":  [30E-3, 0.35],
 "Nsamples": 200,  
@@ -9,6 +11,5 @@
 "trgTO": 1000,        
 "trgActive": false,
 "pretrig": 0.05, 
-"frqSG": 100E3,
-"mode": "test" 
+"frqSG": 100E3
 }

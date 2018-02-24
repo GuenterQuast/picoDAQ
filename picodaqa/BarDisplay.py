@@ -61,14 +61,14 @@ class BarDisplay(object):
   # initialize objects to be animated
     self.barsp = ()
     self.barsm = ()
-    colr='gold'
+    barcolr='gold'
     for i in range(self.NChan):
        b, = self.axbar.barh(self.yvals[i], 0. , self.bheight, 
-           align='center', color = colr, alpha=0.5) 
+           align='center', color = barcolr, alpha=0.5) 
        self.barsp += b,
        if self.mode==2:
          b, = self.axbar.barh(self.yvals[i], 0. , self.bheight, 
-           align='center', color = colr, alpha=0.5) 
+           align='center', color = barcolr, alpha=0.5) 
          self.barsm += b,
 
     return self.barsm + self.barsp
