@@ -51,13 +51,15 @@ def setRefPulse(dT, taur=20E-9, tauon=12E-9, tauf=128E-9, pheight=-0.030):
   return rp
 
 
-def pulseFilter(BM, filtRateQ = None, histQ = None, VSigQ = None, fileout = None, verbose=1):
+def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout = None, verbose=1):
   '''
     Find a pulse similar to a template pulse by cross-correlatation
 
       - implemented as an obligatory consumer, i.e.  sees all data
       - cleaning of detected pulses in second step by
-        subtracting the pulse mean to increase sensitivity to the shape     
+        subtracting the pulse mean to increase sensitivity to the shape
+      - count coincidences of validated pulses
+      - search for double pulse and determin time difference
   '''
 
 # buffermanager must be active
@@ -74,19 +76,27 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, VSigQ = None, fileout = None
 #    logf = open('pFilt_' + datetime+'.dat', 'w')
     logf2 = open('dpFilt_' + datetime+'.dat', 'w', 1)
     print("# Nacc, Ndble, Tau, delT(iChan), ... V(iChan)", 
-      file=logf2)
+      file=logf2) # header line 
+
+# retrieve configuration parameters
+  dT = conf.TSampling # get sampling interval
+  NChan = conf.NChannels
+  NSamples = conf.NSamples
+  trgChan = conf.trgChan
+  iCtrg = -1   # trigger channel, initialized to -1
+  for i, C in enumerate(conf.picoChannels):   
+    if C == conf.trgChan: 
+      iCtrg = i
+      break
+  idT0 = int(conf.NSamples * conf.pretrig) # sample number of trigger point
 
 # register this client with Buffer Manager
   myId = BM.BMregister()
   mode = 0    # obligatory consumer, request pointer to Buffer
 
-  dT = BM.TSampling # actual sampling interval
-  NChan = BM.NChannels
-
   refp = setRefPulse(dT)
   lref = len(refp)
   refpm = refp - refp.mean() # mean subtracted
-  Fconv = refpm - 1. # function to cross-correlate with signal wave form  
 
 # calculate thresholds for correlation analysis
   pthr = np.sum(refp * refp) # norm of reference pulse
@@ -95,6 +105,8 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, VSigQ = None, fileout = None
     prlog('*==* pulse Filter: reference pulse')
     prlog(np.array_str(refp) )
     prlog('  thresholds: %.2g, %2g ' %(pthr, pthrm))
+
+# --- end initialisation 
 
 # initialise event loop
   evcnt=0  # events seen
@@ -123,6 +135,21 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, VSigQ = None, fileout = None
         prlog('*==* pulseFilter: event Nr %i, %i events seen'%(evNr,evcnt))
 
 # analyze signal data
+# 1. validate trigger pulse
+      if iCtrg >= 0:  
+        cort = np.correlate(evData[iCtrg, :idT0+lref], refp, mode='valid')
+        cort[cort<pthr] = pthr # set all values below threshold to threshold
+        idmxt = np.argmax(cort) # find index of 1st maximum 
+        evd = evData[iCtrg, idmxt:idmxt+lref]
+        evdm = evd - evd.mean()  # center signal candidate around zero
+        cc = np.sum(evdm *refpm) # convolution with mean-corrected reference
+        if cc > pthrm:
+          validated = True # valid trigger pulse
+          Nval +=1
+        else:   # no valid trigger
+          nTrsigs.append( max(abs(evd)) )
+          continue # skip rest of loop
+        
   # find signal candidates by convoluting signal with reference pulse
       idSig = [] # time slice of valid pulse
       VSig = []  # signal height in Volts
@@ -130,7 +157,7 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, VSigQ = None, fileout = None
       NSig = []
       for iC in range(NChan):
         cor = np.correlate(evData[iC], refp, mode='valid')
-        cor[cor<pthrm] = pthrm # set all values below threshold to threshold
+        cor[cor<pthr] = pthr # set all values below threshold to threshold
         idmx, = argrelmax(cor) # find maxima 
 
 # clean pulse candidates by requesting match with time-averaged pulse
@@ -142,9 +169,7 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, VSigQ = None, fileout = None
           evd = evData[iC, idx:idx+lref]
           evdm = evd - evd.mean()  # center signal candidate around zero
           cc = np.sum(evdm *refpm) # convolution with mean-corrected reference
-          if cc < pthrm:
-            if iC == 0: nTrsigs.append( max(abs(evd)) )
-          else:   # valid pulse
+          if cc > pthrm: # valid pulse 
             idSig[iC].append(idx)
             V = max(abs(evd)) # signal Voltage 
             VSig[iC].append(V) 
@@ -158,10 +183,6 @@ def pulseFilter(BM, filtRateQ = None, histQ = None, VSigQ = None, fileout = None
         if NSig[iC] == 0:
           VSig[iC].append(0.) # Volts=0 if no Signal on Channel
    #  -- end for loop over channels
-
-      if NSig[0]:   # valid signal on trigger channel
-        validated = True
-        Nval +=1
 
 # count trigger validated and accepted events
       if NChan == 1 and validated:  # one valid pulse found, accept event

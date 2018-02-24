@@ -42,7 +42,7 @@ procs.append(mp.Process(name='PanelSignals',
 #               mp.Queue Chan.Conf.  name          
 
 thrds.append(threading.Thread(target=pulseFilter,
-      args = ( BM, filtRateQ, histQ, VSigQ, True, 1) ) )
+      args = ( BM, PSconf, filtRateQ, histQ, VSigQ, True, 1) ) )
 #                  RMeterQ   histQ  fileout verbose    
 
 #   could also run this in main thread
