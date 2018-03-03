@@ -38,7 +38,7 @@ def mpLogWin(Q, name='Buffer Manager Logging Window'):
   button = Tk.Button(master=root, text='Quit', command=sys.exit)
   button.pack(side=Tk.BOTTOM)
   S = Tk.Scrollbar(root)
-  T = Tk.Text(root, height=25, width=80, wrap=Tk.WORD,
+  T = Tk.Text(root, height=15, width=90, wrap=Tk.WORD,
        bg='black', fg='orange' )
   S.pack(side=Tk.RIGHT, fill=Tk.Y)
   T.pack(side=Tk.LEFT, fill=Tk.Y)

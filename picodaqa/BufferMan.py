@@ -52,19 +52,19 @@ class BufferMan(object):
       self.BMmodules = BMdict["BMmodules"] # display modules to start
     else:
       self.BMmodules = ["mpBufInfo"]
+    if "LogFile" in BMdict:
+      self.LogFile = BMdict["LogFile"]
+    else:
+      self.LogFile = None
+    self.flog = None    # file not yet open
     if "verbose" in BMdict: 
       self.verbose = BMdict["verbose"]
     else:
       self.verbose=1   # print (detailed) info if >0 
-
-
     if "logTime" in BMdict: 
       self.logTime = BMdict["logTime"] # display modules to start
     else:
       self.logTime = 60 # logging information once per 60 sec
-
-
-
 
   # set up data structure for BufferManager
     self.BMbuf = np.empty([self.NBuffers, self.NChannels, self.NSamples], 
@@ -151,6 +151,7 @@ class BufferMan(object):
         return
       ttrg, tl = e
       tlife += tl
+      ttrg -= self.BMT0
       self.Tlife += tl
       self.timeStamp[ibufw] = ttrg  # store time when data became ready
       self.Ttrig = ttrg
@@ -361,10 +362,19 @@ class BufferMan(object):
         print('      BufferMan: starting process ', prc.name, ' PID =', prc.pid)
 
   def run(self):
-    if self.BMT0==0: 
-       if self.verbose: self.prlog('*==* BufferMan T0')
-       self.BMT0 = time.time()        # remember start time
+    if self.RUNNING.value:
+      self.prlog('*==* BufferMan already running - do nothing')
+      return
+
+    tstart = time.time()
+    if self.LogFile:
+      datetime=time.strftime('%y%m%d-%H%M',time.gmtime(tstart))
+      self.flog = open(self.LogFile + '_' + datetime + '.log', 'w')
+
+    if self.verbose: self.prlog('*==* BufferMan T0')
+    self.BMT0 = tstart
     if self.verbose: self.prlog('*==* BufferMan start running')
+
     self.RUNNING.value = True  
 
   def pause(self):
@@ -429,23 +439,26 @@ class BufferMan(object):
       print(s)
     else:
       self.logQ.put(s)
+    if self.flog:
+      print(s, file = self.flog)
 
   def print_summary(self):
     datetime=time.strftime('%y%m%d-%H%M',time.gmtime(self.BMT0))
-    fsum = open('BMsummary_' + datetime+'.sum', 'w', 1)
-    print('Run Summary: started ' + datetime, file=fsum )
+    if not self.flog:
+      self.flog = open('BMsummary_' + datetime+'.sum', 'w')
+    print('Run Summary: started ' + datetime, file=self.flog )
     print('  Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
-        %(time.time()-self.BMT0, self.Ntrig, self.Tlife), file=fsum )
-    fsum.close()
+        %(time.time()-self.BMT0, self.Ntrig, self.Tlife), file=self.flog )
+    self.flog.close()
 
   def end(self):
     self.pause()
-    self.print_summary()
     if self.verbose: 
       self.prlog('*==* BufferMan ending')
       print('*==* BufferMan ending')
       print('  Run Summary: Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
         %(time.time()-self.BMT0, self.Ntrig, self.Tlife) )
+    self.print_summary()
     self.ACTIVE.value = False 
     time.sleep(0.3)
   # stop all sub-processes

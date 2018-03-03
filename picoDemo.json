@@ -5,7 +5,7 @@
 "picoChannels":["A", "B"],
 "ChanRanges":  [0.03, 0.2],
 "Nsamples": 200,  
-"sampleTime": 10E-6, 
+"sampleTime": 10.E-6, 
 "trgChan": "B",      
 "trgThr": 0.01,       
 "trgTyp": "Rising",   
@@ -13,7 +13,7 @@
 "trgDelay":  0,
 "ChanColors": ["darkblue", "sienna"],
 "pretrig": 0.05, 
-"frqSG": 100E3,
+"frqSG": 100.E+3,
 "swpSG": "UpDown",
 "mode": ["test", "VMeter"]
 }

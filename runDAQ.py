@@ -34,17 +34,14 @@
   and an open cable to Channel A
 '''
 
-from __future__ import division
+from __future__ import print_function, division, unicode_literals
 from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 
-import sys, time, numpy as np, threading
+import sys, time, yaml, numpy as np, threading
 #from multiprocessing import Process, Queue
 import multiprocessing as mp
 
 # import relevant pieces from picodaqa
-from picodaqa.read_config import *
 import picodaqa.picoConfig
 import picodaqa.BufferMan
 
@@ -54,8 +51,6 @@ import picodaqa.mpVMeter
 import picodaqa.mpRMeter
 import picodaqa.mpHists
 import picodaqa.AnimatedInstruments # deprecated !!!
-
-
 
 # !!!!
 # import matplotlib.pyplot as plt
@@ -89,7 +84,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   print('    DAQconfiguration from file ' + DAQconfFile)
   try:
     with open(DAQconfFile) as f:
-      DAQconfdict=read_config(f)
+      DAQconfdict=yaml.load(f)
   except:
     print('     failed to read DAQ configuration file ' + DAQconfFile)
     exit(1)
@@ -126,15 +121,15 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   print('    Device configuration from file ' + DeviceFile)
   try:
     with open(DeviceFile) as f:
-      PSconfdict=read_config(f)
+      PSconfdict=yaml.load(f)
   except:
-    print('     failed to read scope configuration file ' + DeviceFile)
+    print('     failed to ofread scope configuration file ' + DeviceFile)
     exit(1)
 
   # read Buffer Manager configuration file
   try:
     with open(BMfile) as f:
-        BMconfdict=read_config(f)
+        BMconfdict=yaml.load(f)
   except:
     print('     failed to read BM input file ' + BMfile)
     exit(1)
