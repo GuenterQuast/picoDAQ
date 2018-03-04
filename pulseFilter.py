@@ -47,9 +47,9 @@ def setRefPulse(dT, taur=20E-9, tauon=12E-9, tauf=128E-9, pheight=-0.030):
       fall-off time in sec
       pulse height in Volt
   '''
-
-  l = np.int32( (taur+tauon+tauf)/dT +0.5 ) + 1  
-  ti = np.linspace(0, taur+tauf, l)    
+  tp = taur + tauon + tauf
+  l = np.int32( tp/dT +0.5 ) + 1  
+  ti = np.linspace(0, tp, l)    
   rp = trapezoidPulse(ti, taur, tauon, tauf)
   rp = pheight * rp   # normalize to pulse height
 
@@ -60,10 +60,17 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
     Find a pulse similar to a template pulse by cross-correlatation
 
       - implemented as an obligatory consumer, i.e.  sees all data
-      - cleaning of detected pulses in second step by
-        subtracting the pulse mean to increase sensitivity to the shape
-      - count coincidences of validated pulses
-      - search for double pulse and determin time difference
+
+      - pulse detection via correlation with reference pulse;
+
+          - detected pulses are cleaned in a second step by subtracting 
+           the pulse mean (increased sensitivity to pulse shape)
+
+      - analyis proceeds in three steps:
+
+          1. validation of pulse on trigger channel
+          2. coincidences on other channels near validated trigger pulse
+          3. seach for addtional pulses on any channel
   '''
 
 # buffermanager must be active
@@ -86,7 +93,8 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
 
 # retrieve configuration parameters
   dT = conf.TSampling # get sampling interval
-  dTprec = 2 # precision on time resolution of pulse search (in units of dT)
+  idTprec = 2 # precision on time resolution of pulse search 
+  dTprec = idTprec * dT  # precision on time resolution (in units of dT)
   NChan = conf.NChannels
   NSamples = conf.NSamples
   trgChan = conf.trgChan
@@ -163,15 +171,19 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
 
 # 1. validate trigger pulse
     if iCtrg >= 0:  
-      cort = np.correlate(evData[iCtrg, :idT0+lref], refp, mode='valid')
+      cort = np.correlate(evData[iCtrg, :idT0+idTprec+lref], 
+             refp, mode='valid')
       cort[cort<pthr] = pthr # set all values below threshold to threshold
       idtr = np.argmax(cort) # find index of 1st maximum 
-# check pulse shape by requesting match with time-averaged pulse
+      if idtr > idT0 + taur + tauon + idTprec:
+        hnTrSigs.append(0.)
+        continue #- while # no pulse near trigger, skip rest of event analysis
+    # check pulse shape by requesting match with time-averaged pulse
       evdt = evData[iCtrg, idtr:idtr+lref]
       evdtm = evdt - evdt.mean()  # center signal candidate around zero
-      cc = np.sum(evdtm *refpm) # convolution with mean-corrected reference
+      cc = np.sum(evdtm * refpm) # convolution with mean-corrected reference
       if cc > pthrm:
-        validated = True # valid trigger pulse
+        validated = True # valid trigger pulse found, store
         Nval +=1
         V = max(abs(evdt)) # signal Voltage  
         VSig[iCtrg][0] = V 
@@ -181,20 +193,24 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
         tevt = T  # time of event
       else:   # no valid trigger
         hnTrSigs.append( max(abs(evdt)) )
-        continue # skip rest of loop
+        continue #- while # skip rest of event analysis
     NSig[iCtrg] +=1
 
 #2. find coincidences
     Ncoinc = 1
     for iC in range(NChan):
       if iC != iCtrg:
-        offset = idtr - dTprec  # search around trigger pulse
-        cor = np.correlate(evData[iC, offset:idT0+lref], refp, mode='valid')
+        offset = idtr - idTprec  # search around trigger pulse
+    #  analyse channel to find pulse near trigger
+        cor = np.correlate(evData[iC, offset:idT0+idTprec+lref], 
+              refp, mode='valid')
         cor[cor<pthr] = pthr # set all values below threshold to threshold
-        id = np.argmax(cor)+offset # find index of maximum 
+        id = np.argmax(cor)+offset # find index of (1st) maximum 
+        if id > idT0 + taur + tauon + idTprec:
+          continue #- for # no pulse near trigger, skip
         evd = evData[iC, id:id+lref]
         evdm = evd - evd.mean()  # center signal candidate around zero
-        cc = np.sum(evdm *refpm) # convolution with mean-corrected reference
+        cc = np.sum(evdm * refpm) # convolution with mean-corrected reference
         if cc > pthrm:
           NSig[iC] +=1
           Ncoinc += 1 # valid, coincident pulse
@@ -210,7 +226,7 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
       accepted = True
       Nacc += 1
     else:
-      continue
+      continue #- while 
 
 # fix event time:
     tevt /= Ncoinc
@@ -230,7 +246,7 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
       for id in idmx:
         evd = evData[iC, id:id+lref]
         evdm = evd - evd.mean()  # center signal candidate around zero
-        cc = np.sum(evdm *refpm) # convolution with mean-corrected reference
+        cc = np.sum(evdm * refpm) # convolution with mean-corrected reference
         if cc > pthrm: # valid pulse 
           iacc+=1
           NSig[iC] += 1
