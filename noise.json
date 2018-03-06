@@ -3,12 +3,12 @@
 "PSmodel":"2000a",
 #
 "picoChannels": ["A", "B"],
-"ChanRanges":  [500E-3, 500E-3], 
+"ChanRanges":  [500.E-3, 500.E-3], 
 "ChanModes":  ["DC", "DC"],
 "Nsamples": 200,  # short data sample 
-"sampleTime": 25E-3, 
+"sampleTime": 25.E-3, 
 "trgChan": "A",      
-"trgThr": -15E-3,       
+"trgThr": -15.E-3,       
 "trgTyp": "Rising",   
 "trgTO": 10000,        
 "pretrig": 0.15, 

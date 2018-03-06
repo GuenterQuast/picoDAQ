@@ -19,7 +19,7 @@ class plotBufManInfo(object):
   def __init__(self, Q, maxRate=20., interval=1000.):
     self.Q = Q
  
-    self.maxRate = maxRate
+    self.ymax = maxRate
     self.interval = interval/1000 # time between updates in s
 
     self.Npoints = 100  # number of history points
@@ -39,7 +39,8 @@ class plotBufManInfo(object):
     self.axrate.yaxis.tick_right()
     self.axrate.set_ylabel('DAQ rate (HZ)')
     self.axrate.set_xlabel('rate history')
-    self.axrate.set_ylim(0.1, self.maxRate)
+    self.ymin = 0.1
+    self.axrate.set_ylim(self.ymin, self.ymax)
     self.axrate.set_yscale('log')
     self.axrate.grid(True, alpha=0.5)
 
@@ -61,7 +62,7 @@ class plotBufManInfo(object):
 
     k = n%self.Npoints
     RUNNING,TRun,Ntrig,Ttrig,Tlife,readrate,lifefrac,bufLevel = self.Q.get()
-    self.R[k] = np.log(max(0.1, readrate) )
+    self.R[k] = readrate
       
     self.line1.set_ydata(np.concatenate( (self.R[k+1:], self.R[:k+1]) ))
     self.animtxt1.set_text( \
