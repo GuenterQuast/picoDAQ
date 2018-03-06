@@ -2,14 +2,14 @@
 # example of a configuration file for PicoScope 2000 Series
 "PSmodel": "2000a",  # set model type here (2000a is default)
 "picoChannels": ["A", "B"],
-"ChanRanges":  [30E-3, 0.35],
+"ChanRanges":  [30.E-3, 0.35],
 "Nsamples": 200,  
-"sampleTime": 10E-6, 
+"sampleTime": 10.E-6, 
 "trgChan": "B",      
 "trgThr": 0.1,       
 "trgTyp": "Rising",   
 "trgTO": 1000,        
 "trgActive": false,
 "pretrig": 0.05, 
-"frqSG": 100E3
+"frqSG": 100.E+3
 }
