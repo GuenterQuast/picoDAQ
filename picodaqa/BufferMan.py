@@ -16,7 +16,6 @@ from collections import deque
 from multiprocessing import Queue, Process, Array
 from multiprocessing.sharedctypes import RawValue, RawArray
 
-from .mpLogWin import * 
 from .mpBufManInfo import *
 from .mpOsci import * 
 
@@ -335,25 +334,23 @@ class BufferMan(object):
     thr_manageDataBuffer.setName('manageDataBuffer')
     thr_manageDataBuffer.start()
 
-  # logging window for buffer manager
-    self.logQ = Queue()
-    self.procs.append(Process(name='LogWin', 
-                        target = mpLogWin, args=(self.logQ, ) ) )
   # Buffer Info
     if 'mpBufInfo' in self.BMmodules: 
+      self.logQ = Queue()
       maxBMrate = 100.
       BMIinterval = 1000.
       self.procs.append(Process(name='BufManInfo',
-                   target = mpBufManInfo, 
-                   args=(self.getBMInfoQue(), maxBMrate, BMIinterval) ) )
-#                           BM InfoQue      max. rate  update interval
+        target = mpBufManInfo, 
+        args=(self.logQ, self.getBMInfoQue(), maxBMrate, BMIinterval) ) )
+#             BM logQue       BM InfoQue      max. rate  update interval
+
   # waveform display 
     if 'mpOsci' in self.BMmodules: 
       OScidx, OSmpQ = self.BMregister_mpQ()
       self.procs.append(Process(name='Osci',
                               target = mpOsci, 
                               args=(OSmpQ, self.DevConf, 50., 'event rate') ) )
-#                                               interval
+#                                                     interval
 # start BufferMan background processes   
     for prc in self.procs:
 #      prc.deamon = True
