@@ -4,10 +4,8 @@
 .. author: Guenter Quast <guenter.quast@online.de>
 '''
 #
-from __future__ import division
+from __future__ import print_function, division, unicode_literals
 from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 
 # - class BufferMan
 import numpy as np, sys, time, threading
@@ -65,16 +63,21 @@ class BufferMan(object):
     else:
       self.logTime = 60 # logging information once per 60 sec
 
-  # set up data structure for BufferManager
-    self.BMbuf = np.empty([self.NBuffers, self.NChannels, self.NSamples], 
-          dtype=np.float32 )
-    self.timeStamp = np.empty(self.NBuffers)
-#(
-# eventually use shared c-type memory (would need adjustmens in picoDevice) 
-#    self.BMbuf = RaWArray('f', (self.NBuffers, self.NChannels, self.NSamples) )
-#    self.timeStamp = RawArray('f', self.NBuffers )
-#)
-    self.ibufr = -1     # read index, used to synchronize with producer 
+  # set up data structure for BufferManager (numpy arrays)
+#    self.BMbuf = np.empty([self.NBuffers, self.NChannels, self.NSamples], 
+#          dtype=np.float32 )
+#    self.timeStamp = np.empty(self.NBuffers)
+#
+# use shared c-type memory (allows data sharing across sub-processes)
+    self.CBMbuf = RawArray('f', 
+                  self.NBuffers * self.NChannels * self.NSamples) 
+    self.CtimeStamp = RawArray('f', self.NBuffers )
+#  ... and map to numpy arrays
+    self.BMbuf = np.frombuffer(self.CBMbuf, 'f').reshape(self.NBuffers, 
+        self.NChannels, self.NSamples)
+    self.timeStamp = np.frombuffer(self.CtimeStamp, 'f')
+
+    self.ibufr = RawValue('i', -1) # read index, synchronization with producer 
 
     self.procs=[] # list of sub-processes started by BufferMan
 
@@ -131,7 +134,7 @@ class BufferMan(object):
     while self.ACTIVE.value:
   # sample data from Picoscope handled by instance ps
       ibufw = (ibufw + 1) % self.NBuffers # next write buffer
-      while ibufw==self.ibufr:  # wait for consumer done with this buffer
+      while ibufw==self.ibufr.value:  # wait for consumer done with this buffer
         if not self.ACTIVE.value: 
           if self.verbose: self.prlog ('*==* BufMan.acquireData()  ended')
           return
@@ -195,9 +198,9 @@ class BufferMan(object):
           if self.verbose: self.prlog('*==* BufMan ended')
           return
         time.sleep(0.001)
-      evNr, self.ibufr = self.prod_que.popleft()
+      evNr, self.ibufr.value = self.prod_que.popleft()
 
-# !debug    self.prlog('ibufr=', self.ibufr,'request_ques',self.request_ques)
+# !debug    self.prlog('ibufr=', self.ibufr.value,'request_ques',self.request_ques)
 
 # check if other threads want data
       l_obligatory=[]
@@ -206,14 +209,16 @@ class BufferMan(object):
           if len(q):
             req = q.popleft()
             if req==0:                          # return poiner to Buffer      
-              self.consumer_ques[i].append( (evNr, self.ibufr) ) 
+              self.consumer_ques[i].append( (evNr, self.ibufr.value) ) 
               l_obligatory.append(i)
             elif req==1:                               # return a copy of data
-              evTime=self.timeStamp[self.ibufr]
-              self.consumer_ques[i].append( (evNr, evTime, np.copy(self.BMbuf[self.ibufr]) ) )
+              evTime=self.timeStamp[self.ibufr.value]
+              self.consumer_ques[i].append( (evNr, evTime, 
+                   np.copy(self.BMbuf[self.ibufr.value]) ) )
             elif req==2:                   # return copy and mark as obligatory
-              evTime=self.timeStamp[self.ibufr]
-              self.consumer_ques[i].append( (evNr, evTime, np.copy(BMbuf[self.ibufr]) ) )
+              evTime=self.timeStamp[self.ibufr.value]
+              self.consumer_ques[i].append( (evNr, evTime, 
+                    np.copy(BMbuf[self.ibufr.value]) ) )
               l_obligatory.append(i)
             else:
               self.prlog('!=! manageDataBuffer: invalid request mode', req)
@@ -222,8 +227,8 @@ class BufferMan(object):
       if len(self.mpQues):
         for Q in self.mpQues:
           if Q.empty(): # put an event in the Queue
-            evTime=self.timeStamp[self.ibufr]
-            Q.put( (evNr, evTime, np.copy(self.BMbuf[self.ibufr]) ) )
+            evTime=self.timeStamp[self.ibufr.value]
+            Q.put( (evNr, evTime, np.copy(self.BMbuf[self.ibufr.value]) ) )
 
 # wait until all obligatory consumers are done
       if len(l_obligatory):
@@ -237,7 +242,7 @@ class BufferMan(object):
             return
           time.sleep(0.001)        
 #  now signal to producer that all consumers are done with this event
-      self.ibufr = -1
+      self.ibufr.value = -1
 
 # print event rate
       n+=1
@@ -337,7 +342,7 @@ class BufferMan(object):
   # Buffer Info
     if 'mpBufInfo' in self.BMmodules: 
       self.logQ = Queue()
-      maxBMrate = 100.
+      maxBMrate = 400.
       BMIinterval = 1000.
       self.procs.append(Process(name='BufManInfo',
         target = mpBufManInfo, 
