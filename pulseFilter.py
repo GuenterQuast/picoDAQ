@@ -171,11 +171,12 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
 
 # 1. validate trigger pulse
     if iCtrg >= 0:  
-      cort = np.correlate(evData[iCtrg, :idT0+idTprec+lref], 
+      offset = max(0, idT0 - taur/dT - idTprec)
+      cort = np.correlate(evData[iCtrg, offset:idT0+idTprec+lref], 
              refp, mode='valid')
       cort[cort<pthr] = pthr # set all values below threshold to threshold
-      idtr = np.argmax(cort) # find index of 1st maximum 
-      if idtr > idT0 + taur + tauon + idTprec:
+      idtr = np.argmax(cort) + offset # index of 1st maximum 
+      if idtr > idT0 + (taur + tauon)/dT + idTprec:
         hnTrSigs.append(0.)
         continue #- while # no pulse near trigger, skip rest of event analysis
     # check pulse shape by requesting match with time-averaged pulse
@@ -200,13 +201,13 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
     Ncoinc = 1
     for iC in range(NChan):
       if iC != iCtrg:
-        offset = idtr - idTprec  # search around trigger pulse
+        offset = max(0, idtr - idTprec)  # search around trigger pulse
     #  analyse channel to find pulse near trigger
         cor = np.correlate(evData[iC, offset:idT0+idTprec+lref], 
               refp, mode='valid')
         cor[cor<pthr] = pthr # set all values below threshold to threshold
         id = np.argmax(cor)+offset # find index of (1st) maximum 
-        if id > idT0 + taur + tauon + idTprec:
+        if id > idT0 + (taur + tauon)/dT + idTprec:
           continue #- for # no pulse near trigger, skip
         evd = evData[iC, id:id+lref]
         evdm = evd - evd.mean()  # center signal candidate around zero
