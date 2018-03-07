@@ -171,7 +171,7 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
 
 # 1. validate trigger pulse
     if iCtrg >= 0:  
-      offset = max(0, idT0 - taur/dT - idTprec)
+      offset = max(0, idT0 - int(taur/dT) - idTprec)
       cort = np.correlate(evData[iCtrg, offset:idT0+idTprec+lref], 
              refp, mode='valid')
       cort[cort<pthr] = pthr # set all values below threshold to threshold
