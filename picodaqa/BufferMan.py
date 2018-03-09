@@ -137,7 +137,7 @@ class BufferMan(object):
         if not self.ACTIVE.value: 
           if self.verbose: self.prlog ('*==* BufMan.acquireData()  ended')
           return
-        time.sleep(0.001)
+        time.sleep(0.0005)
 #
       while not self.RUNNING.value:   # wait for running status 
         if not self.ACTIVE.value: 
@@ -165,7 +165,7 @@ class BufferMan(object):
         if not self.ACTIVE.value: 
           if self.verbose: self.prlog('*==* BufMan.acquireData()  ended')
           return
-        time.sleep(0.001)
+        time.sleep(0.0005)
       
 # calculate life time and read rate
       if (self.Ntrig.value - ni) == 10:
@@ -197,7 +197,7 @@ class BufferMan(object):
         if not self.ACTIVE.value:
           if self.verbose: self.prlog('*==* BufMan ended')
           return
-        time.sleep(0.001)
+        time.sleep(0.0005)
       self.ibufr.value = self.prod_Que.get()
       evNr = self.trigStamp[self.ibufr.value]
       evTime=self.timeStamp[self.ibufr.value]
@@ -239,7 +239,7 @@ class BufferMan(object):
           if not self.ACTIVE.value: 
             if self.verbose: self.prlog('*==* BufMan ended')
             return
-          time.sleep(0.001)        
+          time.sleep(0.0005)        
 #  now signal to producer that all consumers are done with this event
       self.ibufr.value = -1
 
@@ -313,8 +313,8 @@ class BufferMan(object):
     self.request_ques[client_index].append(mode)
     cq=self.consumer_ques[client_index]
     while not len(cq):
-        if not self.ACTIVE.value: return
-        time.sleep(0.01)
+      if not self.ACTIVE.value: return
+      time.sleep(0.0005)
     #self.prlog('*==* getEvent: received event %i'%evNr)
     if mode !=0: # received copy of the event data
       return cq.popleft()

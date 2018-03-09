@@ -229,14 +229,15 @@ class PSconfig(object):
   '''
     self.picoDevice.runBlock(pretrig=self.pretrig) #
     # wait for PicoScope to set up (~1ms)
-    time.sleep(0.001) # set-up time not to be counted as "life time"
+ #   time.sleep(0.0005) # set-up time not to be counted as "life time"
     ti=time.time()
     while not self.picoDevice.isReady():
       if not self.BM.ACTIVE: return
-      time.sleep(0.001)
+      time.sleep(0.0001)
     # waiting time for occurence of trigger is counted as life time
     ttrg=time.time()
-    tlife = ttrg - ti       # account life time
+    # account life time, w. appr. corr. for set-up time
+    tlife = ttrg - ti - 0.00062  
   # store raw data in global array 
     for i, C in enumerate(self.picoChannels):
       self.picoDevice.getDataRaw(C, self.NSamples, data=self.rawBuf[i])
