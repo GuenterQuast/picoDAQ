@@ -14,7 +14,7 @@ from collections import deque
 from multiprocessing import Queue, Process, Array
 from multiprocessing.sharedctypes import RawValue, RawArray
 
-from .mpBufManInfo import *
+from .mpBufManCntrl import *
 from .mpOsci import * 
 
   
@@ -48,7 +48,7 @@ class BufferMan(object):
     if "BMmodules" in BMdict: 
       self.BMmodules = BMdict["BMmodules"] # display modules to start
     else:
-      self.BMmodules = ["mpBufInfo"]
+      self.BMmodules = []
     if "LogFile" in BMdict:
       self.LogFile = BMdict["LogFile"]
     else:
@@ -123,7 +123,7 @@ class BufferMan(object):
      Communicates with consumer via collections.deque()
 
     '''
-    self.prlog('*==* BufMan:  !!! acquireData starting')
+#    self.prlog('*==* BufMan:  !!! acquireData starting')
     tlife = 0.
 
     ni = 0       # temporary variable
@@ -343,15 +343,16 @@ class BufferMan(object):
     thr_manageDataBuffer.setName('manageDataBuffer')
     thr_manageDataBuffer.start()
 
-  # Buffer Info
-    if 'mpBufInfo' in self.BMmodules: 
-      self.logQ = Queue()
-      maxBMrate = 400.
-      BMIinterval = 1000.
-      self.procs.append(Process(name='BufManInfo',
-        target = mpBufManInfo, 
-        args=(self.logQ, self.getBMInfoQue(), maxBMrate, BMIinterval) ) )
-#             BM logQue       BM InfoQue      max. rate  update interval
+  # BufferMan Info and control  always started
+    self.logQ = Queue()
+    maxBMrate = 400.
+    BMIinterval = 1000.
+    self.procs.append(Process(name='BufManCntrl',
+      target = mpBufManCntrl, 
+      args=(self.getBMCommandQue(), self.logQ, self.getBMInfoQue(), 
+#                  cmdQ             BM_logQue       BM_InfoQue      
+            maxBMrate, BMIinterval) ) )
+#             max_rate   update_interval
 
   # waveform display 
     if 'mpOsci' in self.BMmodules: 
@@ -386,7 +387,7 @@ class BufferMan(object):
   def pause(self):
     if self.verbose: self.prlog('*==* BufferMan  pause')
     self.RUNNING.value = False  
-    self.readrate = 0.
+    self.readrate.value = 0.
 
   def resume(self):
     if self.verbose: self.prlog('*==* BufferMan  resume')
@@ -394,6 +395,38 @@ class BufferMan(object):
   
   def setverbose(self, vlevel):
     self.verbose = vlevel
+
+  def readCommands(self, cmdQ):
+  # read commands via multiprocessing Queue
+    while self.ACTIVE.value:
+      cmd = cmdQ.get()
+      if cmd == 'P':
+        self.pause()
+      elif cmd == 'R':
+        self.resume()
+      elif cmd == 'E': 
+        self.end()    
+      time.sleep(0.02)
+
+  def getBMCommandQue(self):
+    '''multiprocessing Queue for commands  
+
+       starts a background process to read BMCommandQue
+
+       Returns: multiprocess Queue
+    '''
+
+    self.BMCommandQue = Queue(1) 
+  # start a background thread for reporting
+    thr_BMCommandQ = threading.Thread(target=self.readCommands,
+                                   args=(self.BMCommandQue,)  )
+    thr_BMCommandQ.daemon = True
+    thr_BMCommandQ.setName('BMreadCommand')
+    thr_BMCommandQ.start()
+
+    if self.verbose:
+      self.prlog("*==* BMCommandQue enabled")
+    return self.BMCommandQue
 
   def getStatus(self):
     ''' Returns:
@@ -457,6 +490,7 @@ class BufferMan(object):
           %(time.time()-self.BMT0, self.Ntrig.value, self.Tlife.value), 
           file=self.flog )
     self.flog.close()
+    self.flog = None
 
   def end(self):
     self.pause()

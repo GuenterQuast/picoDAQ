@@ -32,5 +32,5 @@ from .mpVMeter import *
 from .mpBDisplay import *
 from .mpLogWin import *
 from .mpHists import *
-from .mpBufManInfo import *
+from .mpBufManCntrl import *
 

@@ -123,7 +123,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     with open(DeviceFile) as f:
       PSconfdict=yaml.load(f)
   except:
-    print('     failed to ofread scope configuration file ' + DeviceFile)
+    print('     failed to read scope configuration file ' + DeviceFile)
     exit(1)
 
   # read Buffer Manager configuration file
@@ -139,6 +139,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # configure and initialize PicoScope
   PSconf=picodaqa.picoConfig.PSconfig(PSconfdict)
+  PSconf.init()
   # copy some of the important configuration variables
   NChannels = PSconf.NChannels # number of channels in use
   TSampling = PSconf.TSampling # sampling interval
@@ -225,7 +226,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
       get_input = input
 
 # ->> wait here until key pressed <<- 
-    while True:
+    while BM.ACTIVE.value:
       A=get_input(40*' '+'type -> E(nd), P(ause) or R(esume) + <ret> ')
       if A=='P':
         BM.pause()

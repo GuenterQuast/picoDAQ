@@ -128,7 +128,9 @@ class PSconfig(object):
 
     if "mode" in confdict: 
       self.mode = confdict["mode"] # "VMeter" "test"
+# - end picoConf.__init__()
 
+  def init(self):
 # configuration parameters only known after initialisation
     # import libraries relevant to PS model
     exec('from picoscope import ps'+self.PSmodel)
@@ -143,7 +145,7 @@ class PSconfig(object):
     except:
       print("PSconfig: Error initialising device - exit")
       sys.exit(1)
-# - end picoConf.__init__()
+# - end picoConf.init()
 
   def setSamplingPars(self, dT, NSamples, CRanges):
     self.TSampling = dT    # sampling interval
@@ -163,7 +165,7 @@ class PSconfig(object):
       print("Found the following picoscope:")
       print(self.picoDevice.getAllUnitInfo())
 
-    prompt=6*' ' +'picoIni: '
+    prompt = 6*' ' + 'picoIni: '
 # configure oscilloscope
 # 1) Time Base
     TSampling, NSamples, maxSamples = \

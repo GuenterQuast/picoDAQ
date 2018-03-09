@@ -2,10 +2,8 @@
 
 '''Text display in TKinter window'''
 
-from __future__ import division
+from __future__ import print_function, division, unicode_literals
 from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import sys, time, numpy as np
 import threading, multiprocessing as mp
@@ -23,8 +21,8 @@ import matplotlib.pyplot as plt, matplotlib.animation as anim
 # import plotBufManInfo class
 from .plotBufManInfo import *
 
-def mpBufManInfo(Qlog, Qinfo, maxRate = 100. , interval = 1000.):
-  '''show Buffer Manager logging messages and rate history
+def mpBufManCntrl(Qcmd, Qlog, Qinfo, maxRate = 100. , interval = 1000.):
+  '''show Buffer Manager logging messages and rate history and command buttons
     Args:
       Qlog:     multiprocessing.Queue() for log-info  
       Qinfo:    multiprocessing.Queue() for status info
@@ -45,16 +43,64 @@ def mpBufManInfo(Qlog, Qinfo, maxRate = 100. , interval = 1000.):
       i+=1
       yield i
     return
-    
+
+  def cmdPause():
+    Qcmd.put('P')
+
+  def cmdResume():
+    Qcmd.put('R')
+
+  def cmdEnd():
+    Qcmd.put('E')
+ 
+  # a simple clock
+  def clkLabel(TkLabel):
+     t0=time.time()
+     def clkUpdate():
+       dt = int(time.time() - t0)
+       datetime = time.strftime('%y/%m/%d %H:%M:%S',time.gmtime())
+       TkLabel.config(text = datetime + '   tRun=' + str(dt) + 's  ' )
+       TkLabel.after(1000, clkUpdate)
+     clkUpdate()
+
 # ------- executable part -------- 
 
-# generate window for graphics and text display 
+# generate window Buttons, graphics and text display 
   Tkwin = Tk.Tk()
   Tkwin.wm_title("Buffer Manager Information")
 
-# quit button
-  button = Tk.Button(master=Tkwin, text='Quit', command=sys.exit)
-  button.pack(side=Tk.BOTTOM)
+# Comand buttons
+  frame = Tk.Frame(master=Tkwin)
+  frame.grid(row=0, column=8)
+  frame.pack(padx=5, side=Tk.BOTTOM)
+
+  buttonE = Tk.Button(frame, text='EndRun', fg='red', command=cmdEnd)
+  buttonE.grid(row=0, column=8)
+#  buttonE.pack(padx=5, side=Tk.RIGHT)
+
+  blank = Tk.Label(frame, width=10, text="")
+  blank.grid(row=0, column=7)
+
+  clock = Tk.Label(frame)
+  clock.grid(row=0, column=5)
+#  clock.pack(side=Tk.RIGHT)
+  clkLabel(clock)
+
+  blank2 = Tk.Label(frame, width=10, text="")
+  blank2.grid(row=0, column=4)
+
+  buttonR = Tk.Button(frame, text='Resume', fg='blue', command=cmdResume)
+  buttonR.grid(row=0, column=2)
+#  buttonR.pack(side=Tk.LEFT)
+
+  buttonP = Tk.Button(frame, text='Pause ', fg='blue', command=cmdPause)
+  buttonP.grid(row=0, column=1)
+#  buttonP.pack(padx=5, side=Tk.LEFT)
+
+  blank3 = Tk.Label(frame, width=10, text="")
+  blank3.grid(row=0, column=0)
+
+
 #
 # graphics display 
   BMi = plotBufManInfo(Qinfo, maxRate, interval)
