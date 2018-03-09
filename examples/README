@@ -1,0 +1,3 @@
+# to start examples in this direcotry, type
+
+../runDAQ DAQ_xxx.json 

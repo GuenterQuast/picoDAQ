@@ -1,0 +1,10 @@
+# configuration for runDAQ.py
+{
+
+"DeviceFile": "PMpulse.json",
+"BMfile": "BMconfig.json",
+"ANAscript": "anaDAQ.py"
+
+#"DAQmodules": ["mpRMeter", "mpVMeter"] # other modules to start
+
+}
