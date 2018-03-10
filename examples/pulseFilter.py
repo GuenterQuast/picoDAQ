@@ -372,4 +372,3 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
 
   return
 #-end def pulseFilter
-

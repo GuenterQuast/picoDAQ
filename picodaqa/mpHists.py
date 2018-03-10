@@ -60,6 +60,6 @@ def mpHists(Q, Hdescripts, interval, name = 'Histograms'):
                              #     to fix memory leak in animate
     plt.show()
   
-  except KeyboardInterrupt:
+  except:
     print('*==* mpHist: termination signal recieved')
   sys.exit()
