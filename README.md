@@ -39,7 +39,7 @@ filled with water and equipped with a PM to count muons from cosmic rays.
 
    class *picoConfig*:
 
-   - set up PicoScope channel ranges and trigger
+   - set up PicoScope time base, channel ranges and trigger
    - set up the internal signal generator
    - PicoScope configuration read from *json* or *yaml* file
    - data acquisition of raw data from device
@@ -48,11 +48,13 @@ filled with water and equipped with a PM to count muons from cosmic rays.
 
    - acquire data (implemented as background thread)
    - manage event data buffer and distribute to consumers
-   - configutation read from *json* or *yaml* file
+   - configuration read from *json* or *yaml* file
 
-      *obligatory* consumers: data acquisition pauses until consumer done
+    supports 
+    
+      - *obligatory* consumers: data acquisition pauses until consumer done
 
-      *random* consumers: receive a copy of one event, data acquisition 
+      - *random* consumers: receive a copy of one event, data acquisition 
       continues
 
   module *AnimatedInstruments* (deprecated, to be removed soon)
@@ -63,16 +65,15 @@ filled with water and equipped with a PM to count muons from cosmic rays.
          (class *RMeter*). The module must run as a *python* *thread* in
          the same *python* interpreter as *BufferMan*
 
-  module *mpLogWin* 
+ 
+  module *mpBufManCntrl*
 
-   - receives information from the Buffer Manager via a multiprocessing 
-        Queue and displays Buffer Manager logging information in a text window 
-
-  module *mpBufManInfo*
-
-   - this sub-process receives status information from the Buffer Manager  
-        via a multiprocessing Queue and displays input rate history, filling  
-        level of the buffers and the data-acquisition lifetime 
+   - this sub-process receives status and logging information from the Buffer
+     Manager via a multiprocessing Queue and displays input rate history, filling
+     level of the buffers and the data-acquisition lifetime. Buttons at the bottom
+     of the window allow status changes (from RUNNING to PAUSED or vice versa) or to
+     exit. A log-file at the end contains a summary and, optionally, logging
+     information. 
 
   module *mpOsci*
 
@@ -102,14 +103,19 @@ filled with water and equipped with a PM to count muons from cosmic rays.
        value per Channel (e.g. peak Voltage, effective Voltage etc.). Values 
        are passed to the sub-process via a multiprocessing Queue.
 
-The script *runDAQ.py* gives an example of how to use all of the above. For a full demo, connect the output of a PicoScope's signal generator to channel *B*, and eventually an open cable to Channel *A* to see random noise. Use the configuration file *DAQconfig.json*, which contains the configuration files *BMconfig.json* for the Buffer Manager and *PSConfig.json* for the PicoScope. As a hook for own extensions, own python code may be included. An example for this is the configuration *DAQ_Cosmo.json*, which includes a code snippet *anaDAQ.py* to start a dedicated consumer for signal filtering and analysis (see *pulseFilter* below for another example). 
+The script `runDAQ.py` gives an example of how to use all of the above. For a full demo, connect the output of a PicoScope's signal generator to channel *B*, and eventually an open cable to Channel *A* to see random noise. Use the configuration file `DAQconfig.json`, which specifies the configuration files `BMconfig.json` for the Buffer Manager and `PSConfig.json` for the PicoScope. As a hook for own extensions, user code may be included. An example for this is shown in the configuration file `DAQ_Cosmo.json`, which points to a code snippet *anaDAQ.py* to starts some example consumers (code in `exampleConsumers.py`).
 
-The consumer *pulseFilter.py* is an implementation of a convolution filter to search for characteristic signal shapes in an input waveform. The present example is tailored to identify short pulses from muon detectors. In first step, the trigger is validated by cross-correlation with a signal template. Coincidences around the time of the trigger signal are identified an all connected channels. The thirst step consists of a searches for additional pulses after the triggering event, indicating the decay of a stopped muon in or near the detector. This simple set-up allows to measure the mean muon lifetime in the muon rest frame (2.2 µs). 
+The directory `examples/` contains configuration files and a special consumer   `pulseFilter.py`, which implements a convolution filter to search for characteristic signal shapes in an input waveform. The present example is tailored to identify short pulses from muon detectors (the scintillator panels of the *CosMO*-experiment by "Netzwerk Teilchenwelt", http://www.teilchenwelt.de). In a first step, the trigger is validated by cross-correlation with a signal template located around the trigger time. Coincidences near a validated triggering pulse are searched for in all connected channels. The thirst step performs a searches for additional pulses after the triggering event, indicating the decay of a stopped muon in or near the detector. This simple set-up allows to measure the mean muon lifetime in the muon rest frame (2.2 µs). To run the example, connect one, two or three panels to your PicoScope and type
+`./runDAQ.py DAQ_Cosmo.json`.
 
 
 ## Installation of the package
 
 This python code is compatible with *python* versions 2.7 and 3.5.
+It was tested with PicoScope device classes PS2000, PS2000a,
+PS3000a and PS4000 under Ubuntu, openSUSE Leap and on RaspberryPi.
+Graphical displays are implemented with `matplotlib`.
+
 **Requirements:**
 
   - The low-level drivers and C-libraries contained in the Pico Technology
@@ -117,11 +123,6 @@ This python code is compatible with *python* versions 2.7 and 3.5.
     see  https://www.picotech.com/downloads
   - *python* bindings of the *pico-python* project by Colin O'Flynn
     and Mark Harfouche, https://github.com/colinoflynn/pico-python
-
-Graphical displays are implemented with *matplotlib*.
-
-The code was tested with PicoScope device classes PS2000, PS2000a,   
-PS3000a and PS4000 under Ubuntu, openSUSE Leap and on RaspberryPi
 
 *picoDAQ* presently consists of the modules in the direcoctry *picodaqa*, mentioned above, and an example *python* script (*runDAQ.py*) with configuration examples (*.json* files) for the data acquisition (*DAQconfig.json*), for the PicoScope Device (*PSconfig.json*) and for the Buffer Mananger (*BMconfig.json*).
 
