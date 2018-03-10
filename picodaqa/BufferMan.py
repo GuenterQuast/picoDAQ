@@ -456,7 +456,11 @@ class BufferMan(object):
     '''
     bL = (self.prod_Que.qsize()*100)/self.NBuffers
     stat = self.RUNNING.value
-    return (stat, time.time()-self.BMT0, 
+    if self.tPause != 0. :
+      t = self.tPause
+    else:
+      t = time.time()
+    return (stat, t - self.BMT0 - self.dTPause, 
            self.Ntrig.value, self.Ttrig.value, self.Tlife.value, 
            self.readrate.value, self.lifefrac.value, bL) 
 
