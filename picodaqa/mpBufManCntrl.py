@@ -50,6 +50,9 @@ def mpBufManCntrl(Qcmd, Qlog, Qinfo, maxRate = 100. , interval = 1000.):
   def cmdResume():
     Qcmd.put('R')
 
+  def cmdStop():
+    Qcmd.put('S')
+
   def cmdEnd():
     Qcmd.put('E')
  
@@ -58,8 +61,9 @@ def mpBufManCntrl(Qcmd, Qlog, Qinfo, maxRate = 100. , interval = 1000.):
      t0=time.time()
      def clkUpdate():
        dt = int(time.time() - t0)
-       datetime = time.strftime('%y/%m/%d %H:%M:%S',time.gmtime())
-       TkLabel.config(text = datetime + '   tRun=' + str(dt) + 's  ' )
+       datetime = time.strftime('%y/%m/%d %H:%M',time.gmtime(t0))
+       TkLabel.config(text = 'started ' + datetime + \
+                      '   Trun=' + str(dt) + 's  ' )
        TkLabel.after(1000, clkUpdate)
      clkUpdate()
 
@@ -76,30 +80,28 @@ def mpBufManCntrl(Qcmd, Qlog, Qinfo, maxRate = 100. , interval = 1000.):
 
   buttonE = Tk.Button(frame, text='EndRun', fg='red', command=cmdEnd)
   buttonE.grid(row=0, column=8)
-#  buttonE.pack(padx=5, side=Tk.RIGHT)
 
-  blank = Tk.Label(frame, width=10, text="")
+  blank = Tk.Label(frame, width=7, text="")
   blank.grid(row=0, column=7)
 
   clock = Tk.Label(frame)
   clock.grid(row=0, column=5)
-#  clock.pack(side=Tk.RIGHT)
   clkLabel(clock)
 
-  blank2 = Tk.Label(frame, width=10, text="")
+  blank2 = Tk.Label(frame, width=7, text="")
   blank2.grid(row=0, column=4)
+
+  buttonS = Tk.Button(frame, text=' Stop ', fg='purple', command=cmdStop)
+  buttonS.grid(row=0, column=3)
 
   buttonR = Tk.Button(frame, text='Resume', fg='blue', command=cmdResume)
   buttonR.grid(row=0, column=2)
-#  buttonR.pack(side=Tk.LEFT)
 
   buttonP = Tk.Button(frame, text='Pause ', fg='blue', command=cmdPause)
   buttonP.grid(row=0, column=1)
-#  buttonP.pack(padx=5, side=Tk.LEFT)
 
-  blank3 = Tk.Label(frame, width=10, text="")
+  blank3 = Tk.Label(frame, width=7, text="")
   blank3.grid(row=0, column=0)
-
 
 #
 # graphics display 
@@ -113,7 +115,7 @@ def mpBufManCntrl(Qcmd, Qlog, Qinfo, maxRate = 100. , interval = 1000.):
 # text window
   S = Tk.Scrollbar(Tkwin)
   T = Tk.Text(Tkwin, height=10, width=100, wrap=Tk.WORD,
-       bg='black', fg='cyan' )
+       bg='black', fg='aquamarine' )
   S.pack(side=Tk.RIGHT, fill=Tk.Y)
   T.pack(side=Tk.LEFT, fill=Tk.Y)
   S.config(command=T.yview)

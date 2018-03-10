@@ -61,7 +61,12 @@ class plotBufManInfo(object):
        self.init()
 
     k = n%self.Npoints
-    RUNNING,TRun,Ntrig,Ttrig,Tlife,readrate,lifefrac,bufLevel = self.Q.get()
+    try: 
+      RUNNING,TRun,Ntrig,Ttrig,Tlife,readrate,lifefrac,bufLevel = \
+                 self.Q.get(True, 0.5)
+    except:
+      return self.line1, self.animtxt1, self.animtxt2  
+ 
     self.R[k] = readrate
       
     self.line1.set_ydata(np.concatenate( (self.R[k+1:], self.R[:k+1]) ))

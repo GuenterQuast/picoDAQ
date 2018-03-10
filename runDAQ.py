@@ -61,9 +61,10 @@ import picodaqa.AnimatedInstruments # deprecated !!!
 # --------------------------------------------------------------
 
 def cleanup():
-    if verbose: print('  ending  -> cleaning up ')
-    BM.end()         # tell buffer manager that we're done
-    time.sleep(2)    #     and wait for tasks to finish
+    '''
+      Close Device at end of run
+    '''
+    if verbose: print('  closing connection to device')
     PSconf.picoDevice.stop()
     PSconf.picoDevice.close()
     time.sleep(1)
@@ -164,31 +165,30 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     modules = [modules]
 #
 
-# --- infinite LOOP
-  try:
-    thrds = []
-    procs =[]
+# set up all sub-processes and threads
+  thrds = []
+  procs =[]
     
-    if ('osci' in modules) or ('VMeter' in modules) or\
-       ('RMeter' in modules) or ('BufInfo' in modules):
-      # print('calling AnimatedInstruments')
-      thrds.append(threading.Thread(target=picodaqa.animInstruments,
+  if ('osci' in modules) or ('VMeter' in modules) or\
+     ('RMeter' in modules) or ('BufInfo' in modules):
+    # print('calling AnimatedInstruments')
+    thrds.append(threading.Thread(target=picodaqa.animInstruments,
                                            args=(modules, PSconf, BM) ) )
 
 # modules to be run as subprocesses
 #                  these use multiprocessing.Queue for data transfer
   # rate display
-    if 'mpRMeter' in modules:
-      RMcidx, RMmpQ = BM.BMregister_mpQ()
-      procs.append(mp.Process(name='RMeter', target = picodaqa.mpRMeter, 
-                args=(RMmpQ, 75., 2500., 'trigger rate history') ) )
-#                         maxRate interval name
+  if 'mpRMeter' in modules:
+    RMcidx, RMmpQ = BM.BMregister_mpQ()
+    procs.append(mp.Process(name='RMeter', target = picodaqa.mpRMeter, 
+              args=(RMmpQ, 75., 2500., 'trigger rate history') ) )
+#                       maxRate interval name
   # Voltmeter display
-    if 'mpVMeter' in modules:
-      VMcidx, VMmpQ = BM.BMregister_mpQ()
-      procs.append(mp.Process(name='VMeter', target = picodaqa.mpVMeter, 
-                args=(VMmpQ, PSconf, 500., 'effective Voltage') ) )
-#                           config interval name
+  if 'mpVMeter' in modules:
+    VMcidx, VMmpQ = BM.BMregister_mpQ()
+    procs.append(mp.Process(name='VMeter', target = picodaqa.mpVMeter, 
+              args=(VMmpQ, PSconf, 500., 'effective Voltage') ) )
+#                         config interval name
 
 # ---> put your own code here 
 
@@ -202,42 +202,46 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # <---
 
-    if len(procs)==0 and len(thrds)==0 :
-      print ('!!! nothing to do - running BM only')
+  if len(procs)==0 and len(thrds)==0 :
+    print ('!!! nothing to do - running BM only')
 # start all background processes   
-    for prc in procs:
-      prc.deamon = True
-      prc.start()
-      print(' -> starting process ', prc.name, ' PID=', prc.pid)
-    time.sleep(1.)
+  for prc in procs:
+    prc.deamon = True
+    prc.start()
+    print(' -> starting process ', prc.name, ' PID=', prc.pid)
+  time.sleep(1.)
 # start threads
-    for thrd in thrds:
-      thrd.daemon = True
-      thrd.start()
+  for thrd in thrds:
+    thrd.daemon = True
+    thrd.start()
+
+  # remove pyhton 2 vs. python 3 incompatibility for keyboard input
+  if sys.version_info[:2] <=(2,7):
+    get_input = raw_input
+  else: 
+    get_input = input
+
 # start run
-#    BM.setLogQ(logQ) # redirect output to logging Queue
-    BM.run() 
+  BM.run() 
 
-# ---- run until key pressed
-    # fist, remove pyhton 2 vs. python 3 incompatibility
-    if sys.version_info[:2] <=(2,7):
-      get_input = raw_input
-    else: 
-      get_input = input
-
+# --- infinite LOOP
+  try:
 # ->> wait here until key pressed <<- 
     while BM.ACTIVE.value:
-      A=get_input(40*' '+'type -> E(nd), P(ause) or R(esume) + <ret> ')
+      A=get_input(30*' '+'type -> E(nd), P(ause), S(top) or R(esume) + <ret> ')
       if A=='P':
         BM.pause()
       elif A=='R':
         BM.resume()
+      elif A=='S': 
+        BM.stop()
       elif A=='E': 
+        BM.end()
         break
 
-    print(sys.argv[0]+' preparing to end ...')
-    cleanup()
-    for prc in procs:
+    print(sys.argv[0] + ' preparing to end ...')
+    cleanup() # close down device
+    for prc in procs: # stop all sub-processes
       print('    terminating '+prc.name)
       prc.terminate()
     time.sleep(2)
@@ -248,9 +252,10 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
   except KeyboardInterrupt:
 # END: code to clean up
-    print(sys.argv[0]+': keyboard interrupt - preparing to end ...')
-    cleanup()
-    for prc in procs:
+    print(sys.argv[0]+': keyboard interrupt - closing down ...')
+    BM.end()  # shut down BufferManager
+    cleanup() # close down device
+    for prc in procs: # stop all sub-processes
       print('    terminating '+prc.name)
       prc.terminate()
     time.sleep(2)

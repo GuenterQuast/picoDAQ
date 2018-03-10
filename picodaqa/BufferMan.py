@@ -90,10 +90,13 @@ class BufferMan(object):
     self.readrate = RawValue('f', 0) # current rate                
     self.lifefrac = RawValue('f', 0) # current life-time
 
-  # set up status 
+  # set up variables for status and accounting  
     self.BMT0 = 0.
+    self.tPause = 0.  # time when last paused
+    self.dTPause = 0. # total time spent in paused state
     self.ACTIVE = RawValue('b', 0) 
     self.RUNNING = RawValue('b', 0)
+    self.STOPPED = False
 
   # queues (collections.deque() for communication with threads
     self.prod_Que = Queue(self.NBuffers) # acquireData <-> manageDataBuffer
@@ -345,13 +348,13 @@ class BufferMan(object):
 
   # BufferMan Info and control  always started
     self.logQ = Queue()
-    maxBMrate = 400.
-    BMIinterval = 1000.
+    maxBMrate = 450.
+    self.BMIinterval = 1000.
     self.procs.append(Process(name='BufManCntrl',
       target = mpBufManCntrl, 
       args=(self.getBMCommandQue(), self.logQ, self.getBMInfoQue(), 
 #                  cmdQ             BM_logQue       BM_InfoQue      
-            maxBMrate, BMIinterval) ) )
+            maxBMrate, self.BMIinterval) ) )
 #             max_rate   update_interval
 
   # waveform display 
@@ -385,14 +388,30 @@ class BufferMan(object):
     self.RUNNING.value = True  
 
   def pause(self):
+    if not self.RUNNING.value: 
+      print('*==* BufferMan: Pause command recieved, but not running')
+      return
+    if self.STOPPED:
+      print('*==* BufferMan: Pause from Stopped state not possible')
+      return
     if self.verbose: self.prlog('*==* BufferMan  pause')
     self.RUNNING.value = False  
+    self.tPause = time.time()
     self.readrate.value = 0.
 
   def resume(self):
+    if self.RUNNING.value:
+      print('*==* BufferMan: Resume command recieved, but already running')
+      return
+    if self.STOPPED:
+      print('*==* BufferMan: Resume from Stopped state not possible')
+      return
+
     if self.verbose: self.prlog('*==* BufferMan  resume')
     self.RUNNING.value = True
-  
+    self.dTPause += (time.time() - self.tPause)  
+    self.tPause = 0.
+
   def setverbose(self, vlevel):
     self.verbose = vlevel
 
@@ -404,6 +423,8 @@ class BufferMan(object):
         self.pause()
       elif cmd == 'R':
         self.resume()
+      elif cmd == 'S': 
+        self.stop()    
       elif cmd == 'E': 
         self.end()    
       time.sleep(0.02)
@@ -461,14 +482,10 @@ class BufferMan(object):
 
   def reportStatus(self, Q):
     '''report Buffer manager staus to a multiprocessing Queue'''
-    while self.ACTIVE.value:
+    while not self.STOPPED:
       if Q is not None and Q.empty(): 
         Q.put( self.getStatus()) 
-      time.sleep(0.1)
-
-  def setLogQ(self, Q):
-    '''set a Queue for log messages'''
-    self.logQ = Q
+      time.sleep(self.BMIinterval/2000.) # ! convert from ms to s
 
   def prlog(self, m):
     ''' send a Message, to screen or to LogQ'''
@@ -478,33 +495,60 @@ class BufferMan(object):
       print(s)
     else:
       self.logQ.put(s)
-    if self.flog:
+    if self.flog != None:
       print(s, file = self.flog)
 
   def print_summary(self):
     datetime=time.strftime('%y%m%d-%H%M',time.gmtime(self.BMT0))
-    if not self.flog:
+    if self.flog == None:
       self.flog = open('BMsummary_' + datetime+'.sum', 'w')
-    print('Run Summary: started ' + datetime, file=self.flog )
-    print('  Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
-          %(time.time()-self.BMT0, self.Ntrig.value, self.Tlife.value), 
-          file=self.flog )
+    self.prlog('Run Summary: started ' + datetime)
+    self.prlog('  Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
+          %(self.TStop - self.BMT0 - self.dTPause, 
+            self.Ntrig.value, self.Tlife.value) )
     self.flog.close()
     self.flog = None
 
-  def end(self):
-    self.pause()
+  def stop(self):
+    if not self.ACTIVE.value:
+      print('*==* BufferMan: Stop command recieved, but not running')
+      return
+
+    if self.tPause != 0. :    # stopping from paused state
+      self.dTPause += (time.time() - self.tPause)
+      self.tPause = 0.
+    if self.RUNNING.value: 
+      self.pause()
+      self.tPause = 0.
+
+    self.TStop = time.time()
+    self.STOPPED = True
+
+    time.sleep(1.) # allow all events to propagate 
+
     if self.verbose: 
-      self.prlog('*==* BufferMan ending')
-      print('*==* BufferMan ending')
-      print('  Run Summary: Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
-            %(time.time()-self.BMT0, self.Ntrig.value, self.Tlife.value) )
+      self.prlog('*==* BufferMan endig - reached stopped state')
     self.print_summary()
+    if self.verbose: 
+      print('\n *==* BufferMan ending, RunSummary written')
+      print('  Run Summary: Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
+            %(self.TStop - self.BMT0-self.dTPause, 
+              self.Ntrig.value, self.Tlife.value) )
+
+  def end(self):
+    if not self.ACTIVE.value:
+      print('*==* BufferMan: End command recieved, but not active')
+      return
+
+    if self.RUNNING.value: # ending from RUNNING state, stop first
+      self.stop()
+
     self.ACTIVE.value = False 
     time.sleep(0.3)
+
   # stop all sub-processes
     for prc in self.procs:
-      if self.verbose: print('    BufferMan: terminating '+prc.name)
+      if self.verbose: print('    BufferMan: terminating ' + prc.name)
       prc.terminate()
     time.sleep(0.3)
 
