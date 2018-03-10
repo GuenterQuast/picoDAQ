@@ -60,21 +60,45 @@ import picodaqa.AnimatedInstruments # deprecated !!!
 #     scope settings defined in .json-File, see picoConfig
 # --------------------------------------------------------------
 
-def cleanup():
-    '''
-      Close Device at end of run
-    '''
-    if verbose: print('  closing connection to device')
-    PSconf.picoDevice.stop()
-    PSconf.picoDevice.close()
-    time.sleep(1)
-#    if verbose>0: print('                      -> exit')
-#    sys.exit(0)
+
+# some helper functions 
+kbdtxt = ''
+def kbdin():
+  ''' 
+    read keyboard input, run as backround-thread to aviod blocking
+  '''
+    # 1st, remove pyhton 2 vs. python 3 incompatibility for keyboard input
+  if sys.version_info[:2] <=(2,7):
+    get_input = raw_input
+  else: 
+    get_input = input
+  # keyboard input as thread
+  global kbdtxt
+  while True:
+    kbdtxt = get_input(30*' '+'type -> E(nd), P(ause), S(top) or R(esume) + <ret> ')
+
+def closeDevice():
+  '''
+    Close down hardwre device at end of run
+  '''
+  if verbose: print('  closing connection to device')
+  PSconf.picoDevice.stop()
+  PSconf.picoDevice.close()
+  time.sleep(1)
+
+def stop_processes(proclst):
+  '''
+    Close Device at end of run
+  '''
+  for p in proclst: # stop all sub-processes
+    print('    terminating '+p.name)
+    p.terminate()
+  time.sleep(2)
 
 
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
-  print('\n*==* script ' + sys.argv[0] + ' executing')
+  print('\n*==* script ' + sys.argv[0] + ' running \n')
 
 # check for / read command line arguments
   # read DAQ configuration file
@@ -115,8 +139,6 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     verbose = DAQconfdict["verbose"]
   else:
     verbose = 1   # print (detailed) info if >0 
-
-
     
   # read scope configuration file
   print('    Device configuration from file ' + DeviceFile)
@@ -215,50 +237,43 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     thrd.daemon = True
     thrd.start()
 
-  # remove pyhton 2 vs. python 3 incompatibility for keyboard input
-  if sys.version_info[:2] <=(2,7):
-    get_input = raw_input
-  else: 
-    get_input = input
-
 # start run
   BM.run() 
 
-# --- infinite LOOP
+# set up a thread to read from keyboad without blocking
+  kbd_thrd=threading.Thread(target=kbdin)
+  kbd_thrd.daemon = True
+  kbd_thrd.start()
+
+# --- LOOP
   try:
-# ->> wait here until key pressed <<- 
+# ->> wait for keyboard input or until BM ends <<- 
     while BM.ACTIVE.value:
-      A=get_input(30*' '+'type -> E(nd), P(ause), S(top) or R(esume) + <ret> ')
-      if A=='P':
-        BM.pause()
-      elif A=='R':
-        BM.resume()
-      elif A=='S': 
-        BM.stop()
-      elif A=='E': 
-        BM.end()
-        break
+      if len(kbdtxt):
+        cmd = kbdtxt
+        kbdtxt=''
+        if cmd == 'P':
+          BM.pause()
+        elif cmd == 'R':
+          BM.resume()
+        elif cmd == 'S': 
+          BM.stop()
+        elif cmd =='E': 
+          BM.end()
+          continue  # while
 
-    print(sys.argv[0] + ' preparing to end ...')
-    cleanup() # close down device
-    for prc in procs: # stop all sub-processes
-      print('    terminating '+prc.name)
-      prc.terminate()
-    time.sleep(2)
+    print(sys.argv[0] + ' End command recieved ...')
 
-# ---> end-of-run code could go here
+# ---> user-specific end-of-run code could go here
     print('Data Acquisition ended normally')
 # <---
 
   except KeyboardInterrupt:
-# END: code to clean up
     print(sys.argv[0]+': keyboard interrupt - closing down ...')
     BM.end()  # shut down BufferManager
-    cleanup() # close down device
-    for prc in procs: # stop all sub-processes
-      print('    terminating '+prc.name)
-      prc.terminate()
-    time.sleep(2)
-    sys.exit()
-  
-  sys.exit()
+
+  finally:
+# END: code to clean up
+    closeDevice() # close down device
+    stop_processes(procs) # termnate background processes
+    print('finished cleaning up \n')
