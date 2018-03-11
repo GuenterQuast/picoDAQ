@@ -28,11 +28,4 @@ __version__ += _version_suffix
 __all__ = ["BufferMan","mpBufManCntrl","mpOsci","mpRMeter","mpVMeter",
             "mpBDisplay","mpHists"]
 
-#from .BufferMan import *
-#from .mpBufManCntrl import *
-#from .mpOsci import *
-#from .mpRMeter import *
-#from .mpVMeter import *
-#from .mpBDisplay import *
-#from .mpHists import *
 
