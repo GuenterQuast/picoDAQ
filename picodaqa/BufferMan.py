@@ -17,7 +17,6 @@ from multiprocessing.sharedctypes import RawValue, RawArray
 from .mpBufManCntrl import *
 from .mpOsci import * 
 
-  
 class BufferMan(object):
   '''
   A simple Buffer Manager

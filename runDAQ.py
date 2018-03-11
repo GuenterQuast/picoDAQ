@@ -43,14 +43,12 @@ import multiprocessing as mp
 
 # import relevant pieces from picodaqa
 import picodaqa.picoConfig
-import picodaqa.BufferMan
+import picodaqa.BufferMan as BMan
 
 # animated displays running as background processes/threads
-import picodaqa.mpOsci
-import picodaqa.mpVMeter
-import picodaqa.mpRMeter
-import picodaqa.mpHists
-import picodaqa.AnimatedInstruments # deprecated !!!
+from picodaqa.mpOsci import mpOsci
+from picodaqa.mpVMeter import mpVMeter
+from picodaqa.mpRMeter import mpRMeter
 
 # !!!!
 # import matplotlib.pyplot as plt
@@ -154,8 +152,8 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     with open(BMfile) as f:
         BMconfdict=yaml.load(f)
   except:
-    print('     failed to read BM input file ' + BMfile)
-    exit(1)
+   print('     failed to read BM input file ' + BMfile)
+   exit(1)
 
 # initialisation
   print(' -> initializing PicoScope')
@@ -170,7 +168,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # configure Buffer Manager  ...
   print(' -> initializing BufferMan')
-  BM = picodaqa.BufferMan(BMconfdict, PSconf)
+  BM = BMan.BufferMan(BMconfdict, PSconf)
 # ... tell device what its buffer manager is ...
   PSconf.setBufferManagerPointer(BM)
 
@@ -187,28 +185,21 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     modules = [modules]
 #
 
-# set up all sub-processes and threads
+# modules to be run as sub-processes
+#             these use multiprocessing.Queue for data transfer
   thrds = []
   procs =[]
     
-  if ('osci' in modules) or ('VMeter' in modules) or\
-     ('RMeter' in modules) or ('BufInfo' in modules):
-    # print('calling AnimatedInstruments')
-    thrds.append(threading.Thread(target=picodaqa.animInstruments,
-                                           args=(modules, PSconf, BM) ) )
-
-# modules to be run as subprocesses
-#                  these use multiprocessing.Queue for data transfer
   # rate display
   if 'mpRMeter' in modules:
     RMcidx, RMmpQ = BM.BMregister_mpQ()
-    procs.append(mp.Process(name='RMeter', target = picodaqa.mpRMeter, 
+    procs.append(mp.Process(name='RMeter', target = mpRMeter, 
               args=(RMmpQ, 75., 2500., 'trigger rate history') ) )
 #                       maxRate interval name
   # Voltmeter display
   if 'mpVMeter' in modules:
     VMcidx, VMmpQ = BM.BMregister_mpQ()
-    procs.append(mp.Process(name='VMeter', target = picodaqa.mpVMeter, 
+    procs.append(mp.Process(name='VMeter', target = mpVMeter, 
               args=(VMmpQ, PSconf, 500., 'effective Voltage') ) )
 #                         config interval name
 
