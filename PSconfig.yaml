@@ -1,0 +1,20 @@
+# example of a configuration file for PicoScope 2000 Series
+PSmodel: 2000a
+
+# channel configuration 
+picoChannels: [A, B]
+ChanRanges: [0.03, 0.35]
+sampleTime: 1.0E-05
+Nsamples: 200
+
+# trigger
+trgActive: false  # true to activate
+trgChan: B
+trgThr: 0.1
+pretrig: 0.05
+trgTyp: Rising
+trgTO: 1000  # time-out
+
+# signal generator 
+frqSG: 100.E+3 # put 0. do disable
+

@@ -1,0 +1,22 @@
+# example of a configuration file for PicoScope 2000 Series
+#    connected to a PM tube
+
+PSmodel: 2000a      # model type here (2000a is default)
+
+picoChannels:      [A]
+## picoChannels:     [A, B]
+ChanRanges:        [0.5, 0.2]
+ChanOffsets:       [0.4, 0.45]
+
+sampleTime:   16.E-6    # scientific format with '.' and signed exponent 
+Nsamples:     3500
+
+trgChan:    A
+ChanColors: [darkblue, sienna, indigo]
+trgThr:     -75.E-3
+trgTyp:     Falling
+trgTO:      5000
+pretrig:    0.05
+
+frqSG: 0.0
+

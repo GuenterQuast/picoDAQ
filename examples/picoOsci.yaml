@@ -1,0 +1,21 @@
+# PicoScope configuration with free-running trigger
+
+picoChannels:     [A, B]
+# picoChannels:     [A, B, C]
+ChanModes:     [AC, AC, AC]
+ChanRanges:       [0.05, 0.05, 0.05]
+ChanColors:       [darkblue, sienna, indigo]
+
+Nsamples: 400  
+sampleTime: 10.E-6 
+
+trgChan: B      
+trgThr: 0.0       
+trgTyp: Above   
+trgTO: 100        
+trgActive: false
+trgDelay:  0
+pretrig: 0.05 
+
+frqSG: 10.E+3
+swpSG: UpDown

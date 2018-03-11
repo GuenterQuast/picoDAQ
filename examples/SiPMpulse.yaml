@@ -1,0 +1,20 @@
+# PicoScope configuration for three channles with DESY Panels
+
+picoChannels: [A, B, C]
+ChanModes:     [AC, AC, AC]
+##picoChannels: [A, B]
+ChanRanges: [0.2, 0.2, 0.2]
+ChanOffsets: [0.14, 0.16, 0.15]
+ChanColors: [darkblue, sienna, indigo]
+
+Nsamples: 3500
+sampleTime: 16.E-6
+
+trgChan: A
+trgThr: -40.E-3
+trgTyp: Falling
+trgTO: 5000
+pretrig: 0.05
+
+frqSG: 0.0
+
