@@ -81,12 +81,7 @@ def mpBufManCntrl(Qcmd, Qlog, Qinfo, maxRate = 100. , interval = 1000.):
        print("Deleting BufManCntrl window")
        Tkwin.destroy()
   
-#  def _destroy(event):
-#     print("BufManCntrl window destroyed")
-#     Tkwin.destroy()
-
   Tkwin.protocol("WM_DELETE_WINDOW", _delete_window)
-#  Tkwin.bind("<Destroy>", _destroy)
 
 # Comand buttons
   frame = Tk.Frame(master=Tkwin)

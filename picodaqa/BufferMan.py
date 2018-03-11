@@ -349,7 +349,7 @@ class BufferMan(object):
   # BufferMan Info and control  always started
     self.logQ = Queue()
     maxBMrate = 450.
-    self.BMIinterval = 1000.
+    self.BMIinterval = 1000.  # update interval in ms
     self.procs.append(Process(name='BufManCntrl',
       target = mpBufManCntrl, 
       args=(self.getBMCommandQue(), self.logQ, self.getBMInfoQue(), 

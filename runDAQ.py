@@ -261,6 +261,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
         elif cmd =='E': 
           BM.end()
           continue  # while
+      time.sleep(0.5)
 
     print(sys.argv[0] + ' End command recieved ...')
 
