@@ -47,26 +47,26 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage'):
 # ------- executable part -------- 
 #  print(' -> mpVMeter starting')
 
-  try:
-    VM = VoltMeter(conf)
-    figVM = VM.fig
+  VM = VoltMeter(conf)
+  figVM = VM.fig
 
 # generate a simple window for graphics display as a tk.DrawingArea
-    root = Tk.Tk()
-    root.wm_title("Voltmeter Display")
-    canvas = FigureCanvasTkAgg(figVM, master=root)
-    canvas.show()
-    canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-    canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-    button = Tk.Button(master=root, text='Quit', command=sys.exit)
-    button.pack(side=Tk.BOTTOM)
+  root = Tk.Tk()
+  root.wm_title("Voltmeter Display")
+  canvas = FigureCanvasTkAgg(figVM, master=root)
+  canvas.show()
+  canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+  canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+  button = Tk.Button(master=root, text='Quit', command=sys.exit)
+  button.pack(side=Tk.BOTTOM)
 
 # set up matplotlib animation
-    VMAnim = anim.FuncAnimation(figVM, VM, yieldEvt_fromQ,
+  VMAnim = anim.FuncAnimation(figVM, VM, yieldEvt_fromQ,
                          interval=WaitTime, init_func=VM.init,
                          blit=True, fargs=None, repeat=True, save_count=None)
                        # save_count=None is a (temporary) work-around 
                        #     to fix memory leak in animate
+  try:
     Tk.mainloop()
    
   except:
