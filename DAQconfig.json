@@ -1,9 +1,0 @@
-# configuration for runDAQ.py
-{
-
-"DeviceFile": "PSconfig.json",
-"BMfile": "BMconfig.json",
-"DAQmodules": ["mpRMeter", "mpVMeter"], # other modules to start
-"ANAscript": "testDAQ.py"
-
-}

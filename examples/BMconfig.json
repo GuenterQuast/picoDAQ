@@ -1,7 +1,0 @@
-# configuration of picoDAQ Buffer Manager 
-{
-
-"NBuffers": 16,    # mumber of buffers to store raw waveforms
-"BMmodules": ["mpBufInfo", "mpOsci"], #BufferMan modules to start
-"LogFile": "BMsum"
-}
