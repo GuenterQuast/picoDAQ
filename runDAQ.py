@@ -16,7 +16,7 @@
   Functions:
  
     - set up PicoScope channel ranges and trigger
-    - PicoScope configuration optionally from json file
+    - PicoScope configuration optionally from yaml file
     - acquire data (implemented as thread)
     - manage event data and distribute to obligatory and random consumers
     - analyse and plot data:
@@ -55,7 +55,7 @@ from picodaqa.mpRMeter import mpRMeter
 # !!!! matplot can only be used if no other thread using it is active
 
 # --------------------------------------------------------------
-#     scope settings defined in .json-File, see picoConfig
+#     scope settings defined in .yaml-File, see picoConfig
 # --------------------------------------------------------------
 
 
@@ -103,7 +103,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   if len(sys.argv)==2:
     DAQconfFile = sys.argv[1]
   else: 
-    DAQconfFile = 'DAQconfig.json'
+    DAQconfFile = 'DAQconfig.yaml'
   print('    DAQconfiguration from file ' + DAQconfFile)
   try:
     with open(DAQconfFile) as f:
