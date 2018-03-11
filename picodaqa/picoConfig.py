@@ -211,6 +211,10 @@ class PSconfig(object):
     # reserve static buffer for picoscope driver for storing raw data
     self.rawBuf = np.empty([self.NChannels, NSamples], dtype=np.int16 )
 
+    # estimate set-up and transfer-overhead
+    #     from maximum rate with free-running trigger
+    self.toverhead = 0.00038 + self.NChannels * 0.00013
+
 # -- end def picoIni
 
   def acquireData(self, buffer):
@@ -226,8 +230,6 @@ class PSconfig(object):
         tlife life time of device
   '''
     self.picoDevice.runBlock(pretrig=self.pretrig) #
-    # wait for PicoScope to set up (~1ms)
- #   time.sleep(0.0005) # set-up time not to be counted as "life time"
     ti=time.time()
     while not self.picoDevice.isReady():
       if not self.BM.ACTIVE: return
@@ -235,7 +237,7 @@ class PSconfig(object):
     # waiting time for occurence of trigger is counted as life time
     ttrg=time.time()
     # account life time, w. appr. corr. for set-up time
-    tlife = ttrg - ti - 0.00062  
+    tlife = ttrg - ti - self.toverhead
   # store raw data in global array 
     for i, C in enumerate(self.picoChannels):
       self.picoDevice.getDataRaw(C, self.NSamples, data=self.rawBuf[i])
