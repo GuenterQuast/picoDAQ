@@ -498,7 +498,10 @@ class BufferMan(object):
     if self.logQ is None:
       print(s)
     else:
-      self.logQ.put(s)
+      if self.logQ.empty(): 
+        self.logQ.put(s)
+      else:
+        print(s)
     if self.flog != None:
       print(s, file = self.flog)
 

@@ -75,7 +75,7 @@ class plotBufManInfo(object):
     else:
       txtStat='        PAUSED'
     self.animtxt1.set_text( \
-       'Time: %.1fs  Triggers: %i  Lifetime: %.1fs (%.1f%%)'\
+       'TRun: %.1fs  Triggers: %i  Lifetime: %.1fs (%.1f%%)'\
         %(TRun, Ntrig, Tlife, 100.*Tlife/TRun) + txtStat)
     self.animtxt2.set_text( \
      'current rate: %.3gHz  life: %.1f%%  buffer: %.0f%%'\
