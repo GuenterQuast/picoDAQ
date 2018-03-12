@@ -228,7 +228,8 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     thrd.daemon = True
     thrd.start()
 
-# start run
+  time.sleep(1) # wait for all threads to start, then ...
+# ...start run
   BM.run() 
 
 # set up a thread to read from keyboad without blocking
