@@ -68,7 +68,7 @@ def subprocConsumer(Q):
   cnt = 0  
   try:         
     while True:
-      evN, evT, evBuf = mpQ.get()
+      evN, evT, evBuf = Q.get()
       cnt += 1
       print('*==* mpQ: got event %i'%(evN) )
       if cnt <= 3:
