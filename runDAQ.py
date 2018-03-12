@@ -227,8 +227,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   for thrd in thrds:
     thrd.daemon = True
     thrd.start()
-
-  time.sleep(1) # wait for all threads to start, then ...
+  time.sleep(1.) # wait for all threads to start, then ...
 # ...start run
   BM.run() 
 
