@@ -9,7 +9,6 @@ from __future__ import absolute_import
 
 # - class BufferMan
 import numpy as np, sys, time, threading
-#from collections import deque
 
 from multiprocessing import Queue, Process, Array
 from multiprocessing.sharedctypes import RawValue, RawArray
@@ -195,7 +194,7 @@ class BufferMan(object):
     n0=0
     n=0
     while self.ACTIVE.value:
-      while self.prod_Que.empty(): # wait for data in producer queue
+      while self.prod_Que.empty(): # wait for pointer to data in producer queue
         if not self.ACTIVE.value:
           if self.verbose: self.prlog('*==* BufMan ended')
           return
@@ -225,8 +224,10 @@ class BufferMan(object):
             else:
               self.prlog('!=! manageDataBuffer: invalid request mode', req)
               sys.exit(1)
-# check if other processes want data
-      if len(self.mpQues):
+              
+# check if other processes want data via an mp-Queue,
+#  as these are random consumers, only provide data if Buffer is not full
+      if len(self.mpQues) and self.prod_Que.qsize() <= self.NBuffers/2 :
         for Q in self.mpQues:
           if Q.empty(): # put an event in the Queue
             Q.put( (evNr, evTime, self.BMbuf[self.ibufr.value] ) )
@@ -338,7 +339,7 @@ class BufferMan(object):
     thr_acquireData.start()
 # try as sub-process
 #    prc_acquireData=Process(name='acquireData', target=self.acquireData)
-#    prc_acquireData.start()
+#    prc_cquireData.start()
 
 #    thr_manageDataBuffer=threading.Thread(target=self.manageDataBuffer)
 #    thr_manageDataBuffer.setName('manageDataBuffer')
