@@ -385,11 +385,11 @@ class BufferMan(object):
     if self.start_manageDataBuffer: # delayed start of manageDataBuffer
       self.procs.append(Process(name='manageDataBuffer', 
                                  target=self.manageDataBuffer) )
-      procs[-1].start()    
+      self.procs[-1].start()    
       self.start_manageDataBuffer = False
       if self.verbose:
         print('      BufferMan: starting process ',
-             procs[-1].name, ' PID =', procs[-1].pid)
+             self.procs[-1].name, ' PID =', self.procs[-1].pid)
         
     tstart = time.time()
     if self.LogFile:
