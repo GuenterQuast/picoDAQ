@@ -7,10 +7,11 @@
 
 # ->>> code from here inserted as 'anaDAQ.py' in runDAQ.py
 
-# import analysis code as library
-from pulseFilter import *
 from picodaqa.mpBDisplay import mpBDisplay
 from picodaqa.mpHists import mpHists
+
+# import analysis code as library
+from pulseFilter import *
 
 # pulse shape analysis
 filtRateQ = None
@@ -37,16 +38,26 @@ procs.append(mp.Process(name='Hists',
 VSigQ = mp.Queue(1) # information queue for Filter
 mode = 2 # 0:signed, 1: abs. 2: symmetric
 size = 1. # stretch factor for display
-procs.append(mp.Process(name='PanelSignals',
+procs.append(mp.Process(name = 'ChannelSignals',
           target = mpBDisplay, 
           args=(VSigQ, PSconf, mode, size, 'Panel Signals') ) )
-#               mp.Queue Chan.Conf.  name          
+#               mp.Queue Chan.Conf.           name          
 
-thrds.append(threading.Thread(target=pulseFilter,
-      args = ( BM, PSconf, filtRateQ, histQ, VSigQ, True, 1) ) )
-#                  RMeterQ   histQ  fileout verbose    
+
+# run pulse analysis
+cId = BM.BMregister() # get a Buffer Manager Client Id
+
+  # pulse analysis as thread
+#thrds.append(threading.Thread(target=pulseFilter,
+#      args = ( BM, PSconf, cId, filtRateQ, histQ, VSigQ, True, 1) ) )
+#                      BMclientId  RMeterQ  histQ  fileout verbose    
+
+  # pulse analysis as sub-process
+procs.append(mp.Process(name='pulseFilter', target=pulseFilter, 
+       args = ( BM, PSconf, cId, filtRateQ, histQ, VSigQ, True, 1) ) )
+#                      BMclientId  RMeterQ  histQ  fileout verbose    
 
 #   could also run this in main thread
-#     pulseFilter(BM, filtRateQ, verbose=1) 
+#pulseFilter( BM, PSconf, cId, filtRateQ, histQ, VSigQ, True, 1)  
 
 # <<< - end of inserted code

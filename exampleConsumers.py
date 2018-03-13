@@ -7,24 +7,25 @@ import time, numpy as np
 
 # - - - - some examples of consumers connected to BufferManager- - - - 
 
-def obligConsumer(BM):
+def obligConsumer(BM, cId):
   '''
     test readout speed: do nothing, just request data from buffer manager
-
       - an example of an obligatory consumer, sees all data
         (i.e. data acquisition is halted when no data is requested)
+
+      Args:  
+        BM:   Buffer Manager instance
+        cId:  Buffer Manager client id (from main process)
     
-    for reasons of speed, only a pointer to the event buffer is returned
   '''
 
   if not BM.ACTIVE.value: sys.exit(1)
 # register with Buffer Manager
-  myId = BM.BMregister()
-  mode = 0    # obligatory consumer, request pointer to Buffer
+  mode = 0    # obligatory consumer, data in evdata transferred as pointer
 
   evcnt=0
   while BM.ACTIVE.value:
-    e = BM.getEvent(myId, mode=mode)
+    e = BM.getEvent(cId, mode=mode)
     if e != None:
       evNr, evtime, evData = e
       evcnt+=1
@@ -35,20 +36,18 @@ def obligConsumer(BM):
   return
 #-end def obligComsumer
 
-def randConsumer(BM):
+def randConsumer(BM, cId):
   '''
     test readout speed: 
       does nothing except requesting random data samples from buffer manager
   '''
 
   if not BM.ACTIVE.value: sys.exit(1)
-  # register with Buffer Manager
-  myId = BM.BMregister()
-  mode = 1    # random consumer, request event copy
+  mode = 1    # random consumer, eventdata as copy
 
   evcnt=0
   while BM.ACTIVE.value:
-    e = BM.getEvent(myId, mode=mode)
+    e = BM.getEvent(cId, mode=mode)
     if e != None:
       evNr, evtime, evData = e 
       evcnt+=1
@@ -57,10 +56,11 @@ def randConsumer(BM):
     time.sleep(np.random.randint(100,1000)/1000.)
 # - end def randConsumer()
   return
-#
+
+
 def subprocConsumer(Q):
   '''
-    test consumer in subprocess 
+    test consumer in subprocess using simple protocol
       reads event data from multiprocessing.Queue()
   '''    
   if not BM.ACTIVE.value: sys.exit(1)

@@ -55,7 +55,9 @@ def setRefPulse(dT, taur=20E-9, tauon=12E-9, tauf=128E-9, pheight=-0.030):
 
   return rp
 
-def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout = None, verbose=1):
+def pulseFilter(BM, conf, cId, 
+                filtRateQ = None, histQ = None, VSigQ = None, 
+                fileout = None, verbose=1):
   '''
     Find a pulse similar to a template pulse by cross-correlatation
 
@@ -127,7 +129,6 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
     prlog('  thresholds: %.2g, %2g ' %(pthr, pthrm))
 
 # register this client with Buffer Manager
-  myId = BM.BMregister()
   mode = 0    # obligatory consumer, request pointer to Buffer
 
 # --- end initialisation 
@@ -153,7 +154,7 @@ def pulseFilter(BM, conf, filtRateQ = None, histQ = None, VSigQ = None, fileout 
     validated = False
     accepted = False
     doublePulse = False
-    e = BM.getEvent(myId, mode=mode)
+    e = BM.getEvent(cId, mode=mode)
     if e == None:
       break
 
