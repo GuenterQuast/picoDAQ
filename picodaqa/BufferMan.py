@@ -48,7 +48,7 @@ class BufferMan(object):
     else:
       self.BMmodules = []
     if "LogFile" in BMdict:
-      self.LogFile = BMdict["LogFile"]
+     self.LogFile = BMdict["LogFile"]
     else:
       self.LogFile = None
     self.flog = None    # file not yet open
@@ -383,11 +383,14 @@ class BufferMan(object):
       return
 
     if self.start_manageDataBuffer: # delayed start of manageDataBuffer
-      prc_manageDataBuffer=Process(name='manageDataBuffer', 
-                                 target=self.manageDataBuffer)
-      prc_manageDataBuffer.start()    
+      self.procs.append(Process(name='manageDataBuffer', 
+                                 target=self.manageDataBuffer) )
+      procs[-1].start()    
       self.start_manageDataBuffer = False
-
+      if self.verbose:
+        print('      BufferMan: starting process ',
+             procs[-1].name, ' PID =', procs[-1].pid)
+        
     tstart = time.time()
     if self.LogFile:
       datetime=time.strftime('%y%m%d-%H%M',time.gmtime(tstart))
