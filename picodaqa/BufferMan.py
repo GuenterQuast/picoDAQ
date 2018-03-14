@@ -512,7 +512,7 @@ class BufferMan(object):
     thr_BMInfoQ.daemon = True
     thr_BMInfoQ.setName('BMreportStatus')
     thr_BMInfoQ.start()
-    self.thrds.qppend(thr_BMInfoQ)
+    self.thrds.append(thr_BMInfoQ)
     
     if self.verbose:
       self.prlog("*==* BMInfoQue enabled")
