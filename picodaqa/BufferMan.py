@@ -32,13 +32,8 @@ class BufferMan(object):
     '''Args:  configuration dictionary
               Device Class             
     '''
-    self.DevConf = DevConf  
-    self.NChannels = DevConf.NChannels # number of channels in use
-    self.NSamples = DevConf.NSamples   # number of samples 
-    self.TSampling = DevConf.TSampling # sampling interval
-    # function collecting data from hardware device
-    self.rawDAQproducer = DevConf.acquireData 
-
+ 
+    # read configuration dictionary
     if "NBuffers" in BMdict: 
       self.NBuffers = BMdict["NBuffers"] # number of buffers
     else:
@@ -61,12 +56,15 @@ class BufferMan(object):
     else:
       self.logTime = 60 # logging information once per 60 sec
 
-  # set up data structure for BufferManager (numpy arrays)
-#    self.BMbuf = np.empty([self.NBuffers, self.NChannels, self.NSamples], 
-#          dtype=np.float32 )
-#    self.timeStamp = np.empty(self.NBuffers)
-#
-# use shared c-type memory (allows data sharing across sub-processes)
+# read device congiguration and set up Buffer space
+    self.DevConf = DevConf  
+    self.NChannels = DevConf.NChannels # number of channels in use
+    self.NSamples = DevConf.NSamples   # number of samples 
+    self.TSampling = DevConf.TSampling # sampling interval
+    # function collecting data from hardware device
+    self.rawDAQproducer = DevConf.acquireData 
+
+# data structure for BufferManager in shared c-type memory ...
     self.CBMbuf = RawArray('f', 
                   self.NBuffers * self.NChannels * self.NSamples) 
     self.CtimeStamp = RawArray('f', self.NBuffers )
@@ -79,16 +77,14 @@ class BufferMan(object):
 
     self.ibufr = RawValue('i', -1) # read index, synchronization with producer 
 
-    self.procs=[] # list of sub-processes started by BufferMan
-
-  # global variables for producer statistics
+# global variables for producer statistics
     self.Ntrig = RawValue('i', 0)    # count number of readings
     self.Ttrig = RawValue('f', 0.)   # time of last event
     self.Tlife = RawValue('f', 0.)   # DAQ lifetime
     self.readrate = RawValue('f', 0) # current rate                
     self.lifefrac = RawValue('f', 0) # current life-time
 
-  # set up variables for status and accounting  
+# set up variables for Buffer Manager status and accounting  
     self.BMT0 = 0.
     self.tPause = 0.  # time when last paused
     self.dTPause = 0. # total time spent in paused state
@@ -110,7 +106,16 @@ class BufferMan(object):
 
     self.BMlock = threading.Lock() 
     self.logQ = None
+
+ # keep track of sub-processes started by BufferManager   
+    self.procs=[] # list of sub-processes started by BufferMan
+    self.thrds=[] # list of sub-processes started by BufferMan
+
+# -- end of __init__()    
     
+
+# -- the raw data procuder
+#   must run as a thread in the same process that initialized the hardware device
   def acquireData(self):
     '''
      Procucer Thread
@@ -181,7 +186,7 @@ class BufferMan(object):
     return
 # -- end def acquireData
 
-
+# -- the central Buffer Manager - runs as a thread or sub-process
   def manageDataBuffer(self):
     '''main Consumer Thread 
 
@@ -203,9 +208,8 @@ class BufferMan(object):
       evNr = self.trigStamp[self.ibufr.value]
       evTime=self.timeStamp[self.ibufr.value]
  
-# !debug    self.prlog('ibufr=', self.ibufr.value,'request_ques',self.request_ques)
-
-# check if other threads want data
+# check if other threads or sup-processes request data
+#     next request treated as "done" for obligatory consumers
       l_obligatory=[]
       if len(self.request_Ques):
         for i, Q in enumerate(self.request_Ques):
@@ -225,8 +229,7 @@ class BufferMan(object):
               self.prlog('!=! manageDataBuffer: invalid request mode', req)
               sys.exit(1)
               
-# check if other processes want data via an mp-Queue,
-#  as these are random consumers, only provide data if Buffer is not full
+# provide data via a mp-Queue at lower priority if Buffer is not full
       if len(self.mpQues) and self.prod_Que.qsize() <= self.NBuffers/2 :
         for Q in self.mpQues:
           if Q.empty(): # put an event in the Queue
@@ -243,7 +246,7 @@ class BufferMan(object):
             if self.verbose: self.prlog('*==* BufMan ended')
             return
           time.sleep(0.0005)        
-#  now signal to producer that all consumers are done with this event
+#  signal to producer that all consumers are done with this event
       self.ibufr.value = -1
 
 # print event rate
@@ -259,7 +262,10 @@ class BufferMan(object):
 #   - end while ACTIVE  
     if self.verbose: self.prlog('*==* BufMan ended')
     return
-# -end def manageDataBuffer()
+# -- end def manageDataBuffer()
+
+
+# -- helper functions for interaction with BufferManager
 
   def BMregister(self):
     ''' 
@@ -296,6 +302,7 @@ class BufferMan(object):
       self.prlog("*==* BMregister_mpQ: new subprocess client id=%i" % cid)
     return cid, self.mpQues[-1]
 
+# -- encapsulates data access for obligatory and random clients  
   def getEvent(self, client_index, mode=1):
     ''' 
     request event from Buffer Manager
@@ -326,7 +333,9 @@ class BufferMan(object):
       evTime = self.timeStamp[ibr]
       evData = self.BMbuf[ibr]
       return evNr, evTime, evData
-#
+
+#-- Run control fuctions
+# set-up Buffer Manager processes
   def start(self):
     if self.verbose > 1: 
       self.prlog('*==* BufferMan  starting acquisition threads')
@@ -337,7 +346,8 @@ class BufferMan(object):
     thr_acquireData.setName('acquireData')
     thr_acquireData.daemon=True
     thr_acquireData.start()
-# try as sub-process
+    self.thrds.append(thr_acquireData)
+# test: try as sub-process
 #    prc_acquireData=Process(name='acquireData', target=self.acquireData)
 #    prc_cquireData.start()
 
@@ -376,6 +386,7 @@ class BufferMan(object):
         print('      BufferMan: starting process ', prc.name, ' PID =', prc.pid)
 #  end start()
 
+# start run - this must not be started before all clients have registred
   def run(self):
     # start manageDataBuffer process and initialize run 
     if self.runStarted:
@@ -403,6 +414,7 @@ class BufferMan(object):
     self.runStarted = True
     self.RUNNING.value = True  
 
+# pause data acquisition - RUNNING flag evaluated by raw data producer
   def pause(self):
     if not self.RUNNING.value: 
       print('*==* BufferMan: Pause command recieved, but not running')
@@ -415,6 +427,7 @@ class BufferMan(object):
     self.tPause = time.time()
     self.readrate.value = 0.
 
+# resume data acquisition
   def resume(self):
     if self.RUNNING.value:
       print('*==* BufferMan: Resume command recieved, but already running')
@@ -431,6 +444,7 @@ class BufferMan(object):
   def setverbose(self, vlevel):
     self.verbose = vlevel
 
+# a thread to receive control commands via a mp-Queue
   def readCommands(self, cmdQ):
   # read commands via multiprocessing Queue
     while self.ACTIVE.value:
@@ -460,11 +474,13 @@ class BufferMan(object):
     thr_BMCommandQ.daemon = True
     thr_BMCommandQ.setName('BMreadCommand')
     thr_BMCommandQ.start()
-
+    self.thrds.append(thr_BMCommandQ)
+    
     if self.verbose:
       self.prlog("*==* BMCommandQue enabled")
     return self.BMCommandQue
 
+# collect status information - actual and integrated
   def getStatus(self):
     ''' Returns:
           tuple: Running status, number of events,
@@ -480,6 +496,7 @@ class BufferMan(object):
            self.Ntrig.value, self.Ttrig.value, self.Tlife.value, 
            self.readrate.value, self.lifefrac.value, bL) 
 
+# mp-Qeueu for information, starts getStatus as thread  
   def getBMInfoQue(self):
     '''multiprocessing Queue for status information 
 
@@ -495,7 +512,8 @@ class BufferMan(object):
     thr_BMInfoQ.daemon = True
     thr_BMInfoQ.setName('BMreportStatus')
     thr_BMInfoQ.start()
-
+    self.thrds.qppend(thr_BMInfoQ)
+    
     if self.verbose:
       self.prlog("*==* BMInfoQue enabled")
     return self.BMInfoQue
@@ -521,6 +539,7 @@ class BufferMan(object):
     if self.flog != None:
       print(s, file = self.flog)
 
+# prints end-of-run summary      
   def print_summary(self):
     datetime=time.strftime('%y%m%d-%H%M',time.gmtime(self.BMT0))
     if self.flog == None:
@@ -532,6 +551,7 @@ class BufferMan(object):
     self.flog.close()
     self.flog = None
 
+# put run in "stopped state" - BM processes remain active, no resume possible    
   def stop(self):
     if not self.ACTIVE.value:
       print('*==* BufferMan: Stop command recieved, but not running')
@@ -558,6 +578,8 @@ class BufferMan(object):
             %(self.TStop - self.BMT0-self.dTPause, 
               self.Ntrig.value, self.Tlife.value) )
 
+ # end BufferManager, stop all processes
+ #       ACTIVE flag observed by all sub-processes     
   def end(self):
     if not self.ACTIVE.value:
       print('*==* BufferMan: End command recieved, but not active')
