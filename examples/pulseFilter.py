@@ -1,6 +1,6 @@
 from __future__ import print_function,division,absolute_import,unicode_literals
 
-import time, numpy as np
+import time, yaml, numpy as np
 from scipy.signal import argrelmax
 from scipy.interpolate import interp1d
 from multiprocessing import Queue
@@ -50,7 +50,7 @@ def setRefPulse(dT, taur=20E-9, tauon=12E-9, tauf=128E-9, pheight=-0.030):
   tp = taur + tauon + tauf
   l = np.int32( tp/dT +0.5 ) + 1  
   ti = np.linspace(0, tp, l)    
-  rp = trapezoidPulse(ti, taur, tauon, tauf)
+  rp = trapezoidPulse(ti, taur, tauon, tauf, mode=0) # uni-polar pulse
   rp = pheight * rp   # normalize to pulse height
 
   return rp
@@ -82,6 +82,35 @@ def pulseFilter(BM, conf, cId,
 
 # print information to log-window via BufferManager prlog
   prlog = BM.prlog
+
+# set characteristics of reference pulse for convolution pulse search
+  pFconfFile = 'pFconfig.yaml'
+  try:   # try config file
+    with open(pFconfFile) as f:
+      pFconfdict = yaml.load(f)
+  except: 
+     pFconfdict = None
+  if pFconfdict != None:
+    try: 
+      taur = pFconfdict['taur']
+      tauon = pFconfdict['tauon']
+      tauf= pFconfdict['tauf']
+      pheight = pFconfdict['pheight']
+    #  tauf2= pFconfdict['tauf2']  # only uni-polar pulse for now
+    #  tauoff= pFconfdict['tauoff']
+    #  taur2 = pFconfdict['taur2']
+    #  mode = pFconfdict['mode']
+    except:
+      print('     failed to read pulseFilter configuration file ' + pFconfFile)
+      exit(1)
+  else:
+#     unipolar pulse:
+    taur = 20E-9     # rise time in (s)
+    tauon = 12E-9    # hold time in (s)
+    tauf = 128E-9    # fall time in (s)
+#  pheight = -0.030 # pulse height (V) # for SiPM panels
+    pheight = -0.035 # pulse height (V) # for Kamiokanne
+
 # open a logfile
   if fileout:
     datetime=time.strftime('%y%m%d-%H%M', time.gmtime())
@@ -107,18 +136,10 @@ def pulseFilter(BM, conf, cId,
       break
   idT0 = int(conf.NSamples * conf.pretrig) # sample number of trigger point
 
-# set characteristics of reference pulse for convoultion pulse search
-#     unipolar pulse:
-  taur = 20E-9     # rise time in (s)
-  tauon = 12E-9    # hold time in (s)
-  tauf = 128E-9    # fall time in (s)
-#  ph = -0.030 # pulse height (V) # for SiPM panels
-  ph = -0.035 # pulse height (V) # for Kamiokanne
-#
-  refp = setRefPulse(dT, taur, tauon, tauf, ph)
-#
+# generate reference pulse 
+  refp = setRefPulse(dT, taur, tauon, tauf, pheight)
+  refpm = refp - refp.mean()            # mean subtracted
   lref = len(refp)
-  refpm = refp - refp.mean() # mean subtracted
 
 # calculate thresholds for correlation analysis
   pthr = np.sum(refp * refp) # norm of reference pulse
