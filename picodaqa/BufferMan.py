@@ -444,20 +444,57 @@ class BufferMan(object):
   def setverbose(self, vlevel):
     self.verbose = vlevel
 
+# functions for Buffer Manager control
+  def execCommand(self, c):
+    if c == 'P':
+      self.pause()
+    elif c == 'R':
+      self.resume()
+    elif c == 'S': 
+      self.stop()
+    elif c =='E': 
+      self.end()
+
+  def kbdin(self):
+    ''' 
+      read keyboard input, run as backround-thread to aviod blocking
+    '''
+    # 1st, remove pyhton 2 vs. python 3 incompatibility for keyboard input
+    if sys.version_info[:2] <=(2,7):
+      get_input = raw_input
+    else: 
+      get_input = input
+   # keyboard input as thread
+
+    while self.ACTIVE.value:
+      self.kbdtxt =\
+       get_input(30*' '+'type -> E(nd), P(ause), S(top) or R(esume) + <ret> ')
+
+  def kbdCntrl(self):
+    ''' 
+      Control Buffer Manager via keyboard (stdin)
+    ''' 
+
+    self.kbdtxt = ''
+# set up a thread to read from keyboad without blocking
+    kbd_thrd=threading.Thread(target=self.kbdin)
+    kbd_thrd.daemon = True
+    kbd_thrd.start()
+    self.thrds.append(kbd_thrd)
+
+    while self.ACTIVE.value:
+      if len(self.kbdtxt):
+        cmd = self.kbdtxt
+        self.kbdtxt=''
+        self.execCommand(cmd)
+      time.sleep(0.1)
+
+  def readCommands_frQ(self, cmdQ):
 # a thread to receive control commands via a mp-Queue
-  def readCommands(self, cmdQ):
-  # read commands via multiprocessing Queue
     while self.ACTIVE.value:
       cmd = cmdQ.get()
-      if cmd == 'P':
-        self.pause()
-      elif cmd == 'R':
-        self.resume()
-      elif cmd == 'S': 
-        self.stop()    
-      elif cmd == 'E': 
-        self.end()    
-      time.sleep(0.02)
+      self.execCommand(cmd)
+      time.sleep(0.1)
 
   def getBMCommandQue(self):
     '''multiprocessing Queue for commands  
@@ -469,7 +506,7 @@ class BufferMan(object):
 
     self.BMCommandQue = Queue(1) 
   # start a background thread for reporting
-    thr_BMCommandQ = threading.Thread(target=self.readCommands,
+    thr_BMCommandQ = threading.Thread(target=self.readCommands_frQ,
                                    args=(self.BMCommandQue,)  )
     thr_BMCommandQ.daemon = True
     thr_BMCommandQ.setName('BMreadCommand')

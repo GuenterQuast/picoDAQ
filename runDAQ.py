@@ -60,29 +60,6 @@ from picodaqa.mpRMeter import mpRMeter
 
 
 # some helper functions 
-kbdtxt = ''
-def kbdin():
-  ''' 
-    read keyboard input, run as backround-thread to aviod blocking
-  '''
-    # 1st, remove pyhton 2 vs. python 3 incompatibility for keyboard input
-  if sys.version_info[:2] <=(2,7):
-    get_input = raw_input
-  else: 
-    get_input = input
-  # keyboard input as thread
-  global kbdtxt
-  while True:
-    kbdtxt = get_input(30*' '+'type -> E(nd), P(ause), S(top) or R(esume) + <ret> ')
-
-def closeDevice():
-  '''
-    Close down hardwre device at end of run
-  '''
-  if verbose: print('  closing connection to device')
-  PSconf.picoDevice.stop()
-  PSconf.picoDevice.close()
-  time.sleep(1)
 
 def stop_processes(proclst):
   '''
@@ -231,30 +208,11 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # ...start run
   BM.run() 
 
-# set up a thread to read from keyboad without blocking
-  kbd_thrd=threading.Thread(target=kbdin)
-  kbd_thrd.daemon = True
-  kbd_thrd.start()
-
 # --- LOOP
   try:
-# ->> wait for keyboard input or until BM ends <<- 
-    while BM.ACTIVE.value:
-      if len(kbdtxt):
-        cmd = kbdtxt
-        kbdtxt=''
-        if cmd == 'P':
-          BM.pause()
-        elif cmd == 'R':
-          BM.resume()
-        elif cmd == 'S': 
-          BM.stop()
-        elif cmd =='E': 
-          BM.end()
-          continue  # while
-      time.sleep(0.5)
-
-    print(sys.argv[0] + ' End command recieved ...')
+# ->> read keyboard (control Buffermanager)<<- 
+    BM.kbdCntrl()
+    print(sys.argv[0]+': End command received - closing down ...')
 
 # ---> user-specific end-of-run code could go here
     print('Data Acquisition ended normally')
@@ -266,6 +224,6 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
   finally:
 # END: code to clean up
-    closeDevice() # close down device
+    PSconf.closeDevice() # close down hardware device
     stop_processes(procs) # termnate background processes
     print('finished cleaning up \n')

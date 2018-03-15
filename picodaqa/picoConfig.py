@@ -126,7 +126,7 @@ class PSconfig(object):
 
     if "mode" in confdict: 
       self.mode = confdict["mode"] # "VMeter" "test"
-# - end picoConf.__init__()
+# - end PSconf.__init__()
 
   def init(self):
 # configuration parameters only known after initialisation
@@ -143,7 +143,7 @@ class PSconfig(object):
     except:
       print("PSconfig: Error initialising device - exit")
       sys.exit(1)
-# - end picoConf.init()
+# - end PSconf.init()
 
   def setSamplingPars(self, dT, NSamples, CRanges):
     self.TSampling = dT    # sampling interval
@@ -246,3 +246,15 @@ class PSconfig(object):
      # self.picoDevice.getDataV(C, NSamples, dataV=VBuf[ibufw,i], dtype=np.float32)
     return ttrg, tlife
 # - end def acquirePicoData()
+
+  def closeDevice(self):
+    '''
+      Close down hardwre device
+    '''
+    prompt = 6*' ' + 'PSconf: '
+    if self.verbose: print(prompt + "closing connection to device")
+    self.picoDevice.stop()
+    self.picoDevice.close()
+    time.sleep(0.5)
+
+
