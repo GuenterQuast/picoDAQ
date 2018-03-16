@@ -61,6 +61,7 @@ class BufferMan(object):
     self.NChannels = DevConf.NChannels # number of channels in use
     self.NSamples = DevConf.NSamples   # number of samples 
     self.TSampling = DevConf.TSampling # sampling interval
+
     # function collecting data from hardware device
     self.rawDAQproducer = DevConf.acquireData 
 

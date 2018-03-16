@@ -55,7 +55,7 @@ def setRefPulse(dT, taur=20E-9, tauon=12E-9, tauf=128E-9, pheight=-0.030):
 
   return rp
 
-def pulseFilter(BM, conf, cId, 
+def pulseFilter(BM, cId, 
                 filtRateQ = None, histQ = None, VSigQ = None, 
                 fileout = None, verbose=1):
   '''
@@ -122,19 +122,19 @@ def pulseFilter(BM, conf, cId,
     print("# Nacc, Ndble, Tau, delT(iChan), ... V(iChan)", 
       file=logf2) # header line 
 
-# retrieve configuration parameters
-  dT = conf.TSampling # get sampling interval
+# retrieve relevant configuration parameters (from BufferManager)
+  dT = BM.TSampling # get sampling interval
   idTprec = 2 # precision on time resolution of pulse search 
   dTprec = idTprec * dT  # precision on time resolution (in units of dT)
-  NChan = conf.NChannels
-  NSamples = conf.NSamples
-  trgChan = conf.trgChan
-  iCtrg = -1   # trigger channel, initialized to -1
-  for i, C in enumerate(conf.picoChannels):   
-    if C == conf.trgChan: 
-      iCtrg = i
+  NChan = BM.NChannels
+  NSamples = BM.NSamples
+  trgChan = BM.DevConf.trgChan     # trigger Channel
+  idT0 = int(BM.DevConf.NSamples * BM.DevConf.pretrig) # index of trigger T0
+  iCtrg = -1
+  for i, C in enumerate(BM.DevConf.picoChannels):   
+    if C == trgChan: 
+      iCtrg = i       # number of trigger Channel
       break
-  idT0 = int(conf.NSamples * conf.pretrig) # sample number of trigger point
 
 # generate reference pulse 
   refp = setRefPulse(dT, taur, tauon, tauf, pheight)

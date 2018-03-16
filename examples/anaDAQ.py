@@ -54,8 +54,8 @@ cId = BM.BMregister() # get a Buffer Manager Client Id
 
   # pulse analysis as sub-process
 procs.append(mp.Process(name='pulseFilter', target=pulseFilter, 
-       args = ( BM, PSconf, cId, filtRateQ, histQ, VSigQ, True, 1) ) )
-#                      BMclientId  RMeterQ  histQ  fileout verbose    
+       args = ( BM, cId, filtRateQ, histQ, VSigQ, True, 1) ) )
+#                  BMclientId  RMeterQ  histQ  fileout verbose    
 
 #   could also run this in main thread
 #pulseFilter( BM, PSconf, cId, filtRateQ, histQ, VSigQ, True, 1)  
