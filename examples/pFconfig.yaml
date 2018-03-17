@@ -21,5 +21,7 @@ mode   : 0             # 0:uni-polar  1: bipolar
 logFile: None     # all pulses, put None if no output wanted
 logFile2: dpFilt   # only double-pulses, put None if no output wanted
 
-## not yet used! modules: [RMeter, Hists]
+modules: [RMeter, Hists, Display]
+#modules: [RMeter, Display]
+
 ## not yet used! analysisLevel: 2   # 0: trg valid, 1: coinc. 2: double pulses

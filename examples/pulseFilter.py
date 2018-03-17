@@ -230,7 +230,7 @@ def pulseFilter(BM, cId, confDict = None,
       cort[cort<pthr] = pthr # set all values below threshold to threshold
       idtr = np.argmax(cort) + offset # index of 1st maximum 
       if idtr > idT0 + (taur + tauon)/dT + idTprec:
-        hnTrSigs.append(0.)
+        if histQ: hnTrSigs.append(0.)
         continue #- while # no pulse near trigger, skip rest of event analysis
     # check pulse shape by requesting match with time-averaged pulse
       evdt = evData[iCtrg, idtr:idtr+lref]
@@ -241,7 +241,7 @@ def pulseFilter(BM, cId, confDict = None,
         Nval +=1
         V = max(abs(evdt)) # signal Voltage  
         VSig[iCtrg][0] = V 
-        hvTrSigs.append(V)
+        if histQ: hvTrSigs.append(V)
         T = idtr*dT*1E6      # signal time in musec
         TSig[iCtrg][0] = T 
         tevt = T  # time of event
@@ -328,7 +328,7 @@ def pulseFilter(BM, cId, confDict = None,
         sumdT2 += delT2s[iC]
     if doublePulse:
       Ndble += 1
-      hTaus.append( sumdT2 / N2nd )
+      if histQ: hTaus.append( sumdT2 / N2nd )
     
 # eventually store results in file(s)
 # 1. all accepted events
@@ -389,17 +389,20 @@ def pulseFilter(BM, cId, confDict = None,
                  %(Nacc, Ndble, hTaus[-1])
         prlog('*==* double pulse: Nacc, Ndble, dT ' + s)
 
-# provide information necessary for RateMeter
+# provide information for background display processes
+# -- RateMeter
     if filtRateQ is not None and filtRateQ.empty(): 
       filtRateQ.put( (Nacc, evTime) ) 
-# provide information necessary for histograms
+
+# -- histograms
     if len(hvTrSigs) and histQ is not None and histQ.empty(): 
       histQ.put( [hnTrSigs, hvTrSigs, hVSigs, hTaus] )
       hnTrSigs = []
       hvTrSigs = []
       hVSigs = []
       hTaus = []
-# provide information necessary for Panel Display
+
+# -- Signal Display
     if VSigQ is not None and VSigQ.empty(): 
       peaks = [VSig[iC][0] for iC in range(NChan) ]
       VSigQ.put( peaks ) 

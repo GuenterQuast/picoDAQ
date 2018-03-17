@@ -19,33 +19,42 @@ try:   # read config file
     pFconfdict = yaml.load(f)
 except: 
    pFconfdict = None
+if pFconfdict:
+  if 'modules' in pFconfdict:
+    pFmodules = pFconfdict['modules']
+  else:
+    pFmodules = ['RMeter', 'Hists', 'Display' ]
 
 # pulse shape analysis
 filtRateQ = None
-histQ = None
-filtRateQ = mp.Queue(1) # information queue for Filter
-procs.append(mp.Process(name='RMeter',
+if 'RMeter' in pFmodules:
+  filtRateQ = mp.Queue(1) # information queue for Filter
+  procs.append(mp.Process(name='RMeter',
           target = mpRMeter, 
           args=(filtRateQ, 12., 2500., 'muon rate history') ) )
 #               mp.Queue  rate  update interval          
 
-histQ = mp.Queue(1) # information queue for Filter
+histQ = None
+if 'Hists' in pFmodules:
+  histQ = mp.Queue(1) # information queue for Filter
 #  book histograms and start histogrammer
-Hdescriptors = []
-Hdescriptors.append([0., 0.4, 50, 20., 'noise Trg. Pulse (V)', 0] )
+  Hdescriptors = []
+  Hdescriptors.append([0., 0.4, 50, 20., 'noise Trg. Pulse (V)', 0] )
 #                   min max nbins ymax    title               lin/log
-Hdescriptors.append([0., 0.8, 50, 15., 'valid Trg. Pulse (V)', 0] )
-Hdescriptors.append([0., 0.8, 50, 15., 'Pulse height (V)', 0] )
-Hdescriptors.append([0., 15., 45, 7.5, 'Tau (µs)', 1] )
-procs.append(mp.Process(name='Hists',
+  Hdescriptors.append([0., 0.8, 50, 15., 'valid Trg. Pulse (V)', 0] )
+  Hdescriptors.append([0., 0.8, 50, 15., 'Pulse height (V)', 0] )
+  Hdescriptors.append([0., 15., 45, 7.5, 'Tau (µs)', 1] )
+  procs.append(mp.Process(name='Hists',
           target = mpHists, 
           args=(histQ, Hdescriptors, 2000., 'Filter Histograms') ) )
 #             data Queue, Hist.Desrc  interval    
 
-VSigQ = mp.Queue(1) # information queue for Filter
-mode = 2 # 0:signed, 1: abs. 2: symmetric
-size = 1. # stretch factor for display
-procs.append(mp.Process(name = 'ChannelSignals',
+VSigQ = None
+if 'Display' in pFmodules:
+  VSigQ = mp.Queue(1) # information queue for Filter
+  mode = 2 # 0:signed, 1: abs. 2: symmetric
+  size = 1. # stretch factor for display
+  procs.append(mp.Process(name = 'ChannelSignals',
           target = mpBDisplay, 
           args=(VSigQ, PSconf, mode, size, 'Panel Signals') ) )
 #               mp.Queue Chan.Conf.           name          
