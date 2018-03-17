@@ -96,12 +96,12 @@ def pulseFilter(BM, cId, confDict = None,
     #  mode = confDict['mode']
       if "logFile" in confDict:
         logFile = confDict['logFile']
+        if logFile == 'None': logFile = None
       else:
         logFile = 'pFilt'
-        if logFile =='None': logFile = None
       if "logFile2" in confDict:
         logFile2 = confDict['logFile2']
-        if logFile2 =='None': logFile2 = None
+        if logFile2 == 'None': logFile2 = None
       else:
         logFile2 = 'dpFilt'
 
@@ -137,8 +137,8 @@ def pulseFilter(BM, cId, confDict = None,
     %(taur, tauon, tauf, pheight ) )
 
 # open a logfile
+  datetime=time.strftime('%y%m%d-%H%M', time.gmtime())
   if logFile is not None:
-    datetime=time.strftime('%y%m%d-%H%M', time.gmtime())
 #    logf=None
     logf = open(logFile + '_' + datetime+'.dat', 'w')
     print("# EvNr, EvT, Vs ...., Ts ...T", 
