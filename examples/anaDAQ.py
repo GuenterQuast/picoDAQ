@@ -13,6 +13,13 @@ from picodaqa.mpHists import mpHists
 # import analysis code as library
 from pulseFilter import *
 
+pFconfFile = 'pFconfig.yaml'
+try:   # read config file
+  with open(pFconfFile) as f:
+    pFconfdict = yaml.load(f)
+except: 
+   pFconfdict = None
+
 # pulse shape analysis
 filtRateQ = None
 histQ = None
@@ -43,7 +50,6 @@ procs.append(mp.Process(name = 'ChannelSignals',
           args=(VSigQ, PSconf, mode, size, 'Panel Signals') ) )
 #               mp.Queue Chan.Conf.           name          
 
-
 # run pulse analysis
 cId = BM.BMregister() # get a Buffer Manager Client Id
 
@@ -54,8 +60,8 @@ cId = BM.BMregister() # get a Buffer Manager Client Id
 
   # pulse analysis as sub-process
 procs.append(mp.Process(name='pulseFilter', target=pulseFilter, 
-       args = ( BM, cId, filtRateQ, histQ, VSigQ, True, 1) ) )
-#                  BMclientId  RMeterQ  histQ  fileout verbose    
+       args = ( BM, cId, pFconfdict, filtRateQ, histQ, VSigQ, True, 1) ) )
+#              BMclientId  config    RMeterQ  histQ  fileout verbose    
 
 #   could also run this in main thread
 #pulseFilter( BM, PSconf, cId, filtRateQ, histQ, VSigQ, True, 1)  

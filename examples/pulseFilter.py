@@ -55,7 +55,7 @@ def setRefPulse(dT, taur=20E-9, tauon=12E-9, tauf=128E-9, pheight=-0.030):
 
   return rp
 
-def pulseFilter(BM, cId, 
+def pulseFilter(BM, cId, confDict = None,
                 filtRateQ = None, histQ = None, VSigQ = None, 
                 fileout = None, verbose=1):
   '''
@@ -84,43 +84,74 @@ def pulseFilter(BM, cId,
   prlog = BM.prlog
 
 # set characteristics of reference pulse for convolution pulse search
-  pFconfFile = 'pFconfig.yaml'
-  try:   # try config file
-    with open(pFconfFile) as f:
-      pFconfdict = yaml.load(f)
-  except: 
-     pFconfdict = None
-  if pFconfdict != None:
+  if confDict != None:
     try: 
-      taur = pFconfdict['taur']
-      tauon = pFconfdict['tauon']
-      tauf= pFconfdict['tauf']
-      pheight = pFconfdict['pheight']
-    #  tauf2= pFconfdict['tauf2']  # only uni-polar pulse for now
-    #  tauoff= pFconfdict['tauoff']
-    #  taur2 = pFconfdict['taur2']
-    #  mode = pFconfdict['mode']
+      taur = confDict['taur']
+      tauon = confDict['tauon']
+      tauf= confDict['tauf']
+      pheight = confDict['pheight']
+    #  tauf2= confDict['tauf2']  # only uni-polar pulse for now
+    #  tauoff= confDict['tauoff']
+    #  taur2 = confDict['taur2']
+    #  mode = confDict['mode']
+      if "logFile" in confDict:
+        logFile = confDict['logFile']
+      else:
+        logFile = 'pFilt'
+        if logFile =='None': logFile = None
+      if "logFile2" in confDict:
+        logFile2 = confDict['logFile2']
+        if logFile2 =='None': logFile2 = None
+      else:
+        logFile2 = 'dpFilt'
+
+#      if "modules" in confDict:
+#        modules = confDict['modules']
+#      else:
+#        modules = ['RMeter','Hists']
+
+#      if "analysisLevel" in confDict:
+#        analysisLevel = confDict['analysisLevel']
+#      else:
+#        analysisLevel = 2
+
     except:
-      print('     failed to read pulseFilter configuration file ' + pFconfFile)
+      print('     failed to read pulseFilter configuration ')
       exit(1)
-  else:
-#     unipolar pulse:
+
+  else:   # no confDict, set defaults
+#   set unipolar pulse:
     taur = 20E-9     # rise time in (s)
     tauon = 12E-9    # hold time in (s)
     tauf = 128E-9    # fall time in (s)
 #  pheight = -0.030 # pulse height (V) # for SiPM panels
     pheight = -0.035 # pulse height (V) # for Kamiokanne
+    logFile = 'pFilt'
+    logFile2 = 'dpFilt'
+
+#    modules = ['RMeter','Hists']
+#    analysisLevel = 2
+    
+  print('pF: pulse parameters set')
+  print('  taur: %.3g, tauon: %.3g, tauf: %.3g, height: %.3g'\
+    %(taur, tauon, tauf, pheight ) )
 
 # open a logfile
-  if fileout:
+  if logFile is not None:
     datetime=time.strftime('%y%m%d-%H%M', time.gmtime())
 #    logf=None
-    logf = open('pFilt_' + datetime+'.dat', 'w')
+    logf = open(logFile + '_' + datetime+'.dat', 'w')
     print("# EvNr, EvT, Vs ...., Ts ...T", 
-      file=logf) # header line 
-    logf2 = open('dpFilt_' + datetime+'.dat', 'w', 1)
+      file=logf) # header line
+  else:
+    logf = None
+
+  if logFile2 is not None:
+    logf2 = open(logFile2 + '_' + datetime+'.dat', 'w', 1)
     print("# Nacc, Ndble, Tau, delT(iChan), ... V(iChan)", 
       file=logf2) # header line 
+  else:
+    logf2 = None
 
 # retrieve relevant configuration parameters (from BufferManager)
   dT = BM.TSampling # get sampling interval
@@ -149,10 +180,10 @@ def pulseFilter(BM, cId,
     prlog(np.array_str(refp) )
     prlog('  thresholds: %.2g, %2g ' %(pthr, pthrm))
 
-# register this client with Buffer Manager
-  mode = 0    # obligatory consumer, request pointer to Buffer
+# set mode for Buffer Manager
+  mode = 0    # obligatory consumer, get all events
 
-# --- end initialisation 
+# --- end set-up 
 
 # initialise event loop
   evcnt=0  # events seen
@@ -177,7 +208,7 @@ def pulseFilter(BM, cId,
     doublePulse = False
     e = BM.getEvent(cId, mode=mode)
     if e == None:
-      break
+      break             # end if empty event or BM no longer active
 
     evNr, evTime, evData = e
     evcnt+=1
@@ -219,7 +250,7 @@ def pulseFilter(BM, cId,
         continue #- while # skip rest of event analysis
     NSig[iCtrg] +=1
 
-#2. find coincidences
+# 2. find coincidences
     Ncoinc = 1
     for iC in range(NChan):
       if iC != iCtrg:
@@ -301,7 +332,7 @@ def pulseFilter(BM, cId,
     
 # eventually store results in file(s)
 # 1. all accepted events
-    if fileout and accepted:
+    if logf is not None and accepted:
       print('%i, %.2f'%(evNr, evTime), end='', file=logf)
       for ic in range(NChan):
         v = VSig[ic][0]
@@ -320,8 +351,8 @@ def pulseFilter(BM, cId,
                   end='', file=logf)
       print('', file=logf)
 
-# 2. double pulses 
-    if fileout and doublePulse:
+# 2. double pulses
+    if logf2 is not None and doublePulse:
       if NChan==1:
         print('%i, %i, %.4g,   %.4g, %.3g'\
               %(Nacc, Ndble, hTaus[-1], delT2s[0], sig2s[0]),
@@ -373,10 +404,10 @@ def pulseFilter(BM, cId,
       peaks = [VSig[iC][0] for iC in range(NChan) ]
       VSigQ.put( peaks ) 
 
-# break e == None  
+# end BM.ACTIVE or break e == None  
 
- #-- end BM.ACTIVE
-  if fileout:
+# add summary information to log-files
+  if logf is not None:
     tag = "# pulseFilter Summary: " 
     if logf: 
       print(tag+"last evNR %i, Nval, Nacc, Nacc2, Nacc3: %i, %i, %i, %i"\
@@ -384,7 +415,7 @@ def pulseFilter(BM, cId,
           file=logf )
       logf.close()
 
-    if logf2: 
+    if logf2 is not None: 
       print(tag+"last evNR %i, Nval, Nacc, Nacc2, Nacc3: %i, %i, %i, %i"\
         %(evcnt, Nval, Nacc, Nacc2, Nacc3),
           file=logf2 )
@@ -393,4 +424,4 @@ def pulseFilter(BM, cId,
       logf2.close()
 
   return
-#-end def pulseFilter
+#-end pulseFilter
