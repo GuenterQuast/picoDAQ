@@ -114,7 +114,8 @@ class Oscilloscope(object):
       self.graphsOs += (g,)
     self.animtxtOs = self.axes[0].text(0.65, 0.94, ' ', 
                      transform=self.axes[0].transAxes,
-                     backgroundcolor='white', alpha=0.5)
+#                     backgroundcolor='white', 
+                     alpha=0.7)
 
     self.T0=time.time() # remember start time
     self.n0 = 0         # initialize counter 

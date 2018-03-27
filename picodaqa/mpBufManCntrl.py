@@ -124,7 +124,7 @@ def mpBufManCntrl(Qcmd, Qlog, Qinfo, maxRate = 100. , interval = 1000.):
 # text window
   S = Tk.Scrollbar(Tkwin)
   T = Tk.Text(Tkwin, height=10, width=100, wrap=Tk.WORD,
-       bg='black', fg='aquamarine' )
+      bg='black', fg='aquamarine' , font='Helvetica 10')
   S.pack(side=Tk.RIGHT, fill=Tk.Y)
   T.pack(side=Tk.LEFT, fill=Tk.Y)
   S.config(command=T.yview)

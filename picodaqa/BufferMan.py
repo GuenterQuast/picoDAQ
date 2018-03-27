@@ -79,14 +79,14 @@ class BufferMan(object):
     self.ibufr = RawValue('i', -1) # read index, synchronization with producer 
 
 # global variables for producer statistics
-    self.Ntrig = RawValue('i', 0)    # count number of readings
-    self.Ttrig = RawValue('f', 0.)   # time of last event
-    self.Tlife = RawValue('f', 0.)   # DAQ lifetime
-    self.readrate = RawValue('f', 0) # current rate                
-    self.lifefrac = RawValue('f', 0) # current life-time
+    self.Ntrig = RawValue('i', 0)     # count number of readings
+    self.Ttrig = RawValue('f', 0.)    # time of last event
+    self.Tlife = RawValue('f', 0.)    # DAQ lifetime
+    self.readrate = RawValue('f', 0.) # current rate                
+    self.lifefrac = RawValue('f', 0.) # current life-time
+    self.BMT0 = RawValue('d', 0.)     # time of run-start
 
 # set up variables for Buffer Manager status and accounting  
-    self.BMT0 = 0.
     self.tPause = 0.  # time when last paused
     self.dTPause = 0. # total time spent in paused state
     self.ACTIVE = RawValue('b', 0) 
@@ -160,7 +160,7 @@ class BufferMan(object):
       ttrg, tl = e
       tlife += tl
       self.Tlife.value += tl
-      ttrg -= self.BMT0
+      ttrg -= self.BMT0.value
       self.timeStamp[ibufw] = ttrg  # store time when data became ready
       self.Ttrig.value = ttrg
       self.Ntrig.value += 1
@@ -409,7 +409,7 @@ class BufferMan(object):
       self.flog = open(self.LogFile + '_' + datetime + '.log', 'w')
 
     if self.verbose: self.prlog('*==* BufferMan T0')
-    self.BMT0 = tstart
+    self.BMT0.value = tstart
     if self.verbose: self.prlog('*==* BufferMan start running')
 
     self.runStarted = True
@@ -530,7 +530,7 @@ class BufferMan(object):
       t = self.tPause
     else:
       t = time.time()
-    return (stat, t - self.BMT0 - self.dTPause, 
+    return (stat, t - self.BMT0.value - self.dTPause, 
            self.Ntrig.value, self.Ttrig.value, self.Tlife.value, 
            self.readrate.value, self.lifefrac.value, bL) 
 
@@ -565,7 +565,7 @@ class BufferMan(object):
 
   def prlog(self, m):
     ''' send a Message, to screen or to LogQ'''
-    t = time.time() - self.BMT0 # add time stamp to message
+    t = time.time() - self.BMT0.value # add time stamp to message
     s = '%.2f '%(t) + m  
     if self.logQ is None:
       print(s)
@@ -579,12 +579,12 @@ class BufferMan(object):
 
 # prints end-of-run summary      
   def print_summary(self):
-    datetime=time.strftime('%y%m%d-%H%M',time.gmtime(self.BMT0))
+    datetime=time.strftime('%y%m%d-%H%M',time.gmtime(self.BMT0.value))
     if self.flog == None:
       self.flog = open('BMsummary_' + datetime+'.sum', 'w')
     self.prlog('Run Summary: started ' + datetime)
     self.prlog('  Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
-          %(self.TStop - self.BMT0 - self.dTPause, 
+          %(self.TStop - self.BMT0.value - self.dTPause, 
             self.Ntrig.value, self.Tlife.value) )
     self.flog.close()
     self.flog = None
@@ -613,7 +613,7 @@ class BufferMan(object):
     if self.verbose: 
       print('\n *==* BufferMan ending, RunSummary written')
       print('  Run Summary: Trun=%.1fs  Ntrig=%i  Tlife=%.1fs\n'\
-            %(self.TStop - self.BMT0-self.dTPause, 
+            %(self.TStop - self.BMT0.value - self.dTPause, 
               self.Ntrig.value, self.Tlife.value) )
 
  # end BufferManager, stop all processes
