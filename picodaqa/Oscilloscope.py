@@ -51,8 +51,8 @@ class Oscilloscope(object):
       axes.append(fig.add_subplot(1,1,1, facecolor='ivory'))
       if len(self.picoChannels)>1:
         axes.append(axes[0].twinx())
-      fig.subplots_adjust(left=0.13, bottom=0.17, right=0.87, top=0.925,
-                          wspace=0., hspace=0.25)
+      fig.subplots_adjust(left=0.13, bottom=0.15, right=0.87, top=0.925,
+                          wspace=0., hspace=0.1)
     else:
       fig=plt.figure("Oscilloscope", figsize=(6., 6.) )
       axes.append(fig.add_subplot(2, 1, 1, facecolor='ivory'))
@@ -61,21 +61,21 @@ class Oscilloscope(object):
       if self.NChannels > 3:
         axes.append(axes[2].twinx())
       fig.subplots_adjust(left=0.13, bottom=0.1, right=0.87, top=0.925,
-                    wspace=-0.1, hspace=.25)
+                    wspace=-0.1, hspace=.1)
         
     for i in range(self.NChannels):
       axes[i].set_ylim(-self.CRanges[i]-self.ChanOffsets[i], 
                       self.CRanges[i]-self.ChanOffsets[i])
       axes[i].grid(True, color=self.ChanColors[i], linestyle = '--', alpha=0.5)
       axes[i].set_ylabel(self.picoChannels[i] + "     Voltage (V)",
-                   size='x-large',color = self.ChanColors[i])
+                   size='large',color = self.ChanColors[i])
       axes[i].tick_params(axis='y', color = self.ChanColors[i])
 
 # time base
     if self.NChannels <=2:
-      axes[0].set_xlabel("Time "+self.TUnit, size='x-large') 
+      axes[0].set_xlabel("Time "+self.TUnit, size='large') 
     else:
-      axes[2].set_xlabel("Time "+self.TUnit, size='x-large') 
+      axes[2].set_xlabel("Time "+self.TUnit, size='large') 
 
 # trigger settings
     trgidx=self.picoChannels.index(self.trgChan)
