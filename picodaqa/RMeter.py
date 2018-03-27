@@ -46,7 +46,6 @@ class RMeter(object):
               size='small', color='darkblue')
 
     self.t0 = time.time() # start time
-    self.T0 = time.time() # stores time of last event seen    
     self.n0 = 0
     self.N0 = 0
     return self.line1, self.animtxt  
@@ -57,7 +56,6 @@ class RMeter(object):
     evTime = evt[2]
     if n < 3:
       self.init()
-      self.T0 = evTime
       self.N0 = evNr
       return self.line1, self.animtxt  
 
@@ -65,11 +63,11 @@ class RMeter(object):
     # calculate rate from event number and event Time
     
     dn = evNr - self.N0
-    dt = evTime - self.T0
+    dt = time.time() - self.t0
     rate = dn/dt
     self.R[k] = rate
     self.N0 = evNr
-    self.T0 = evTime
+    self.t0 += dt
 
     self.line1.set_ydata(np.concatenate( (self.R[k+1:], self.R[:k+1]) ))
 

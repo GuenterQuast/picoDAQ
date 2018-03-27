@@ -47,12 +47,12 @@ class Oscilloscope(object):
 # set up a figure to plot samplings from Picoscope
     axes=[]
     if self.NChannels <= 2:
-      fig=plt.figure("Oscilloscope", figsize=(6., 4.) )
+      fig=plt.figure("Oscilloscope", figsize=(6., 3.) )
       axes.append(fig.add_subplot(1,1,1, facecolor='ivory'))
       if len(self.picoChannels)>1:
         axes.append(axes[0].twinx())
-      fig.subplots_adjust(left=0.13, bottom=0.125, right=0.87, top=0.925,
-                    wspace=0., hspace=.25)
+      fig.subplots_adjust(left=0.13, bottom=0.17, right=0.87, top=0.925,
+                          wspace=0., hspace=0.25)
     else:
       fig=plt.figure("Oscilloscope", figsize=(6., 6.) )
       axes.append(fig.add_subplot(2, 1, 1, facecolor='ivory'))
