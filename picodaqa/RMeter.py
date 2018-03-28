@@ -28,8 +28,8 @@ class RMeter(object):
     self.xplt = np.linspace(-self.Npoints*self.interval, 0., self.Npoints)
 
   # create figure 
-    self.fig = plt.figure("RMeter", figsize=(5.,2.5))
-    self.fig.subplots_adjust(left=0.05, bottom=0.2, right=0.925, top=0.95,
+    self.fig = plt.figure("RMeter", figsize=(5.,2.2))
+    self.fig.subplots_adjust(left=0.05, bottom=0.2, right=0.9, top=0.95,
                wspace=None, hspace=.25)
     self.axes = self.fig.add_subplot(1,1,1)
     self.axes.yaxis.tick_right()

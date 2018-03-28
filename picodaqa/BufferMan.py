@@ -405,7 +405,7 @@ class BufferMan(object):
         
     tstart = time.time()
     if self.LogFile:
-      datetime=time.strftime('%y%m%d-%H%M',time.gmtime(tstart))
+      datetime=time.strftime('%y%m%d-%H%M',time.localtime(tstart))
       self.flog = open(self.LogFile + '_' + datetime + '.log', 'w')
 
     if self.verbose: self.prlog('*==* BufferMan T0')
@@ -579,7 +579,7 @@ class BufferMan(object):
 
 # prints end-of-run summary      
   def print_summary(self):
-    datetime=time.strftime('%y%m%d-%H%M',time.gmtime(self.BMT0.value))
+    datetime=time.strftime('%y%m%d-%H%M',time.localtime(self.BMT0.value))
     if self.flog == None:
       self.flog = open('BMsummary_' + datetime+'.sum', 'w')
     self.prlog('Run Summary: started ' + datetime)

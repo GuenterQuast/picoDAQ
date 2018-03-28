@@ -63,7 +63,7 @@ def mpBufManCntrl(Qcmd, Qlog, Qinfo, maxRate = 100. , interval = 1000.):
      t0=time.time()
      def clkUpdate():
        dt = int(time.time() - t0)
-       datetime = time.strftime('%y/%m/%d %H:%M',time.gmtime(t0))
+       datetime = time.strftime('%y/%m/%d %H:%M',time.localtime(t0))
        TkLabel.config(text = 'started ' + datetime + \
                       '   T=' + str(dt) + 's  ' )
        TkLabel.after(1000, clkUpdate)
