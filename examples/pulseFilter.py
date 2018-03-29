@@ -84,60 +84,68 @@ def pulseFilter(BM, cId, confDict = None,
   prlog = BM.prlog
 
 # set characteristics of reference pulse for convolution pulse search
-  if confDict != None:
-    try: 
-      taur = confDict['taur']
-      tauon = confDict['tauon']
-      tauf= confDict['tauf']
-      pheight = confDict['pheight']
-    #  tauf2= confDict['tauf2']  # only uni-polar pulse for now
-    #  tauoff= confDict['tauoff']
-    #  taur2 = confDict['taur2']
-    #  mode = confDict['mode']
-      if "logFile" in confDict:
-        logFile = confDict['logFile']
-        if logFile == 'None': logFile = None
-      else:
-        logFile = 'pFilt'
-      if "logFile2" in confDict:
-        logFile2 = confDict['logFile2']
-        if logFile2 == 'None': logFile2 = None
-      else:
-        logFile2 = 'dpFilt'
 
-#      if "modules" in confDict:
-#        modules = confDict['modules']
-#      else:
-#        modules = ['RMeter','Hists']
+  if confDict == None:
+    confDict = {}
+#   set default unipolar pulse:
+    confDict['taur'] = 20E-9     # rise time in (s)
+    confDict['tauon'] = 12E-9    # hold time in (s)
+    confDict['tauf'] = 128E-9    # fall time in (s)
+    confDict['pheight'] = -0.035 # pulse height (V) 
+    confDict['logFile'] = None
+    confDict['logFile2'] = 'dpFilt'
+    confDict['rawFile'] = None
+#   confDict[' analysisLevel'] = 2
 
-#      if "analysisLevel" in confDict:
-#        analysisLevel = confDict['analysisLevel']
-#      else:
-#        analysisLevel = 2
+  try: 
+    taur = confDict['taur']
+    tauon = confDict['tauon']
+    tauf= confDict['tauf']
+    pheight = confDict['pheight']
+  #  tauf2= confDict['tauf2']  # only uni-polar pulse for now
+  #  tauoff= confDict['tauoff']
+  #  taur2 = confDict['taur2']
+  #  mode = confDict['mode']
 
-    except:
-      print('     failed to read pulseFilter configuration ')
-      exit(1)
+    if "logFile" in confDict:
+      logFile = confDict['logFile']
+      if logFile == None: logFile = None
+    else:
+      logFile = 'pFilt'
 
-  else:   # no confDict, set defaults
-#   set unipolar pulse:
-    taur = 20E-9     # rise time in (s)
-    tauon = 12E-9    # hold time in (s)
-    tauf = 128E-9    # fall time in (s)
-#  pheight = -0.030 # pulse height (V) # for SiPM panels
-    pheight = -0.035 # pulse height (V) # for Kamiokanne
-    logFile = 'pFilt'
-    logFile2 = 'dpFilt'
+    if "logFile2" in confDict:
+      logFile2 = confDict['logFile2']
+      if logFile2 == None: logFile2 = None
+    else:
+      logFile2 = 'dpFilt'
 
-#    modules = ['RMeter','Hists']
-#    analysisLevel = 2
-    
+    if "rawFile" in confDict:
+      rawFile = confDict['rawFile']
+      if rawFile == None: rawFile = None
+    else:
+      rawFile = None
+        
+    if "modules" in confDict:
+      modules = confDict['modules']
+    else:
+      modules = ['RMeter','Hists']
+
+#    if "analysisLevel" in confDict:
+#      analysisLevel = confDict['analysisLevel']
+#    else:
+#      analysisLevel = 2
+
+  except:
+    print('     failed to read pulseFilter configuration ')
+    exit(1)
+
+  
   print('pF: pulse parameters set')
   print('  taur: %.3g, tauon: %.3g, tauf: %.3g, height: %.3g'\
     %(taur, tauon, tauf, pheight ) )
 
-# open a logfile
-  datetime=time.strftime('%y%m%d-%H%M', time.gmtime())
+# open and initialize files
+  datetime=time.strftime('%y%m%d-%H%M', time.localtime())
   if logFile is not None:
 #    logf=None
     logf = open(logFile + '_' + datetime+'.dat', 'w')
@@ -152,6 +160,29 @@ def pulseFilter(BM, cId, confDict = None,
       file=logf2) # header line 
   else:
     logf2 = None
+
+  if rawFile is not None:
+    rawf = open(rawFile + '_' + datetime+'.dat', 'w', 1)
+    print("--- #raw waveforms",
+      file=rawf) # header line     
+    yaml.dump( {'DevConf': {'picoChannels' : BM.DevConf.picoChannels,
+                            'NChannels' : BM.NChannels,
+                            'NSamples' : BM.NSamples,
+                            'TSampling' : BM.TSampling,
+                            'pretrig' : BM.DevConf.pretrig,
+                            'CRanges' : BM.DevConf.CRanges,
+                            'ChanOffsets': BM.DevConf.ChanOffsets,
+                            'ChanColors': BM.DevConf.ChanColors,
+                            'trgChan' : BM.DevConf.trgChan,
+                            'trgActive' : BM.DevConf.trgActive,
+                            'trgThr' : BM.DevConf.trgThr,
+                            'trgTyp' : BM.DevConf.trgTyp } },
+               rawf )
+    yaml.dump( {'pFConf' : confDict},
+               rawf )
+    print('data: ',  file=rawf) # data tag    
+  else:
+    rawf = None  
 
 # retrieve relevant configuration parameters (from BufferManager)
   dT = BM.TSampling # get sampling interval
@@ -368,6 +399,10 @@ def pulseFilter(BM, cId, confDict = None,
                 delT2s[0], delT2s[1], delT2s[2], 
                 sig2s[0], sig2s[1], sig2s[2]),
                 file=logf2)
+
+    if rawf is not None and doublePulse: # write raw waveforms
+      print(yaml.dump(evData.tolist()),  file=rawf) # data tag    
+
 # print to screen 
     if accepted and verbose > 1:
       if NChan ==1:
@@ -425,6 +460,11 @@ def pulseFilter(BM, cId, confDict = None,
       print("#                       %i double pulses"%(Ndble), 
           file=logf2 )
       logf2.close()
+
+    if rawf is not None: 
+      print("--- ", file=rawf )
+      rawf.close()
+
 
   return
 #-end pulseFilter

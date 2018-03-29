@@ -14,12 +14,13 @@ tauf   : 128.E-9
 tauf2  : 0. 
 tauoff : 0. 
 taur2  : 0.
-pheight: -0.030
+pheight: -0.045
 mode   : 0             # 0:uni-polar  1: bipolar 
 
-#logFile: pFilt     # all pulses, put None if no output wanted
-logFile: None     # all pulses, put None if no output wanted
-logFile2: dpFilt   # only double-pulses, put None if no output wanted
+#logFile: pFilt     # all pulses, put Null if no output wanted
+logFile: Null     # all pulses, put Null if no output wanted
+logFile2: dpFilt   # only double-pulses, put Null if no output wanted
+rawFile:  rawDP    # raw wave froms, put Null if not wanted
 
 modules: [RMeter, Hists, Display]
 #modules: [RMeter, Display]

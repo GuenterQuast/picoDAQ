@@ -13,7 +13,7 @@ Nsamples:     3500
 
 trgChan:    A
 ChanColors: [darkblue, sienna, indigo]
-trgThr:     -75.E-3
+trgThr:     -30.E-3
 trgTyp:     Falling
 trgTO:      5000
 pretrig:    0.05
