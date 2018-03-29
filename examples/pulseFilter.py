@@ -401,7 +401,7 @@ def pulseFilter(BM, cId, confDict = None,
                 file=logf2)
 
     if rawf is not None and doublePulse: # write raw waveforms
-      print(yaml.dump(evData.tolist()),  file=rawf) # data tag    
+      print(yaml.dump(np.around(evData, 5).tolist()),  file=rawf) # data tag    
 
 # print to screen 
     if accepted and verbose > 1:
