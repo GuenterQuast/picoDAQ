@@ -165,21 +165,8 @@ def pulseFilter(BM, cId, confDict = None,
     rawf = open(rawFile + '_' + datetime+'.dat', 'w', 1)
     print("--- #raw waveforms",
       file=rawf) # header line     
-    yaml.dump( {'DevConf': {'picoChannels' : BM.DevConf.picoChannels,
-                            'NChannels' : BM.NChannels,
-                            'NSamples' : BM.NSamples,
-                            'TSampling' : BM.TSampling,
-                            'pretrig' : BM.DevConf.pretrig,
-                            'CRanges' : BM.DevConf.CRanges,
-                            'ChanOffsets': BM.DevConf.ChanOffsets,
-                            'ChanColors': BM.DevConf.ChanColors,
-                            'trgChan' : BM.DevConf.trgChan,
-                            'trgActive' : BM.DevConf.trgActive,
-                            'trgThr' : BM.DevConf.trgThr,
-                            'trgTyp' : BM.DevConf.trgTyp } },
-               rawf )
-    yaml.dump( {'pFConf' : confDict},
-               rawf )
+    yaml.dump( {'OscConf': BM.DevConf.OscConfDict}, rawf )
+    yaml.dump( {'pFConf' : confDict}, rawf )
     print('data: ',  file=rawf) # data tag    
   else:
     rawf = None  

@@ -143,6 +143,20 @@ class PSconfig(object):
     except:
       print("PSconfig: Error initialising device - exit")
       sys.exit(1)
+
+   # store configuration parameters in dictionary
+    self.OscConfDict = {'Channels' : self.picoChannels,
+                        'NChannels' : self.NChannels,
+                        'NSamples' : self.NSamples,
+                        'TSampling' : self.TSampling,
+                        'pretrig' : self.pretrig,
+                        'CRanges' : self.CRanges,
+                        'ChanOffsets': self.ChanOffsets,
+                        'ChanColors': self.ChanColors,
+                        'trgChan' : self.trgChan,
+                        'trgActive' : self.trgActive,
+                        'trgThr' : self.trgThr,
+                        'trgTyp' : self.trgTyp }
 # - end PSconf.init()
 
   def setSamplingPars(self, dT, NSamples, CRanges):
