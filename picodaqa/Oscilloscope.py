@@ -9,25 +9,26 @@ import time, numpy as np, matplotlib.pyplot as plt
 class Oscilloscope(object):
   ''' Oscilloscope: display channel readings in time domain'''
 
-  def __init__(self, conf, name='event rate', BM = None):
+  def __init__(self, OscConfDict, name='event rate', BM = None):
     ''' Args:
           conf: picoConfig instance 
           BM:   BufferMan instance (optional)
     ''' 
     self.name = name
+    # get oscilloscpe settings   
+    self.Channels = OscConfDict['Channels']
+    self.NChannels = OscConfDict['NChannels']
+    self.NSamples = OscConfDict['NSamples']
+    self.TSampling = OscConfDict['TSampling']
+    self.pretrig = OscConfDict['pretrig']
+    self.CRanges = OscConfDict['CRanges']
+    self.ChanOffsets = OscConfDict['ChanOffsets']
+    self.ChanColors = OscConfDict['ChanColors']
+    self.trgChan = OscConfDict['trgChan']
+    self.trgActive = OscConfDict['trgActive'] 
+    self.trgThr = OscConfDict['trgThr'] 
+    self.trgTyp = OscConfDict['trgTyp'] 
 
-    self.picoChannels = conf.picoChannels
-    self.NChannels = conf.NChannels
-    self.NSamples = conf.NSamples
-    self.TSampling = conf.TSampling
-    self.pretrig = conf.pretrig
-    self.CRanges = conf.CRanges     # channel voltage ranges (hw settings)
-    self.ChanOffsets = conf.ChanOffsets
-    self.ChanColors = conf.ChanColors
-    self.trgChan = conf.trgChan
-    self.trgActive = conf.trgActive
-    self.trgThr = conf.trgThr
-    self.trgTyp = conf.trgTyp
   # array of sampling times (in ms)
     self.SamplingPeriod = self.TSampling * self.NSamples
     self.samplingTimes =\
@@ -49,7 +50,7 @@ class Oscilloscope(object):
     if self.NChannels <= 2:
       fig=plt.figure("Oscilloscope", figsize=(6., 3.) )
       axes.append(fig.add_subplot(1,1,1, facecolor='ivory'))
-      if len(self.picoChannels)>1:
+      if len(self.Channels)>1:
         axes.append(axes[0].twinx())
       fig.subplots_adjust(left=0.13, bottom=0.15, right=0.87, top=0.925,
                           wspace=0., hspace=0.1)
@@ -67,7 +68,7 @@ class Oscilloscope(object):
       axes[i].set_ylim(-self.CRanges[i]-self.ChanOffsets[i], 
                       self.CRanges[i]-self.ChanOffsets[i])
       axes[i].grid(True, color=self.ChanColors[i], linestyle = '--', alpha=0.5)
-      axes[i].set_ylabel(self.picoChannels[i] + "     Voltage (V)",
+      axes[i].set_ylabel(self.Channels[i] + "     Voltage (V)",
                    size='large',color = self.ChanColors[i])
       axes[i].tick_params(axis='y', color = self.ChanColors[i])
 
@@ -78,7 +79,7 @@ class Oscilloscope(object):
       axes[2].set_xlabel("Time "+self.TUnit, size='large') 
 
 # trigger settings
-    trgidx=self.picoChannels.index(self.trgChan)
+    trgidx=self.Channels.index(self.trgChan)
     trgax=axes[trgidx]
     trgcol=self.ChanColors[trgidx]
     if self.trgActive:      
@@ -108,7 +109,7 @@ class Oscilloscope(object):
   def init(self):
   # initialize objects to be animated
     self.graphsOs = ()
-    for i, C in enumerate(self.picoChannels):
+    for i, C in enumerate(self.Channels):
       g,= self.axes[i].plot(self.samplingTimes, np.zeros(self.NSamples), 
                            color=self.ChanColors[i])
       self.graphsOs += (g,)
@@ -130,10 +131,10 @@ class Oscilloscope(object):
       return self.init()
 
     if n>2:    # !!! fix to avoid permanent display of first line in blit mode
-      for i, C in enumerate(self.picoChannels):
+      for i, C in enumerate(self.Channels):
         self.graphsOs[i].set_data(self.samplingTimes, evData[i])
     else:
-      for i, C in enumerate(self.picoChannels):
+      for i, C in enumerate(self.Channels):
         self.graphsOs[i].set_data([],[])
 
 # display rate and life time

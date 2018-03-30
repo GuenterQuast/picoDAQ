@@ -230,8 +230,10 @@ class BufferMan(object):
               self.prlog('!=! manageDataBuffer: invalid request mode', req)
               sys.exit(1)
               
-# provide data via a mp-Queue at lower priority if Buffer is not full
-      if len(self.mpQues) and self.prod_Que.qsize() <= self.NBuffers/2 :
+# provide data via a mp-Queue at lower priority 
+      if len(self.mpQues):
+###                 only if Buffer is not full
+#      if len(self.mpQues) and self.prod_Que.qsize() <= self.NBuffers/2 :
         for Q in self.mpQues:
           if Q.empty(): # put an event in the Queue
             Q.put( (evNr, evTime, self.BMbuf[self.ibufr.value] ) )
@@ -375,10 +377,9 @@ class BufferMan(object):
   # waveform display 
     if 'mpOsci' in self.BMmodules: 
       OScidx, OSmpQ = self.BMregister_mpQ()
-      self.procs.append(Process(name='Osci',
-                              target = mpOsci, 
-                              args=(OSmpQ, self.DevConf, 50., 'event rate') ) )
-#                                                     interval
+      self.procs.append(Process(name='Osci', target = mpOsci, 
+        args=(OSmpQ, self.DevConf.OscConfDict, 100., 'event rate') ) )
+#                                            interval
 # start BufferMan background processes   
     for prc in self.procs:
 #      prc.deamon = True

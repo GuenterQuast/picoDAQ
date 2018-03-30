@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 class VoltMeter(object):
   ''' Bar graph display of average over samples '''
 
-  def __init__(self, conf):
+  def __init__(self, OscConfDict):
     '''Args:   Wtime: waiting time between updates
               conf: Configuration of channels
     '''
@@ -18,10 +18,11 @@ class VoltMeter(object):
     self.Npoints = 120  # number of points for history
     self.bwidth = 0.5   # width of bars
 
-    self.NChannels = conf.NChannels
-    self.CRanges = conf.CRanges     # channel voltage ranges (hw settings)
-    self.ChanColors = conf.ChanColors
-    self.picoChannels = conf.picoChannels
+    # get relevant oscilloscpe settings   
+    self.Channels = OscConfDict['Channels']
+    self.NChannels = OscConfDict['NChannels']
+    self.CRanges = OscConfDict['CRanges']
+    self.ChanColors = OscConfDict['ChanColors']
 
    # data structures needed throughout the class
     self.ix = np.linspace(-self.Npoints+1, 0, self.Npoints) # history plot
@@ -45,7 +46,7 @@ class VoltMeter(object):
 #    axes[0].set_ylim(-self.CRanges[0], self.CRanges[0])
 #    axes[1].set_ylim(-self.CRanges[1], self.CRanges[1])
 # for effective Voltage
-    for i, C in enumerate(self.picoChannels):
+    for i, C in enumerate(self.Channels):
       if i > 1:
         break # works for a maximum of 2 Channels only
       axes[i].set_ylim(0., self.CRanges[i])
@@ -102,7 +103,7 @@ class VoltMeter(object):
           align='center', color = self.ChanColors[1], alpha=0.5) 
   # history graphs
     self.graphs=()
-    for i, C in enumerate(self.picoChannels):
+    for i, C in enumerate(self.Channels):
       if i > 1:
         break  # max. of 2 channels
       g,= self.axes[i].plot(self.ix, np.zeros(self.Npoints), 
@@ -128,7 +129,7 @@ class VoltMeter(object):
     k=n%self.Npoints
     txt_t='Time  %.1fs' %(evTime)            
     txt=[]
-    for i, C in enumerate(self.picoChannels):
+    for i, C in enumerate(self.Channels):
       if i > 1: 
         break  # works for 2 channels only
       self.V[i] = np.sqrt (np.inner(evData[i], evData[i])/len(evData[i]) )

@@ -177,7 +177,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   if 'mpVMeter' in modules:
     VMcidx, VMmpQ = BM.BMregister_mpQ()
     procs.append(mp.Process(name='VMeter', target = mpVMeter, 
-              args=(VMmpQ, PSconf, 500., 'effective Voltage') ) )
+              args=(VMmpQ, PSconf.OscConfDict, 500., 'effective Voltage') ) )
 #                         config interval name
 
 # ---> put your own code here 
