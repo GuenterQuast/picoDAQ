@@ -21,6 +21,7 @@ mode   : 0             # 0:uni-polar  1: bipolar
 logFile: Null     # all pulses, put Null if no output wanted
 logFile2: dpFilt   # only double-pulses, put Null if no output wanted
 rawFile:  rawDP    # raw wave froms, put Null if not wanted
+pictFile: pictDP   # save pictures of special waveforms
 
 modules: [RMeter, Hists, Display]
 #modules: [RMeter, Display]

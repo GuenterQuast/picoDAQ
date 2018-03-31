@@ -1,9 +1,16 @@
 from __future__ import print_function,division,absolute_import,unicode_literals
 
-import time, yaml, numpy as np
+import sys, os, time, yaml, numpy as np
 from scipy.signal import argrelmax
 from scipy.interpolate import interp1d
 from multiprocessing import Queue
+
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+
+# animated displays running as background processes/threads
+from picodaqa.Oscilloscope import *
 
   # helper function to generate general unipolar or bipolar template
 def trapezoidPulse(t, tr, ton, tf, tf2=0, toff=0., tr2=0., mode=0):
@@ -95,6 +102,7 @@ def pulseFilter(BM, cId, confDict = None,
     confDict['logFile'] = None
     confDict['logFile2'] = 'dpFilt'
     confDict['rawFile'] = None
+    confDict['pictFile'] = None
 #   confDict[' analysisLevel'] = 2
 
   try: 
@@ -124,6 +132,13 @@ def pulseFilter(BM, cId, confDict = None,
       if rawFile == None: rawFile = None
     else:
       rawFile = None
+
+    if "pictFile" in confDict:
+      pictDir = confDict['pictFile']
+    else:
+      pictDir = None
+
+
         
     if "modules" in confDict:
       modules = confDict['modules']
@@ -170,6 +185,17 @@ def pulseFilter(BM, cId, confDict = None,
     print('data: ',  file=rawf) # data tag    
   else:
     rawf = None  
+
+  if pictDir is not None: # create a directory to store pictures
+    pDir = (pictDir + '_' + datetime)
+    if not os.path.exists(pDir): os.makedirs(pDir)
+  # initialize oscolloscpe class used for plotting
+    #plt.ion()
+    Osci = Oscilloscope(BM.DevConf.OscConfDict, 'DoublePulse') 
+    figOs = Osci.fig
+    Osci.init()
+  else:
+    pDir = None  
 
 # retrieve relevant configuration parameters (from BufferManager)
   dT = BM.TSampling # get sampling interval
@@ -388,7 +414,14 @@ def pulseFilter(BM, cId, confDict = None,
                 file=logf2)
 
     if rawf is not None and doublePulse: # write raw waveforms
-      print(yaml.dump(np.around(evData, 5).tolist()),  file=rawf) # data tag    
+      print( ' - ' + yaml.dump(np.around(evData, 5).tolist(),  
+                       default_flow_style=True ), 
+             file=rawf) 
+
+    if pDir is not None and doublePulse:
+      evt = Osci( (3, Ndble, evTime, evData) ) # update figure, use count=3
+                                      # each time to avoid rate statistics 
+      figOs.savefig(pDir+'/DPfig%i'%(Ndble)+'.png')
 
 # print to screen 
     if accepted and verbose > 1:
@@ -440,18 +473,21 @@ def pulseFilter(BM, cId, confDict = None,
           file=logf )
       logf.close()
 
-    if logf2 is not None: 
-      print(tag+"last evNR %i, Nval, Nacc, Nacc2, Nacc3: %i, %i, %i, %i"\
-        %(evcnt, Nval, Nacc, Nacc2, Nacc3),
-          file=logf2 )
-      print("#                       %i double pulses"%(Ndble), 
-          file=logf2 )
-      logf2.close()
+  if logf2 is not None: 
+    print(tag+"last evNR %i, Nval, Nacc, Nacc2, Nacc3: %i, %i, %i, %i"\
+      %(evcnt, Nval, Nacc, Nacc2, Nacc3),
+        file=logf2 )
+    print("#                       %i double pulses"%(Ndble), 
+        file=logf2 )
+    logf2.close()
 
-    if rawf is not None: 
-      print("--- ", file=rawf )
-      rawf.close()
+  if rawf is not None: 
+    print("--- ", file=rawf )
+    rawf.close()
 
+  if pdir is not None:
+    # put all figures in one zip-file 
+    pass
 
   return
 #-end pulseFilter
