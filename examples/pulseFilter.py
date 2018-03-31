@@ -5,10 +5,6 @@ from scipy.signal import argrelmax
 from scipy.interpolate import interp1d
 from multiprocessing import Queue
 
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-
 # animated displays running as background processes/threads
 from picodaqa.Oscilloscope import *
 
@@ -190,7 +186,6 @@ def pulseFilter(BM, cId, confDict = None,
     pDir = (pictDir + '_' + datetime)
     if not os.path.exists(pDir): os.makedirs(pDir)
   # initialize oscolloscpe class used for plotting
-    #plt.ion()
     Osci = Oscilloscope(BM.DevConf.OscConfDict, 'DoublePulse') 
     figOs = Osci.fig
     Osci.init()
@@ -419,9 +414,9 @@ def pulseFilter(BM, cId, confDict = None,
              file=rawf) 
 
     if pDir is not None and doublePulse:
-      evt = Osci( (3, Ndble, evTime, evData) ) # update figure, use count=3
-                                      # each time to avoid rate statistics 
-      figOs.savefig(pDir+'/DPfig%i'%(Ndble)+'.png')
+      evt = Osci( (3, Ndble, evTime, evData) ) # update figure ...
+         #  use cnt=3 each time to avoid rate statistics 
+      figOs.savefig(pDir+'/DPfig%03i'%(Ndble)+'.png') # ... and save to .png
 
 # print to screen 
     if accepted and verbose > 1:

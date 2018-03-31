@@ -70,7 +70,7 @@ if __name__ == "__main__": # -----------------------------
     print("event %i"%(cnt))
     Osci(evt)
     figOs.canvas.draw()
-##    figOs.savefig('DPfig%i'%(cnt)+'.pdf')
+##    figOs.savefig('DPfig%03i'%(cnt)+'.png')
     time.sleep(twait)
 
 
