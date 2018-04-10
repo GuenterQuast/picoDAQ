@@ -57,7 +57,7 @@ def mpRMeter(Q, maxRate = 10. , interval = 2500., name='rate history'):
     root = Tk.Tk()
     root.wm_title("Rate Display")
     canvas = FigureCanvasTkAgg(figRM, master=root)
-    canvas.show()
+    canvas.draw()
     canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
     canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
     button = Tk.Button(master=root, text='Quit', command=sys.exit)

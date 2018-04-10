@@ -56,7 +56,7 @@ def mpOsci(Q, conf, interval = 50., name='event rate'):
     root = Tk.Tk()
     root.wm_title("Oscilloscope Display")
     canvas = FigureCanvasTkAgg(figOs, master=root)
-    canvas.show()
+    canvas.draw()
     canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
     canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
     button = Tk.Button(master=root, text='Quit', command=sys.exit)

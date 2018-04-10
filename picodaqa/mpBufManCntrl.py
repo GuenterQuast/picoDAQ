@@ -117,7 +117,7 @@ def mpBufManCntrl(Qcmd, Qlog, Qinfo, maxRate = 100. , interval = 1000.):
   BMi = plotBufManInfo(Qinfo, maxRate, interval)
   figBMi = BMi.fig
   canvas = FigureCanvasTkAgg(figBMi, master=Tkwin)
-  canvas.show()
+  canvas.draw()
   canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
   canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 #

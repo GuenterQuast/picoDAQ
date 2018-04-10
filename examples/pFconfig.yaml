@@ -1,5 +1,11 @@
 # Configuration file for pulseFilter
 
+#logFile: pFilt     # all pulses, put Null if no output wanted
+logFile: Null     # all pulses, put Null if no output wanted
+logFile2: dpFilt   # only double-pulses, put Null if no output wanted
+rawFile:  rawDP    # raw wave froms, put Null if not wanted
+pictFile: pictDP   # save pictures of special waveforms
+
 # pulse parameters
 #         ______
 #        /      \  
@@ -8,20 +14,16 @@
 #      r    on  f f2   off  r2 
 #                 f2 - r2 for bi-polar only
 
-taur   : 20.E-9
-tauon  : 12.E-9 
-tauf   : 128.E-9 
-tauf2  : 0. 
-tauoff : 0. 
-taur2  : 0.
-pheight: -0.045
-mode   : 0             # 0:uni-polar  1: bipolar 
+pulseShape:
+ - taur   : 20.E-9
+   tauon  : 12.E-9 
+   tauf   : 128.E-9 
+   tauf2  : 0. 
+   tauoff : 0. 
+   taur2  : 0.
+   pheight: -0.045
+   mode   : 0             # 0:uni-polar  1: bipolar 
 
-#logFile: pFilt     # all pulses, put Null if no output wanted
-logFile: Null     # all pulses, put Null if no output wanted
-logFile2: dpFilt   # only double-pulses, put Null if no output wanted
-rawFile:  rawDP    # raw wave froms, put Null if not wanted
-pictFile: pictDP   # save pictures of special waveforms
 
 modules: [RMeter, Hists, Display]
 #modules: [RMeter, Display]

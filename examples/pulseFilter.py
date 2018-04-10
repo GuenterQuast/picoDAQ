@@ -42,18 +42,21 @@ def trapezoidPulse(t, tr, ton, tf, tf2=0, toff=0., tr2=0., mode=0):
   fpulse = interp1d(ti, ri, kind='linear', copy=False, assume_sorted= True)
   return fpulse(t)
 
-def setRefPulse(dT, taur=20E-9, tauon=12E-9, tauf=128E-9, pheight=-0.030):
+def setRefPulse(dT, taur=20E-9, tauon=12E-9, tauf=128E-9, mode=0,
+                tauf2=0., tauoff=0., taur2=0.,
+                pheight=-0.030):
   '''generate reference pulse shape for convolution filter
     Args: 
       time step
       rise time in sec
       fall-off time in sec
       pulse height in Volt
+      mode : 0 uni-polar  1 bi-polar
   '''
   tp = taur + tauon + tauf
   l = np.int32( tp/dT +0.5 ) + 1  
   ti = np.linspace(0, tp, l)    
-  rp = trapezoidPulse(ti, taur, tauon, tauf, mode=0) # uni-polar pulse
+  rp = trapezoidPulse(ti, taur, tauon, tauf, mode) # uni-polar pulse
   rp = pheight * rp   # normalize to pulse height
 
   return rp
@@ -91,25 +94,23 @@ def pulseFilter(BM, cId, confDict = None,
   if confDict == None:
     confDict = {}
 #   set default unipolar pulse:
-    confDict['taur'] = 20E-9     # rise time in (s)
-    confDict['tauon'] = 12E-9    # hold time in (s)
-    confDict['tauf'] = 128E-9    # fall time in (s)
-    confDict['pheight'] = -0.035 # pulse height (V) 
     confDict['logFile'] = None
     confDict['logFile2'] = 'dpFilt'
     confDict['rawFile'] = None
     confDict['pictFile'] = None
+
+    confDict['pulseShape'] = [ {
+       'taur'    : 20E-9,    # rise time in (s)
+       'tauon'   : 12E-9,    # hold time in (s)
+       'tauf'    : 128E-9,   # fall time in (s)
+       'mode'    : 0,        # uni-polar pulse
+       'pheight' : -0.035    # pulse height (V) 
+      } ]
+
 #   confDict[' analysisLevel'] = 2
 
   try: 
-    taur = confDict['taur']
-    tauon = confDict['tauon']
-    tauf= confDict['tauf']
-    pheight = confDict['pheight']
-  #  tauf2= confDict['tauf2']  # only uni-polar pulse for now
-  #  tauoff= confDict['tauoff']
-  #  taur2 = confDict['taur2']
-  #  mode = confDict['mode']
+    refPulseDicts=confDict['pulseShape']    
 
     if "logFile" in confDict:
       logFile = confDict['logFile']
@@ -133,8 +134,6 @@ def pulseFilter(BM, cId, confDict = None,
       pictDir = confDict['pictFile']
     else:
       pictDir = None
-
-
         
     if "modules" in confDict:
       modules = confDict['modules']
@@ -150,10 +149,6 @@ def pulseFilter(BM, cId, confDict = None,
     print('     failed to read pulseFilter configuration ')
     exit(1)
 
-  
-  print('pF: pulse parameters set')
-  print('  taur: %.3g, tauon: %.3g, tauf: %.3g, height: %.3g'\
-    %(taur, tauon, tauf, pheight ) )
 
 # open and initialize files
   datetime=time.strftime('%y%m%d-%H%M', time.localtime())
@@ -207,7 +202,16 @@ def pulseFilter(BM, cId, confDict = None,
       break
 
 # generate reference pulse 
-  refp = setRefPulse(dT, taur, tauon, tauf, pheight)
+#  refp = setRefPulse(dT, taur, tauon, tauf, pheight)
+  refp = setRefPulse(dT, **refPulseDicts[0])
+  print('pF: pulse parameters set')
+  taur = refPulseDicts[0]['taur'] 
+  tauon = refPulseDicts[0]['tauon'] 
+  tauf =  refPulseDicts[0]['tauf']
+  pheight = refPulseDicts[0]['pheight'] 
+
+  print('  taur: %.3g, tauon: %.3g, tauf: %.3g, height: %.3g'\
+        %(taur, tauon, tauf, pheight) )
   refpm = refp - refp.mean()            # mean subtracted
   lref = len(refp)
 
@@ -300,7 +304,7 @@ def pulseFilter(BM, cId, confDict = None,
         cor[cor<pthr] = pthr # set all values below threshold to threshold
         id = np.argmax(cor)+offset # find index of (1st) maximum 
         if id > idT0 + (taur + tauon)/dT + idTprec:
-          continue #- for # no pulse near trigger, skip
+          continue # no pulse near trigger, skip
         evd = evData[iC, id:id+lref]
         evdm = evd - evd.mean()  # center signal candidate around zero
         cc = np.sum(evdm * refpm) # convolution with mean-corrected reference
@@ -460,8 +464,8 @@ def pulseFilter(BM, cId, confDict = None,
 # end BM.ACTIVE or break e == None  
 
 # add summary information to log-files
+  tag = "# pulseFilter Summary: " 
   if logf is not None:
-    tag = "# pulseFilter Summary: " 
     if logf: 
       print(tag+"last evNR %i, Nval, Nacc, Nacc2, Nacc3: %i, %i, %i, %i"\
         %(evcnt, Nval, Nacc, Nacc2, Nacc3),
@@ -480,7 +484,7 @@ def pulseFilter(BM, cId, confDict = None,
     print("--- ", file=rawf )
     rawf.close()
 
-  if pdir is not None:
+  if pDir is not None:
     # put all figures in one zip-file 
     pass
 
