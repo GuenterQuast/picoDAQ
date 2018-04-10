@@ -67,7 +67,7 @@ def mpBDisplay(Q, conf, mode=0, size=1, name='SignalSize'):
       root = Tk.Tk()
       root.wm_title(name)
       canvas = FigureCanvasTkAgg(figBD, master=root)
-      canvas.show()
+      canvas.draw()
       canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
       canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
       button = Tk.Button(master=root, text='Quit', command=sys.exit)
