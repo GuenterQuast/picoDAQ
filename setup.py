@@ -34,7 +34,7 @@ setup(
     ],
     url='http://www.ekp.kit.edu/~quast/',
     license='GNU Public Licence',
-    description='Data AcQuitition and analysis with PicoScope usb-oscilloscopes',
+    description='Data AcQuisition and analysis with PicoScope usb-oscilloscopes',
     long_description=open('README.md').read(),
     setup_requires=[\
         "NumPy >= 1.7.1",
