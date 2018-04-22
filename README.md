@@ -129,5 +129,9 @@ Graphical displays are implemented with `matplotlib`.
 
 *picoDAQ* presently consists of the modules in the direcoctry *picodaqa*, mentioned above, and an example *python* script (*runDAQ.py*) with configuration examples (*.json* files) for the data acquisition (*DAQconfig.json*), for the PicoScope Device (*PSconfig.json*) and for the Buffer Mananger (*BMconfig.json*).
 
-After downloading, connect your PicoScope and start from the command line, e. g. `python runDAQ.py`. 
+After downloading all files from the git repository, connect your PicoScope and start from the command line, e. g. `python runDAQ.py`. 
+
+You may run the script *make_dist.sh* to generate a *.whl* file in the subdirectory *dist*, which can
+be installed via `pip install picodaqa_<vers>_<type>.whl`. Once this is done, the provided examples can be
+copied to any directory. 
 
