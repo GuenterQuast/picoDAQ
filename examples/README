@@ -1,3 +1,9 @@
 # to start examples in this direcotry, type
 
-./runDAQ DAQ_xxx.json 
+./runCosmo DAQ_xxx.yaml
+
+
+# DAQ_Kanne.yaml : configuration for Kamiokanne
+
+# DAQ_Cosmon.yaml : configuration for Cosmo-Panels
+
