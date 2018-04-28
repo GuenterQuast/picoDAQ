@@ -1,10 +1,10 @@
 # Configuration file for pulseFilter
 
-#logFile: pFilt     # all pulses, put Null if no output wanted
-logFile: Null     # all pulses, put Null if no output wanted
-logFile2: dpFilt   # only double-pulses, put Null if no output wanted
-rawFile:  rawDP    # raw wave froms, put Null if not wanted
-pictFile: pictDP   # save pictures of special waveforms
+#logFile: pFilt     # store all pulses, put Null if no output wanted
+logFile: Null      # store all pulses, put Null if no output wanted
+logFile2: dpFilt   # store double-pulses only, put Null if not wanted
+rawFile:  rawDP    # store raw wave forms, put Null if not wanted
+pictFile: pictDP   # save pictures of double-pulse waveforms
 
 # pulse parameters
 #         ______

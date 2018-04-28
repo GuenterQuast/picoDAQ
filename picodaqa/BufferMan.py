@@ -407,7 +407,7 @@ class BufferMan(object):
     tstart = time.time()
     if self.LogFile:
       datetime=time.strftime('%y%m%d-%H%M',time.localtime(tstart))
-      self.flog = open(self.LogFile + '_' + datetime + '.log', 'w')
+      self.flog = open(self.LogFile + '_' + datetime + '.log', 'w', 1)
 
     if self.verbose: self.prlog('*==* BufferMan T0')
     self.BMT0.value = tstart
