@@ -395,15 +395,6 @@ class BufferMan(object):
       self.prlog('*==* run already started - do nothing')
       return
 
-    if self.start_manageDataBuffer: # delayed start of manageDataBuffer
-      self.procs.append(Process(name='manageDataBuffer', 
-                                 target=self.manageDataBuffer) )
-      self.procs[-1].start()    
-      self.start_manageDataBuffer = False
-      if self.verbose:
-        print('      BufferMan: starting process ',
-             self.procs[-1].name, ' PID =', self.procs[-1].pid)
-        
     tstart = time.time()
     if self.LogFile:
       datetime=time.strftime('%y%m%d-%H%M',time.localtime(tstart))
@@ -413,6 +404,15 @@ class BufferMan(object):
     self.BMT0.value = tstart
     if self.verbose: self.prlog('*==* BufferMan start running')
 
+    if self.start_manageDataBuffer: # delayed start of manageDataBuffer
+      self.procs.append(Process(name='manageDataBuffer', 
+                                 target=self.manageDataBuffer) )
+      self.procs[-1].start()    
+      self.start_manageDataBuffer = False
+      if self.verbose:
+        print('      BufferMan: starting process ',
+             self.procs[-1].name, ' PID =', self.procs[-1].pid)
+        
     self.runStarted = True
     self.RUNNING.value = True  
 
