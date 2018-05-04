@@ -72,9 +72,12 @@ class animHists(object):
       for a in axarray:
         self.axes.append(a)
     else:
+      nh = 0
       for ir in range(nrows):
         for ic in range(ncols):
-          self.axes.append(axarray[ir,ic])
+          nh += 1
+          if nh <= self.nHist:
+            self.axes.append(axarray[ir,ic])
 
     for ih in range(self.nHist):
       self.axes[ih].set_ylabel('frequency')
@@ -107,8 +110,7 @@ class animHists(object):
 
   def __call__(self, vals):
     # add recent values to frequency array, input is a list of arrays
-    nHist = len(vals)
-    for ih in range(nHist):
+    for ih in range(self.nHist):
       vs = vals[ih]
       self.entries[ih] += len(vs)
       for v in vs:

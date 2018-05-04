@@ -52,7 +52,7 @@ class BufferMan(object):
     else:
       self.verbose=1   # print (detailed) info if >0 
     if "logTime" in BMdict: 
-      self.logTime = BMdict["logTime"] # display modules to start
+      self.logTime = BMdict["logTime"] # time between logging entries
     else:
       self.logTime = 60 # logging information once per 60 sec
 
