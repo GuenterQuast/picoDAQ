@@ -20,7 +20,7 @@ class BufferMan(object):
   '''
   A simple Buffer Manager
 
-  Calls rawDAWproducer() to receive data from hardware device
+  Calls rawDAQproducer() to receive data from hardware device
   and stores them in the classes buffer space. Data are served
   from buffer to obligatory consumers (i.e. data qcquisition
   is paused until all consumcers are done) and random consumers
@@ -363,7 +363,7 @@ class BufferMan(object):
 #   connects daq producer and clients)
     self.start_manageDataBuffer = True
 
-  # BufferMan Info and control  always started
+  # BufferMan Info and control always started
     self.logQ = Queue()
     maxBMrate = 450.
     self.BMIinterval = 1000.  # update interval in ms
