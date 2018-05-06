@@ -3,7 +3,7 @@
 *python* Data AcQuisition and analysis with PicoScope usb-oscilloscopes
 
 The *usb*-oscilloscope series PicoSpope by Pico Technology 
-(see https://www.picotech.com)
+(see <https://www.picotech.com>)
 offers universal instruments that come with great software support, not
 only a graphical interface offering the functionality known from oscilloscopes, 
 but - most importantly for this project - also with a software development kit
@@ -104,34 +104,22 @@ filled with water and equipped with a PM to count muons from cosmic rays.
        value per Channel (e.g. peak Voltage, effective Voltage etc.). Values 
        are passed to the sub-process via a multiprocessing Queue.
 
-The script `runDAQ.py` gives an example of how to use all of the above. For a full
-demo, connect the output of a PicoScope's signal generator to channel *B*, and
-eventually an open cable to Channel *A* to see random noise. Use the configuration
-file `DAQconfig.json`, which specifies the configuration files `BMconfig.json` for
-the Buffer Manager and `PSConfig.json` for the PicoScope. As a hook for own
-extensions, user code may be included. An example for this is shown in the
-configuration file `DAQ_Cosmo.json`, which points to a code snippet *anaDAQ.py*
-to starts some example consumers (code in `exampleConsumers.py`).
+The script `runDAQ.py` gives an example of how to use all of the above. For a
+full demo, connect the output of a PicoScope's signal generator to channel *B*,
+and eventually an open cable to Channel *A* to see random noise. 
+Use the configuration file `DAQconfig.json`, which specifies the configuration files `Mconfig.json` for the Buffer Manager and `PSConfig.json` for the
+PicoScope. As a hook for own extensions, user code may be included. An example for this is shown in the configuration file `DAQ_Cosmo.json`, which points to a code snippet *anaDAQ.py* to starts some example consumers (code in
+`exampleConsumers.py`).
 
 The directory `examples/` contains configuration files and a special consumer
-`pulseFilter.py`, which implements a convolution filter to search for characteristic
-signal shapes in an input waveform. The present example is tailored to identify
-short pulses from muon detectors (the scintillator panels of the *CosMO*-experiment
-by "Netzwerk Teilchenwelt", http://www.teilchenwelt.de, or the Kamiokanne-Experiment
-with photomultiplier readout and pulses shaped to a length of approx. 150ns). In a
-first step, the trigger is validated by cross-correlation with a signal template
-located around the trigger time. Coincidences near a validated triggering pulse are
-searched for in all connected channels. The thirst step performs a searches for
-additional pulses after the triggering event, indicating the decay of a stopped
-muon in or near the detector. This simple set-up allows to measure the mean muon
-lifetime in the muon rest frame (2.2 µs). To run the example, connect one, two or
-three panels to your PicoScope and type
- 
-  `./runCosmo.py DAQ_Cosmo.json` 
-
-in the examples directory. The latest version allows to store the raw waveforms or
-pictures in .png-format of identified double pulses for off-line analysis or for an
-analysis "by Hand" based on the waveform pictures.
+`pulseFilter.py`, which implements a convolution filter to search for
+characteristic signal shapes in an input waveform. The example is
+tailored to identify short pulses from muon detectors (the scintillator
+panels of the *CosMO*-experiment by "Netzwerk Teilchenwelt", 
+<http://www.teilchenwelt.de>, or the Kamiokanne-Experiment
+with photomultiplier readout and pulses shaped to a length of approx. 150ns).
+A more complete and updated example has been moved to the project `picoCosmo`,
+see <https://github.com/GuenterQuast/picoCosmo>. 
 
 
 ## Installation of the package
