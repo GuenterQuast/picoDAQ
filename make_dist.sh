@@ -15,4 +15,4 @@ $PY_EXEC setup.py sdist
 $PY_EXEC setup.py bdist_wheel --universal # py2 and py3
 
 # Install using pip
-#$PIP_EXEC install PhyPraKit --no-index --find-links dist
+#$PIP_EXEC install picodaqa --no-index --find-links dist
