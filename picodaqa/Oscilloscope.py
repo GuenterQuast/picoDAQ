@@ -76,6 +76,7 @@ class Oscilloscope(object):
     if self.NChannels <=2:
       axes[0].set_xlabel("Time "+self.TUnit, size='large') 
     else:
+      axes[0].set_xticklabels([])
       axes[2].set_xlabel("Time "+self.TUnit, size='large') 
 
 # trigger settings
