@@ -609,7 +609,7 @@ class BufferMan(object):
     time.sleep(1.) # allow all events to propagate 
 
     if self.verbose: 
-      self.prlog('*==* BufferMan endig - reached stopped state')
+      self.prlog('*==* BufferMan ending - reached stopped state')
     self.print_summary()
     if self.verbose: 
       print('\n *==* BufferMan ending, RunSummary written')
