@@ -265,7 +265,7 @@ class PSconfig(object):
     '''
       Close down hardwre device
     '''
-    prompt = 6*' ' + 'PSconf: '
+    prompt = 4*' ' + 'PSconf: '
     if self.verbose: print(prompt + "closing connection to device")
     self.picoDevice.stop()
     self.picoDevice.close()
