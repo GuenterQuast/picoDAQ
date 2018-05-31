@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-'''effective Voltage and signal history in TKinter window'''
+'''Ssignal history in TKinter window'''
 
 from __future__ import print_function, division, unicode_literals
 from __future__ import absolute_import
@@ -17,9 +17,10 @@ else:
 import matplotlib.pyplot as plt, matplotlib.animation as anim
 
 # import Voltmeter class
-from .VoltMeter import *
+from .DataLogger import *
 
-def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage'):
+
+def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)'):
   '''effective Voltage of data passed via multiprocessing.Queue
     Args:
       conf: picoConfig object
@@ -28,30 +29,29 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage'):
 
   # Generator to provide data to animation
   def yieldEvt_fromQ():
-# random consumer of Buffer Manager, receives an event copy 
-   # via a Queue from package mutiprocessing
+# receives data via Queue from package mutiprocessing
    
     cnt = 0
     try:
       while True:
-        evNr, evTime, evData = Q.get()
+        evData = Q.get()
         #print('*==* yieldEvt_fromQ: received event %i' % evNr)
         cnt+=1
-        evt = (cnt, evNr, evTime, evData)
+        evt = (cnt, evData)
         yield evt
     except:
       print('*==* yieldEvt_fromQ: termination signal received')
   
 # ------- executable part -------- 
-#  print(' -> mpVMeter starting')
+#  print(' -> mpDataLogger starting')
 
-  VM = VoltMeter(conf)
-  figVM = VM.fig
+  DL = DataLogger(WaitTime, conf, name)
+  figDL = DL.fig
 
 # generate a simple window for graphics display as a tk.DrawingArea
   root = Tk.Tk()
-  root.wm_title("Voltmeter Display")
-  canvas = FigureCanvasTkAgg(figVM, master=root)
+  root.wm_title("Data Logger")
+  canvas = FigureCanvasTkAgg(figDL, master=root)
   canvas.draw()
   canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
   canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
@@ -59,8 +59,8 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage'):
   button.pack(side=Tk.BOTTOM)
 
 # set up matplotlib animation
-  VMAnim = anim.FuncAnimation(figVM, VM, yieldEvt_fromQ,
-                         interval=WaitTime, init_func=VM.init,
+  VMAnim = anim.FuncAnimation(figDL, DL, yieldEvt_fromQ,
+                         interval=WaitTime, init_func=DL.init,
                          blit=True, fargs=None, repeat=True, save_count=None)
                        # save_count=None is a (temporary) work-around 
                        #     to fix memory leak in animate
@@ -68,5 +68,6 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage'):
     Tk.mainloop()
    
   except:
-    print('*==* mpVMeter: termination signal recieved')
+    print('*==* mpDataLogger: termination signal recieved')
   sys.exit()
+# -- end def mpDataLogger()

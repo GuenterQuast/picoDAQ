@@ -111,16 +111,23 @@ Use the configuration file `DAQconfig.json`, which specifies the configuration f
 PicoScope. As a hook for own extensions, user code may be included. An example for this is shown in the configuration file `DAQ_Cosmo.json`, which points to a code snippet *anaDAQ.py* to starts some example consumers (code in
 `exampleConsumers.py`).
 
-The directory `examples/` contains configuration files and a special consumer
-`pulseFilter.py`, which implements a convolution filter to search for
-characteristic signal shapes in an input waveform. The example is
-tailored to identify short pulses from muon detectors (the scintillator
-panels of the *CosMO*-experiment by "Netzwerk Teilchenwelt", 
-<http://www.teilchenwelt.de>, or the Kamiokanne-Experiment
-with photomultiplier readout and pulses shaped to a length of approx. 150ns).
-A more complete and updated example has been moved to the project `picoCosmo`,
+## Examples
+
+The directory `examples/` contains configuration files and some 
+special applications. 
+
+The script `runCosmo.py` depends on `pulseFilter.py`, which implements a
+convolution filter to search for characteristic signal shapes in an input
+waveform. The example is tailored to identify short pulses from muon detectors (the scintillator panels of the *CosMO*-experiment by
+"Netzwerk Teilchenwelt", <http://www.teilchenwelt.de>, or the
+Kamiokanne-Experiment with photomultiplier readout and pulses shaped to a length of approx. 150ns). A more complete and updated example has been moved to the project `picoCosmo`,
 see <https://github.com/GuenterQuast/picoCosmo>. 
 
+`runDataLogger.py` implements a data logger for slow signals rates below
+0.1 Hz. Signals are sampled with a PicoSocpe at a rate of 100 KHz over
+20 ms and then averaged. 50 Hz noise is thus eliminated, and a clean
+Voltage signal obtained. The History of the recorded Voltages is
+displayed using the module `mpDataLogger.py`.
 
 ## Installation of the package
 
