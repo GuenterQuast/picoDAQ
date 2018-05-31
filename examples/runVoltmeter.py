@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-'''Data Logger 
-     reads samples from PicoScope and display averages as voltage history
+'''PicoScope as Voltmeter
+     this script reads data samples from PicoScope and 
+     displays data as effective voltage
 '''
 
 from __future__ import print_function, division, unicode_literals
@@ -12,7 +13,7 @@ import sys, time, yaml, numpy as np, multiprocessing as mp
 
 # import relevant pieces from picodaqa
 import picodaqa.picoConfig
-from picodaqa.mpDataLogger import mpDataLogger
+from picodaqa.mpVMeter import mpVMeter
 
 # helper function
 def stop_processes(proclst):
@@ -21,7 +22,7 @@ def stop_processes(proclst):
   '''
   for p in proclst: # stop all sub-processes
     print('    terminating '+p.name)
-    p.terminate()
+    if p.is_alive(): p.terminate()
   time.sleep(2)
 
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
@@ -33,7 +34,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   if len(sys.argv)==2:
     PSconfFile = sys.argv[1]
   else: 
-    PSconfFile = 'PSdataLogger.yaml'
+    PSconfFile = 'PSVoltMeter.yaml'
   print('    PS configuration from file ' + PSconfFile)
 
   # read scope configuration file
@@ -54,13 +55,12 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   NSamples = PSconf.NSamples   # number of samples
   buf = np.zeros( (NChannels, NSamples) ) # data buffer for PicoScope driver
 
-
   procs=[]
   deltaT = 500.
-  DLmpQ =  mp.Queue(1) # Queue for data transfer to sub-process
-  procs.append(mp.Process(name='DataLogger', target = mpDataLogger, 
-               args=(DLmpQ, PSconf.OscConfDict, deltaT, '(Volt)') ) )
-#                   Queue        config       interval    name
+  VMmpQ =  mp.Queue(1) # Queue for data transfer to sub-process
+  procs.append(mp.Process(name='VoltMeter', target = mpVMeter, 
+            args=(VMmpQ, PSconf.OscConfDict, deltaT, 'effective Voltage') ) )
+#                Queue        config       interval    name
 
 # start subprocess(es)
   for prc in procs:
@@ -72,14 +72,15 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # -- LOOP 
   try:
+    cnt = 0
+    T0 = time.time()
     print('          type <cntrl>C to end -->')
     while True:
-      if DLmpQ.empty(): 
+      if VMmpQ.empty(): 
+        cnt +=1
         PSconf.acquireData(buf) # read data from PicoScope
-        for i, b in enumerate(buf): # process data 
-          # sig[i] = np.sqrt (np.inner(b, b) /NSamples) # eff. Voltage
-          sig[i] = b.sum() / NSamples # average
-        DLmpQ.put(sig) 
+        # construct an "event" like BufferMan.py does and send via Queue
+        VMmpQ.put( (cnt, time.time()- T0 , buf) ) 
 
   except KeyboardInterrupt:
      print(sys.argv[0]+': keyboard interrupt - closing down ...')

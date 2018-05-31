@@ -129,6 +129,9 @@ see <https://github.com/GuenterQuast/picoCosmo>.
 Voltage signal obtained. The History of the recorded Voltages is
 displayed using the module `mpDataLogger.py`.
 
+Similarly, `runVoltMeter` uses a PicoScope device to display the
+ effective voltage as bar graph and history plot.
+
 ## Installation of the package
 
 This python code is compatible with *python* versions 2.7 and 3.5.
