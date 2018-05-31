@@ -63,7 +63,7 @@ class BufferMan(object):
     self.TSampling = DevConf.TSampling # sampling interval
 
     # function collecting data from hardware device
-    self.rawDAQproducer = DevConf.acquireData 
+    self.rawDAQproducer = DevConf.acquireDataBM 
 
 # data structure for BufferManager in shared c-type memory ...
     self.CBMbuf = RawArray('f', 

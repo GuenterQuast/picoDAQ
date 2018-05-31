@@ -231,6 +231,36 @@ class PSconfig(object):
 
 # -- end def picoIni
 
+  def acquireDataBM(self, buffer):
+    '''
+    read data from device
+      this part is hardware (i.e. driver) specific code for PicoScope device,
+      interfaces to BufferMan.py 
+      Args:
+        buffer: space to store data
+
+      Returns:
+        ttrg: time when device became ready
+        tlife life time of device
+  '''
+    self.picoDevice.runBlock(pretrig=self.pretrig) #
+    ti=time.time()
+    while not self.picoDevice.isReady():
+      if not self.BM.ACTIVE.value: return None
+      time.sleep(0.0001)
+    # waiting time for occurence of trigger is counted as life time
+    ttrg=time.time()
+    # account life time, w. appr. corr. for set-up time
+    tlife = ttrg - ti - self.toverhead
+  # store raw data in global array 
+    for i, C in enumerate(self.picoChannels):
+      self.picoDevice.getDataRaw(C, self.NSamples, data=self.rawBuf[i])
+      self.picoDevice.rawToV(C, self.rawBuf[i], buffer[i], dtype=np.float32)
+# alternative:
+     # self.picoDevice.getDataV(C, NSamples, dataV=VBuf[ibufw,i], dtype=np.float32)
+    return ttrg, tlife
+# - end def acquireDataBM()
+
   def acquireData(self, buffer):
     '''
     read data from device
@@ -246,7 +276,6 @@ class PSconfig(object):
     self.picoDevice.runBlock(pretrig=self.pretrig) #
     ti=time.time()
     while not self.picoDevice.isReady():
-      if not self.BM.ACTIVE: return
       time.sleep(0.0001)
     # waiting time for occurence of trigger is counted as life time
     ttrg=time.time()
