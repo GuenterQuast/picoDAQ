@@ -2,17 +2,17 @@
 
 *python* Data AcQuisition and analysis with PicoScope usb-oscilloscopes
 
-The *usb*-oscilloscope series PicoSpope by Pico Technology 
+The *usb*-oscilloscope series PicoSpope by Pico Technology
 (see <https://www.picotech.com>)
 offers universal instruments that come with great software support, not
-only a graphical interface offering the functionality known from oscilloscopes, 
+only a graphical interface offering the functionality known from oscilloscopes,
 but - most importantly for this project - also with a software development kit
 (*SDK*) which makes it possible to use the devices with a wide range of
-high-level languages. 
+high-level languages.
 
-Provided here is a data acquisition system as is needed to record, 
-analyze, classify and count the occurrence of wave forms such as provided 
-for example by single-photon counters or typical detectors common in 
+Provided here is a data acquisition system as is needed to record,
+analyze, classify and count the occurrence of wave forms such as provided
+for example by single-photon counters or typical detectors common in
 quantum mechanical measurements or in nuclear, particle physics and astro
 particle physics, e.g. photo tubes, Geiger counters, avalanche photo-diodes
 or modern SiPMs.
@@ -91,6 +91,11 @@ filled with water and equipped with a PM to count muons from cosmic rays.
    - runs an instance of the *VoltMeter* class as a sub-process, receiving
         data via a multiprocessing Queue.
 
+  module *mpDataLogger* 
+
+   - runs an instance of the *DataLogger* class as a sub-process, receiving
+        data via a multiprocessing Queue.
+
   module *mpHists* 
  
   - runs an instance of the *animHists* class as a sub-process; receives 
@@ -116,21 +121,29 @@ PicoScope. As a hook for own extensions, user code may be included. An example f
 The directory `examples/` contains configuration files and some 
 special applications. 
 
-The script `runCosmo.py` depends on `pulseFilter.py`, which implements a
-convolution filter to search for characteristic signal shapes in an input
-waveform. The example is tailored to identify short pulses from muon detectors (the scintillator panels of the *CosMO*-experiment by
-"Netzwerk Teilchenwelt", <http://www.teilchenwelt.de>, or the
-Kamiokanne-Experiment with photomultiplier readout and pulses shaped to a length of approx. 150ns). A more complete and updated example has been moved to the project `picoCosmo`,
-see <https://github.com/GuenterQuast/picoCosmo>. 
-
-`runDataLogger.py` implements a data logger for slow signals rates below
-0.1 Hz. Signals are sampled with a PicoSocpe at a rate of 100 KHz over
-20 ms and then averaged. 50 Hz noise is thus eliminated, and a clean
-Voltage signal obtained. The History of the recorded Voltages is
-displayed using the module `mpDataLogger.py`.
+The script `runDataLogger.py` implements a data logger for slow signals
+rates below 10 Hz. Signals are sampled with a PicoSocpe at a rate of
+10 kHz over 20 ms and then averaged. 50 Hz noise is thus eliminated,
+and a clean voltage signal is obtained. The history of the recorded
+voltages is displayed using the module `mpDataLogger`. This example
+directly reads from the hardware device and therefore does not rely
+on the `BufferMan` class.
 
 Similarly, `runVoltMeter` uses a PicoScope device to display the
- effective voltage as bar graph and history plot.
+effective voltage as bar graph and history plot.
+
+The script `runCosmo.py` is a modified version of `runDAQ.py` and
+depends on the code in `pulseFilter.py`, which implements a
+convolution filter to search for characteristic signal shapes in
+an input waveform. The example is tailored to identify short pulses
+from muon detectors (e. g. the scintillator panels of the
+*CosMO*-experiment by "Netzwerk Teilchenwelt", 
+<http://www.teilchenwelt.de>, 
+or the Kamiokanne-Experiment with photomultiplier readout and
+pulses shaped to a length of approx. 150ns). A more complete and
+updated version has been moved to the project `picoCosmo`,
+see <https://github.com/GuenterQuast/picoCosmo>. 
+
 
 ## Installation of the package
 
