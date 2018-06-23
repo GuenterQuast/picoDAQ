@@ -4,6 +4,8 @@
 '''PicoScope as Voltmeter
      this script reads data samples from PicoScope and 
      displays data as effective voltage
+
+     Usage: ./runVoltmeter.py [<Oscilloscpope_config>.yaml Interval]
 '''
 
 from __future__ import print_function, division, unicode_literals
@@ -21,9 +23,10 @@ def stop_processes(proclst):
     Close all running processes at end of run
   '''
   for p in proclst: # stop all sub-processes
-    print('    terminating '+p.name)
-    if p.is_alive(): p.terminate()
-  time.sleep(2)
+    if p.is_alive():
+      print('    terminating '+p.name)
+      if p.is_alive(): p.terminate()
+      time.sleep(1.)
 
 if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
@@ -31,11 +34,16 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
 # check for / read command line arguments
   # read DAQ configuration file
-  if len(sys.argv)==2:
+  if len(sys.argv) >= 2:
     PSconfFile = sys.argv[1]
   else: 
     PSconfFile = 'PSVoltMeter.yaml'
   print('    PS configuration from file ' + PSconfFile)
+
+  if len(sys.argv)==3:
+    interval = float(sys.argv[2])
+  else: 
+    interval = 0.5
 
   # read scope configuration file
   print('    Device configuration from file ' + PSconfFile)
@@ -56,11 +64,11 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   buf = np.zeros( (NChannels, NSamples) ) # data buffer for PicoScope driver
 
   procs=[]
-  deltaT = 500.
+  deltaT = interval * 1000.   # update interval in ms
   VMmpQ =  mp.Queue(1) # Queue for data transfer to sub-process
   procs.append(mp.Process(name='VoltMeter', target = mpVMeter, 
             args=(VMmpQ, PSconf.OscConfDict, deltaT, 'effective Voltage') ) )
-#                Queue        config       interval    name
+#                Queue            config                      interval    name
 
 # start subprocess(es)
   for prc in procs:
@@ -68,7 +76,9 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     prc.start()
     print(' -> starting process ', prc.name, ' PID=', prc.pid)
 
-    sig = np.zeros(NChannels)
+  sig = np.zeros(NChannels)
+  PSconf.acquireData(buf) # read initial data from PicoScope
+  VMmpQ.put( (0, 0. , buf) ) 
 
 # -- LOOP 
   try:
@@ -76,15 +86,16 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     T0 = time.time()
     print('          type <cntrl>C to end -->')
     while True:
-      if VMmpQ.empty(): 
-        cnt +=1
-        PSconf.acquireData(buf) # read data from PicoScope
-        # construct an "event" like BufferMan.py does and send via Queue
-        VMmpQ.put( (cnt, time.time()- T0 , buf) ) 
+      cnt +=1
+      PSconf.acquireData(buf) # read data from PicoScope
+      # construct an "event" like BufferMan.py does and send via Queue
+      VMmpQ.put( (cnt, time.time()- T0 , buf) ) 
 
   except KeyboardInterrupt:
-     print(sys.argv[0]+': keyboard interrupt - closing down ...')
+    VMmpQ.put( (cnt, time.time()- T0 , buf) ) 
+    print('\n' + sys.argv[0]+': keyboard interrupt - closing down ...')
   finally:
     PSconf.closeDevice() # close down hardware device
+    time.sleep(1.)
     stop_processes(procs)  # stop all sub-processes in list
     print('*==* ' + sys.argv[0] + ': normal end')

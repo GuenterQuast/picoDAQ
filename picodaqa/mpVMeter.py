@@ -5,7 +5,7 @@
 from __future__ import print_function, division, unicode_literals
 from __future__ import absolute_import
 
-import sys, numpy as np
+import sys, time, numpy as np
 
 import matplotlib
 matplotlib.use('TkAgg')
@@ -30,18 +30,27 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage'):
   def yieldEvt_fromQ():
 # random consumer of Buffer Manager, receives an event copy 
    # via a Queue from package mutiprocessing
-   
+    interval = WaitTime/1000.  # in ms 
     cnt = 0
+    dTcum = 0.
+    tStart = time.time()
     try:
       while True:
-        evNr, evTime, evData = Q.get()
-        #print('*==* yieldEvt_fromQ: received event %i' % evNr)
+        data = Q.get()
+        if data == None:
+          #print('*==* yieldEvt_fromQ: received end event')          
+          sys.exit()
         cnt+=1
-        evt = (cnt, evNr, evTime, evData)
-        yield evt
+        yield (cnt,) + data
+# guarantee correct timing 
+        deltaTime = time.time() - tStart
+        dtcor = interval - deltaTime + dTcum
+        if dtcor > 0. : time.sleep(dtcor) 
+        dTcum += interval
     except:
-      print('*==* yieldEvt_fromQ: termination signal received')
-  
+      #print('*==* yieldEvt_fromQ: termination signal received')
+      sys.exit()
+
 # ------- executable part -------- 
 #  print(' -> mpVMeter starting')
 
@@ -60,7 +69,7 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage'):
 
 # set up matplotlib animation
   VMAnim = anim.FuncAnimation(figVM, VM, yieldEvt_fromQ,
-                         interval=WaitTime, init_func=VM.init,
+                         interval = 1., init_func = VM.init,
                          blit=True, fargs=None, repeat=True, save_count=None)
                        # save_count=None is a (temporary) work-around 
                        #     to fix memory leak in animate

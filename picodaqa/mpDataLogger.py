@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-'''Ssignal history in TKinter window'''
+'''Signal history in TKinter window'''
 
 from __future__ import print_function, division, unicode_literals
 from __future__ import absolute_import
 
-import sys, numpy as np
+import sys, time, numpy as np
 
 import matplotlib
 matplotlib.use('TkAgg')
@@ -29,19 +29,30 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)'):
 
   # Generator to provide data to animation
   def yieldEvt_fromQ():
-# receives data via Queue from package mutiprocessing
-   
+  # receives data via Queue from package mutiprocessing 
+    interval = WaitTime/1000.  # in ms 
     cnt = 0
+    dTcum = 0.
+    tStart = time.time()
     try:
       while True:
         evData = Q.get()
+        if evData == None:
+          #print('*==* yieldEvt_fromQ: received end event')          
+          sys.exit()
         #print('*==* yieldEvt_fromQ: received event %i' % evNr)
         cnt+=1
         evt = (cnt, evData)
         yield evt
+# guarantee correct timing 
+        deltaTime = time.time() - tStart
+        dtcor = interval - deltaTime + dTcum
+        if dtcor > 0. : time.sleep(dtcor) 
+        dTcum += interval
+
     except:
-      print('*==* yieldEvt_fromQ: termination signal received')
-  
+      # print('*==* yieldEvt_fromQ: termination signal received')
+      return
 # ------- executable part -------- 
 #  print(' -> mpDataLogger starting')
 
@@ -60,7 +71,7 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)'):
 
 # set up matplotlib animation
   VMAnim = anim.FuncAnimation(figDL, DL, yieldEvt_fromQ,
-                         interval=WaitTime, init_func=DL.init,
+                         interval = 1. , init_func=DL.init,
                          blit=True, fargs=None, repeat=True, save_count=None)
                        # save_count=None is a (temporary) work-around 
                        #     to fix memory leak in animate
