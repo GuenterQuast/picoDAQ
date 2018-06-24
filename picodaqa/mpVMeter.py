@@ -32,10 +32,9 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage'):
    # via a Queue from package mutiprocessing
     interval = WaitTime/1000.  # in ms 
     cnt = 0
-    dTcum = 0.
-    tStart = time.time()
     try:
       while True:
+        T0 = time.time()
         data = Q.get()
         if data == None:
           #print('*==* yieldEvt_fromQ: received end event')          
@@ -43,10 +42,9 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage'):
         cnt+=1
         yield (cnt,) + data
 # guarantee correct timing 
-        deltaTime = time.time() - tStart
-        dtcor = interval - deltaTime + dTcum
-        if dtcor > 0. : time.sleep(dtcor) 
-        dTcum += interval
+        dtcor = interval - time.time() + T0
+        if dtcor > 0. :  time.sleep(dtcor) 
+
     except:
       #print('*==* yieldEvt_fromQ: termination signal received')
       sys.exit()

@@ -30,12 +30,11 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)'):
   # Generator to provide data to animation
   def yieldEvt_fromQ():
   # receives data via Queue from package mutiprocessing 
-    interval = WaitTime/1000.  # in ms 
+    interval = WaitTime/1000.  # in s 
     cnt = 0
-    dTcum = 0.
-    tStart = time.time()
     try:
       while True:
+        T0 = time.time()
         evData = Q.get()
         if evData == None:
           #print('*==* yieldEvt_fromQ: received end event')          
@@ -45,10 +44,8 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)'):
         evt = (cnt, evData)
         yield evt
 # guarantee correct timing 
-        deltaTime = time.time() - tStart
-        dtcor = interval - deltaTime + dTcum
-        if dtcor > 0. : time.sleep(dtcor) 
-        dTcum += interval
+        dtcor = interval - time.time() + T0
+        if dtcor > 0. :  time.sleep(dtcor) 
 
     except:
       # print('*==* yieldEvt_fromQ: termination signal received')
