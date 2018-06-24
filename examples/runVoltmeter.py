@@ -11,13 +11,29 @@
 from __future__ import print_function, division, unicode_literals
 from __future__ import absolute_import
 
-import sys, time, yaml, numpy as np, multiprocessing as mp
+import sys, time, yaml, numpy as np, threading, multiprocessing as mp
 
 # import relevant pieces from picodaqa
 import picodaqa.picoConfig
 from picodaqa.mpVMeter import mpVMeter
 
-# helper function
+# helper functions
+
+def kbdInput(cmdQ):
+  ''' 
+    read keyboard input, run as backround-thread to aviod blocking
+  '''
+# 1st, remove pyhton 2 vs. python 3 incompatibility for keyboard input
+  if sys.version_info[:2] <=(2,7):
+    get_input = raw_input
+  else: 
+    get_input = input
+ 
+  while ACTIVE:
+    kbdtxt = get_input(20*' ' + 'type -> S(top), R(esume), E(nd) or s(ave) + <ret> ')
+    cmdQ.put(kbdtxt)
+    kbdtxt = ''
+
 def stop_processes(proclst):
   '''
     Close all running processes at end of run
@@ -63,6 +79,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   NSamples = PSconf.NSamples   # number of samples
   buf = np.zeros( (NChannels, NSamples) ) # data buffer for PicoScope driver
 
+  thrds=[]
   procs=[]
   deltaT = interval * 1000.   # update interval in ms
   VMmpQ =  mp.Queue(1) # Queue for data transfer to sub-process
@@ -70,30 +87,64 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
             args=(VMmpQ, PSconf.OscConfDict, deltaT, 'effective Voltage') ) )
 #                Queue            config                      interval    name
 
+  cmdQ =  mp.Queue(1) # Queue for keyboard input
+  thrds.append(threading.Thread(name='kbdInput', target = kbdInput, 
+               args = (cmdQ,)  ) )
+#                           Queue       
+
 # start subprocess(es)
   for prc in procs:
     prc.deamon = True
     prc.start()
     print(' -> starting process ', prc.name, ' PID=', prc.pid)
 
+  ACTIVE = True # thread(s) active 
+  # start threads
+  for thrd in thrds:
+    print(' -> starting thread ', thrd.name)
+    thrd.deamon = True
+    thrd.start()
+
   sig = np.zeros(NChannels)
   PSconf.acquireData(buf) # read initial data from PicoScope
   VMmpQ.put( (0, 0. , buf) ) 
 
+  DAQ_ACTIVE = True  # Data Acquistion active    
 # -- LOOP 
   try:
     cnt = 0
     T0 = time.time()
-    print('          type <cntrl>C to end -->')
     while True:
-      cnt +=1
-      PSconf.acquireData(buf) # read data from PicoScope
-      # construct an "event" like BufferMan.py does and send via Queue
-      VMmpQ.put( (cnt, time.time()- T0 , buf) ) 
-
+      if DAQ_ACTIVE:
+        cnt +=1
+        PSconf.acquireData(buf) # read data from PicoScope
+        # construct an "event" like BufferMan.py does and send via Queue
+        VMmpQ.put( (cnt, time.time()- T0 , buf) )
+   # check for keboard input
+      if not cmdQ.empty():
+        cmd = cmdQ.get()
+        if cmd == 'E':
+          VMmpQ.put(None)       # send empty "end" event
+          print('\n' + sys.argv[0] + ': End command recieved - closing down')
+          ACTIVE = False
+          break
+        elif cmd == 'S':
+          DAQ_ACTIVE = False     
+        elif cmd == 'R':
+          DAQ_ACTIVE = True
+        elif cmd == 's':  
+          VMmpQ.put(None)       # send empty "end" event
+          DAQ_ACTIVE = False     
+          ACTIVE = False
+          print('\n storing data to file, ending')
+          pass # to be implemented ...
+          break
+ 
   except KeyboardInterrupt:
-    VMmpQ.put( (cnt, time.time()- T0 , buf) ) 
+    DAQ_ACTIVE = False     
+    ACTIVE = False
     print('\n' + sys.argv[0]+': keyboard interrupt - closing down ...')
+
   finally:
     PSconf.closeDevice() # close down hardware device
     time.sleep(1.)

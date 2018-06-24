@@ -11,20 +11,36 @@
 from __future__ import print_function, division, unicode_literals
 from __future__ import absolute_import
 
-import sys, time, yaml, numpy as np, multiprocessing as mp
+import sys, time, yaml, numpy as np, threading, multiprocessing as mp
 
 # import relevant pieces from picodaqa
 import picodaqa.picoConfig
 from picodaqa.mpDataLogger import mpDataLogger
 
-# helper function
+# helper functions
+
+def kbdInput(cmdQ):
+  ''' 
+    read keyboard input, run as backround-thread to aviod blocking
+  '''
+# 1st, remove pyhton 2 vs. python 3 incompatibility for keyboard input
+  if sys.version_info[:2] <=(2,7):
+    get_input = raw_input
+  else: 
+    get_input = input
+ 
+  while ACTIVE:
+    kbdtxt = get_input(20*' ' + 'type -> S(top), R(esume), E(nd) or s(ave) + <ret> ')
+    cmdQ.put(kbdtxt)
+    kbdtxt = ''
+
 def stop_processes(proclst):
   '''
     Close all running processes at end of run
   '''
   for p in proclst: # stop all sub-processes
     if p.is_alive():
-      print('    terminating '+p.name)
+      print('    terminating ' + p.name)
       p.terminate()
       time.sleep(1.)
 
@@ -63,6 +79,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   NSamples = PSconf.NSamples   # number of samples
   buf = np.zeros( (NChannels, NSamples) ) # data buffer for PicoScope driver
 
+  thrds=[]
   procs=[]
   deltaT = interval *1000   # minimal time between figure updates in ms
   DLmpQ =  mp.Queue(1) # Queue for data transfer to sub-process
@@ -70,7 +87,12 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
                args=(DLmpQ, PSconf.OscConfDict, deltaT, '(Volt)') ) )
 #                   Queue        config       interval    name
 
-# start subprocess(es)
+  cmdQ =  mp.Queue(1) # Queue for keyboard input
+  thrds.append(threading.Thread(name='kbdInput', target = kbdInput, 
+               args = (cmdQ,)  ) )
+#                           Queue       
+
+  # start subprocess(es)
   for prc in procs:
     prc.deamon = True
     prc.start()
@@ -78,21 +100,52 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
     sig = np.zeros(NChannels)
 
+  ACTIVE = True # thread(s) active 
+  # start threads
+  for thrd in thrds:
+    print(' -> starting thread ', thrd.name)
+    thrd.deamon = True
+    thrd.start()
+
+  DAQ_ACTIVE = True  # Data Acquistion active    
   # -- LOOP 
+  cnt = 0 
   try:
-    print('          type <cntrl>C to end -->')
     while True:
-      PSconf.acquireData(buf) # read data from PicoScope
-      for i, b in enumerate(buf): # process data 
-        # sig[i] = np.sqrt (np.inner(b, b) / NSamples)    # eff. Voltage
-        sig[i] = b.sum() / NSamples          # average
-      DLmpQ.put(sig) 
+      if DAQ_ACTIVE:
+        cnt += 1
+        PSconf.acquireData(buf) # read data from PicoScope
+        for i, b in enumerate(buf): # process data 
+         # sig[i] = np.sqrt (np.inner(b, b) / NSamples)    # eff. Voltage
+          sig[i] = b.sum() / NSamples          # average
+        DLmpQ.put(sig) 
+# check for keboard input
+      if not cmdQ.empty():
+        cmd = cmdQ.get()
+        if cmd == 'E':
+          DLmpQ.put(None)       # send empty "end" event
+          print('\n' + sys.argv[0] + ': End command recieved - closing down')
+          ACTIVE = False
+          break
+        elif cmd == 'S':
+          DAQ_ACTIVE = False     
+        elif cmd == 'R':
+          DAQ_ACTIVE = True
+        elif cmd == 's':  
+          DLmpQ.put(None)       # send empty "end" event
+          DAQ_ACTIVE = False     
+          ACTIVE = False
+          print('\n storing data to file, ending')
+          pass # to be implemented ...
+          break
 
   except KeyboardInterrupt:
      print(sys.argv[0]+': keyboard interrupt - closing down ...')
+     DAQ_ACTIVE = False     
+     ACTIVE = False
   finally:
     PSconf.closeDevice() # close down hardware device
-    DLmpQ.put(None) 
     time.sleep(1.)
     stop_processes(procs)  # stop all sub-processes in list
-    print('*==* ' + sys.argv[0] + ': normal end')
+    print('*==* ' + sys.argv[0] + ': normal end \n')
+
