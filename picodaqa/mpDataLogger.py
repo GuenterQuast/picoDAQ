@@ -12,19 +12,26 @@ matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 if sys.version_info[0] < 3:
   import Tkinter as Tk
+  import tkMessageBox as mbox
 else:
   import tkinter as Tk
+  from tkinter import messagebox as mbox
+
+
 import matplotlib.pyplot as plt, matplotlib.animation as anim
 
 # import Voltmeter class
 from .DataLogger import *
 
 
-def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)'):
+def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
   '''effective Voltage of data passed via multiprocessing.Queue
     Args:
-      conf: picoConfig object
-      Q:    multiprocessing.Queue()   
+      Q:         multiprocessing.Queue()   
+      conf:      picoConfig object
+      WaitTime:  time between updates in ms
+      name:      axis label
+      cmdQ:      multiprocessing.Queue() for commands   
   '''
 
   # Generator to provide data to animation
@@ -35,14 +42,16 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)'):
     try:
       while True:
         T0 = time.time()
-        evData = Q.get()
-        if evData == None:
-          #print('*==* yieldEvt_fromQ: received end event')          
-          sys.exit()
+        if not Q.empty():
+          evData = Q.get()
+          if evData == None:
+        #print('*==* yieldEvt_fromQ: received end event')          
+            sys.exit()
         #print('*==* yieldEvt_fromQ: received event %i' % evNr)
-        cnt+=1
-        evt = (cnt, evData)
-        yield evt
+          cnt+=1
+          yield (cnt, evData)
+        else:
+          yield None
 # guarantee correct timing 
         dtcor = interval - time.time() + T0
         if dtcor > 0. :  time.sleep(dtcor) 
@@ -50,6 +59,18 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)'):
     except:
       # print('*==* yieldEvt_fromQ: termination signal received')
       return
+
+
+  def cmdResume():
+    cmdQ.put('R')
+
+  def cmdStop():
+    cmdQ.put('S')
+
+  def cmdEnd():
+    cmdQ.put('E')
+
+
 # ------- executable part -------- 
 #  print(' -> mpDataLogger starting')
 
@@ -59,12 +80,50 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)'):
 # generate a simple window for graphics display as a tk.DrawingArea
   root = Tk.Tk()
   root.wm_title("Data Logger")
+
+# handle destruction of top-level window
+  def _delete_window():
+    if mbox.askokcancel("Quit", "Really destroy  main window ?"):
+       print("Deleting main window")
+       root.destroy()
+  root.protocol("WM_DELETE_WINDOW", _delete_window)
+
+# Comand buttons
+  frame = Tk.Frame(master=root)
+  frame.grid(row=0, column=8)
+  frame.pack(padx=5, side=Tk.BOTTOM)
+
+  buttonE = Tk.Button(frame, text='End', fg='red', command=cmdEnd)
+  buttonE.grid(row=0, column=8)
+
+  blank = Tk.Label(frame, width=7, text="")
+  blank.grid(row=0, column=7)
+
+  clock = Tk.Label(frame)
+  clock.grid(row=0, column=5)
+
+  blank2 = Tk.Label(frame, width=7, text="")
+  blank2.grid(row=0, column=4)
+
+  buttonS = Tk.Button(frame, text=' Stop ', fg='purple', command=cmdStop)
+  buttonS.grid(row=0, column=3)
+
+  buttonR = Tk.Button(frame, text='Resume', fg='blue', command=cmdResume)
+  buttonR.grid(row=0, column=2)
+
+  blank3 = Tk.Label(frame, width=7, text="")
+  blank3.grid(row=0, column=0)
+
+  blank4 = Tk.Label(frame, width=7, text="")
+  blank4.grid(row=0, column=0)
+
   canvas = FigureCanvasTkAgg(figDL, master=root)
   canvas.draw()
   canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
   canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-  button = Tk.Button(master=root, text='Quit', command=sys.exit)
-  button.pack(side=Tk.BOTTOM)
+
+#  button = Tk.Button(master=root, text='Quit', command=sys.exit)
+#  button.pack(side=Tk.BOTTOM)
 
 # set up matplotlib animation
   VMAnim = anim.FuncAnimation(figDL, DL, yieldEvt_fromQ,

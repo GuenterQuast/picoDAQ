@@ -82,12 +82,12 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   thrds=[]
   procs=[]
   deltaT = interval *1000   # minimal time between figure updates in ms
-  DLmpQ =  mp.Queue(1) # Queue for data transfer to sub-process
+  cmdQ = mp.Queue(1) # Queue for keyboard input
+  DLmpQ = mp.Queue(1) # Queue for data transfer to sub-process
   procs.append(mp.Process(name='DataLogger', target = mpDataLogger, 
-               args=(DLmpQ, PSconf.OscConfDict, deltaT, '(Volt)') ) )
+             args=(DLmpQ, PSconf.OscConfDict, deltaT, '(Volt)', cmdQ) ) )
 #                   Queue        config       interval    name
 
-  cmdQ =  mp.Queue(1) # Queue for keyboard input
   thrds.append(threading.Thread(name='kbdInput', target = kbdInput, 
                args = (cmdQ,)  ) )
 #                           Queue       

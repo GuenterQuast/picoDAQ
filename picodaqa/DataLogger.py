@@ -66,6 +66,9 @@ class DataLogger(object):
 # -- end DataLogger.init()
 
   def __call__( self, data ):
+
+    if data == None: return self.graphs
+
     n, dat = data
     k = n % self.Npoints
     for i, C in enumerate(self.Channels):
