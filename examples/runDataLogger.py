@@ -30,7 +30,7 @@ def kbdInput(cmdQ):
     get_input = input
  
   while ACTIVE:
-    kbdtxt = get_input(20*' ' + 'type -> S(top), R(esume), E(nd) or s(ave) + <ret> ')
+    kbdtxt = get_input(20*' ' + 'type -> P(ause), R(esume), E(nd) or s(ave) + <ret> ')
     cmdQ.put(kbdtxt)
     kbdtxt = ''
 
@@ -122,17 +122,16 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 # check for keboard input
       if not cmdQ.empty():
         cmd = cmdQ.get()
-        if cmd == 'E':
+        if cmd == 'E':          # E(nd)  
           DLmpQ.put(None)       # send empty "end" event
           print('\n' + sys.argv[0] + ': End command recieved - closing down')
           ACTIVE = False
           break
-        elif cmd == 'S':
+        elif cmd == 'P':       # P(ause)
           DAQ_ACTIVE = False     
-        elif cmd == 'R':
-          DAQ_ACTIVE = True
-        elif cmd == 's':  
-          DLmpQ.put(None)       # send empty "end" event
+        elif cmd == 'R':       # R(esume)
+          DAQ_ACTIVE = True    
+        elif cmd == 's':       # s(ave)
           DAQ_ACTIVE = False     
           ACTIVE = False
           print('\n storing data to file, ending')

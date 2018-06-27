@@ -13,10 +13,11 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 if sys.version_info[0] < 3:
   import Tkinter as Tk
   import tkMessageBox as mbox
+  from tkFileDialog import asksaveasfilename
 else:
   import tkinter as Tk
   from tkinter import messagebox as mbox
-
+  from tkinter.filedialog import asksaveasfilename
 
 import matplotlib.pyplot as plt, matplotlib.animation as anim
 
@@ -64,12 +65,17 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
   def cmdResume():
     cmdQ.put('R')
 
-  def cmdStop():
-    cmdQ.put('S')
+  def cmdPause():
+    cmdQ.put('P')
 
   def cmdEnd():
     cmdQ.put('E')
 
+  def cmdSave():
+    filename = asksaveasfilename(initialdir='.', initialfile='DataLogger.png', 
+               title='select file name')
+    figDL.savefig(filename)
+    
 
 # ------- executable part -------- 
 #  print(' -> mpDataLogger starting')
@@ -102,10 +108,10 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
   clock = Tk.Label(frame)
   clock.grid(row=0, column=5)
 
-  blank2 = Tk.Label(frame, width=7, text="")
-  blank2.grid(row=0, column=4)
+  buttonSv = Tk.Button(frame, text=' save  ', fg='purple', command=cmdSave)
+  buttonSv.grid(row=0, column=4)
 
-  buttonS = Tk.Button(frame, text=' Stop ', fg='purple', command=cmdStop)
+  buttonS = Tk.Button(frame, text=' Pause ', fg='blue', command=cmdPause)
   buttonS.grid(row=0, column=3)
 
   buttonR = Tk.Button(frame, text='Resume', fg='blue', command=cmdResume)
@@ -122,8 +128,6 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
   canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
   canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
-#  button = Tk.Button(master=root, text='Quit', command=sys.exit)
-#  button.pack(side=Tk.BOTTOM)
 
 # set up matplotlib animation
   VMAnim = anim.FuncAnimation(figDL, DL, yieldEvt_fromQ,
