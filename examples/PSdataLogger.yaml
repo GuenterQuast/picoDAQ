@@ -3,7 +3,9 @@ PSmodel: 2000a
 
 # channel configuration 
 picoChannels: [A]
-ChanRanges: [1., 1.]
+ChanModes:    [DC, DC]
+ChanRanges: [2., 2.]
+ChanOffsets: [-1.9, -1.8]
 sampleTime: 2.0E-02
 Nsamples: 100
 

@@ -18,6 +18,7 @@ class DataLogger(object):
     self.Channels = ConfDict['Channels']
     self.NChannels = ConfDict['NChannels']
     self.CRanges = ConfDict['CRanges']
+    self.ChanOffsets = ConfDict['ChanOffsets']
     self.ChanColors = ConfDict['ChanColors']
 
    # data structures needed throughout the class
@@ -40,7 +41,8 @@ class DataLogger(object):
      # for effective voltage
      # axes[i].set_ylim(0., self.CRanges[i])
      # for absolute Voltage
-      axes[i].set_ylim(-self.CRanges[i], self.CRanges[i])
+      axes[i].set_ylim(-self.CRanges[i]-self.ChanOffsets[i], 
+                        self.CRanges[i]-self.ChanOffsets[i])
       axes[i].set_ylabel('Chan ' + C + ' ' + sigName, color=self.ChanColors[i])
     axes[0].set_xlabel('History (s)')
 
