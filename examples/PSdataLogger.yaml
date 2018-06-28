@@ -2,7 +2,7 @@
 PSmodel: 2000a
 
 # channel configuration 
-picoChannels: [A]
+picoChannels: [A, B]
 ChanModes:    [DC, DC]
 ChanRanges: [2., 2.]
 ChanOffsets: [-1.9, -1.8]

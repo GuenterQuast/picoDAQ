@@ -2,8 +2,9 @@
 PSmodel: 2000a
 
 # channel configuration 
-picoChannels: [A]
+picoChannels: [A, B]
 ChanRanges: [1., 0.05]
+ChanModes: [DC, DC]
 sampleTime: 2.0E-02
 Nsamples: 200
 

@@ -23,7 +23,6 @@ class DataLogger(object):
 
    # data structures needed throughout the class
     self.Ti = self.dT* np.linspace(-self.Npoints+1, 0, self.Npoints) 
-    self.V = np.empty(self.NChannels)
     self.Vhist = np.zeros( [self.NChannels, self.Npoints] )
 
 # set up a figure to plot actual voltage and samplings from Picoscope
@@ -58,9 +57,9 @@ class DataLogger(object):
     for i, C in enumerate(self.Channels):
       if i > 1:
         break  # max. of 2 channels
-   # initialize with graph outside range
+   # intitialize with graph outside range
       g,= self.axes[i].plot(self.Ti, 
-          self.CRanges[i]*1.1*np.ones(self.Npoints), 
+          (self.CRanges[i]-self.ChanOffsets[i])*1.1*np.ones(self.Npoints), 
           color=self.ChanColors[i])
       self.graphs += (g,)
 
@@ -72,6 +71,7 @@ class DataLogger(object):
     if data == None: return self.graphs
 
     n, dat = data
+
     k = n % self.Npoints
     for i, C in enumerate(self.Channels):
       if i > 1: 
@@ -84,4 +84,3 @@ class DataLogger(object):
     return self.graphs
 #- -end def DataLogger.__call__
 #-end class DataLogger
-

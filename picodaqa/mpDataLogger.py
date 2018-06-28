@@ -40,26 +40,24 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
   # receives data via Queue from package mutiprocessing 
     interval = WaitTime/1000.  # in s 
     cnt = 0
-    try:
-      while True:
-        T0 = time.time()
-        if not Q.empty():
-          evData = Q.get()
-          if evData == None:
-        #print('*==* yieldEvt_fromQ: received end event')          
-            sys.exit()
-        #print('*==* yieldEvt_fromQ: received event %i' % evNr)
-          cnt+=1
-          yield (cnt, evData)
-        else:
-          yield None
+    while True:
+      T0 = time.time()
+      if not Q.empty():
+        evData = Q.get()
+        # print ('Q filled ')
+        if type(evData) != np.ndarray:
+          break
+        cnt+=1
+        #print('*==* yieldEvt_fromQ: received event %i' % cnt)
+        yield (cnt, evData)
+      else:
+        yield None
 # guarantee correct timing 
-        dtcor = interval - time.time() + T0
-        if dtcor > 0. :  time.sleep(dtcor) 
+      dtcor = interval - time.time() + T0
+      if dtcor > 0. :  time.sleep(dtcor) 
 
-    except:
-      # print('*==* yieldEvt_fromQ: termination signal received')
-      return
+    print('*==* yieldEvt_fromQ: received end event')          
+    sys.exit()
 
 
   def cmdResume():
