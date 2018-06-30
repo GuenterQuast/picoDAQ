@@ -18,7 +18,7 @@ class DataLogger(object):
     self.Channels = ConfDict['Channels']
     self.NChannels = ConfDict['NChannels']
     self.CRanges = ConfDict['CRanges']
-    self.ChanOffsets = ConfDict['ChanOffsets']
+    self.COffsets = ConfDict['ChanOffsets']
     self.ChanColors = ConfDict['ChanColors']
 
    # data structures needed throughout the class
@@ -38,10 +38,10 @@ class DataLogger(object):
       if i > 1:
         break # works for a maximum of 2 Channels only
      # for effective voltage
-     # axes[i].set_ylim(0., self.CRanges[i])
+     # axes[i].set_ylim(0., self.CRanges[i]-self.COffsets[i])
      # for absolute Voltage
-      axes[i].set_ylim(-self.CRanges[i]-self.ChanOffsets[i], 
-                        self.CRanges[i]-self.ChanOffsets[i])
+      axes[i].set_ylim(-self.CRanges[i]-self.COffsets[i], 
+                        self.CRanges[i]-self.COffsets[i])
       axes[i].set_ylabel('Chan ' + C + ' ' + sigName, color=self.ChanColors[i])
     axes[0].set_xlabel('History (s)')
 
@@ -59,7 +59,7 @@ class DataLogger(object):
         break  # max. of 2 channels
    # intitialize with graph outside range
       g,= self.axes[i].plot(self.Ti, 
-          (self.CRanges[i]-self.ChanOffsets[i])*1.1*np.ones(self.Npoints), 
+          (self.CRanges[i]-self.COffsets[i])*1.1*np.ones(self.Npoints), 
           color=self.ChanColors[i])
       self.graphs += (g,)
 
@@ -68,19 +68,19 @@ class DataLogger(object):
 
   def __call__( self, data ):
 
-    if data == None: return self.graphs
+    if data !=None: 
+      n, dat = data
 
-    n, dat = data
-
-    k = n % self.Npoints
-    for i, C in enumerate(self.Channels):
-      if i > 1: 
-        break  # works for 2 channels only
-      self.Vhist[i, k] = dat[i]
+      k = n % self.Npoints
+      for i, C in enumerate(self.Channels):
+        if i > 1: 
+          break  # works for 2 channels only
+        self.Vhist[i, k] = dat[i]
     # update history graph
-      if n>1: # !!! fix to avoid permanent display of first object in blit mode
-        self.graphs[i].set_data(self.Ti,
-          np.concatenate((self.Vhist[i, k+1:], self.Vhist[i, :k+1]), axis=0) )
+        if n>1: # !!! fix to avoid permanent display of first object in blit mode
+          self.graphs[i].set_data(self.Ti,
+            np.concatenate((self.Vhist[i, k+1:], self.Vhist[i, :k+1]), axis=0) )
+
     return self.graphs
 #- -end def DataLogger.__call__
 #-end class DataLogger

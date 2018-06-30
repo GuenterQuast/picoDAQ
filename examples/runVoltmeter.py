@@ -30,7 +30,7 @@ def kbdInput(cmdQ):
     get_input = input
  
   while ACTIVE:
-    kbdtxt = get_input(20*' ' + 'type -> S(top), R(esume), E(nd) or s(ave) + <ret> ')
+    kbdtxt = get_input(20*' ' + 'type -> P(ause), R(esume), E(nd) or s(ave) + <ret> ')
     cmdQ.put(kbdtxt)
     kbdtxt = ''
 
@@ -82,12 +82,12 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   thrds=[]
   procs=[]
   deltaT = interval * 1000.   # update interval in ms
+  cmdQ =  mp.Queue(1) # Queue for command input
   VMmpQ =  mp.Queue(1) # Queue for data transfer to sub-process
   procs.append(mp.Process(name='VoltMeter', target = mpVMeter, 
-            args=(VMmpQ, PSconf.OscConfDict, deltaT, 'effective Voltage') ) )
+    args=(VMmpQ, PSconf.OscConfDict, deltaT, 'effective Voltage', cmdQ) ) )
 #                Queue            config                      interval    name
 
-  cmdQ =  mp.Queue(1) # Queue for keyboard input
   thrds.append(threading.Thread(name='kbdInput', target = kbdInput, 
                args = (cmdQ,)  ) )
 #                           Queue       
@@ -128,7 +128,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
           print('\n' + sys.argv[0] + ': End command recieved - closing down')
           ACTIVE = False
           break
-        elif cmd == 'S':
+        elif cmd == 'P':
           DAQ_ACTIVE = False     
         elif cmd == 'R':
           DAQ_ACTIVE = True

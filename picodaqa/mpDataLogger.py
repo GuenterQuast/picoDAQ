@@ -51,7 +51,7 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
         #print('*==* yieldEvt_fromQ: received event %i' % cnt)
         yield (cnt, evData)
       else:
-        yield None
+        yield None # send empty event if no new data
 # guarantee correct timing 
       dtcor = interval - time.time() + T0
       if dtcor > 0. :  time.sleep(dtcor) 
@@ -70,10 +70,13 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
     cmdQ.put('E')
 
   def cmdSave():
-    filename = asksaveasfilename(initialdir='.', initialfile='DataLogger.png', 
+    try:
+      filename = asksaveasfilename(initialdir='.', 
+               initialfile='DataLogger.png', 
                title='select file name')
-    figDL.savefig(filename)
-    
+      figDL.savefig(filename)
+    except: 
+      pass   
 
 # ------- executable part -------- 
 #  print(' -> mpDataLogger starting')
