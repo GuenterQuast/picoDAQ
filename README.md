@@ -112,7 +112,8 @@ filled with water and equipped with a PM to count muons from cosmic rays.
 The script `runDAQ.py` gives an example of how to use all of the above. For a
 full demo, connect the output of a PicoScope's signal generator to channel *B*,
 and eventually an open cable to Channel *A* to see random noise. 
-Use the configuration file `DAQconfig.json`, which specifies the configuration files `Mconfig.json` for the Buffer Manager and `PSConfig.json` for the
+Use the configuration file `DAQconfig.yaml`, which specifies the configuration files
+ `BMconfig.yaml` for the Buffer Manager and `PSConfig.yaml` for the
 PicoScope. As a hook for own extensions, user code may be included. An example for this is shown in the configuration file `DAQ_Cosmo.json`, which points to a code snippet *anaDAQ.py* to starts some example consumers (code in
 `exampleConsumers.py`).
 
