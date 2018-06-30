@@ -3,11 +3,11 @@ PSmodel: 2000a
 
 # channel configuration 
 picoChannels: [A, B]
-ChanRanges: [1., 0.05]
-ChanOffsets: [-0.95, -0.045]
+ChanRanges: [2., 2.]
+ChanOffsets: [-1.95, -1.95]
 ChanModes: [DC, DC]
 sampleTime: 2.0E-02
-Nsamples: 200
+Nsamples: 100
 
 # trigger
 trgActive: false  # true to activate
