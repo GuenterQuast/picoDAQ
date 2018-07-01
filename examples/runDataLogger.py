@@ -61,6 +61,10 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   else: 
     interval = 0.2
 
+  if interval < 0.05:
+    print(" !!! read-out intervals < 0.05 s not reliable, setting to 0.05 s")
+    interval = 0.05
+
   # read scope configuration file
   print('    Device configuration from file ' + PSconfFile)
   try:
