@@ -56,7 +56,7 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
       dtcor = interval - time.time() + T0
       if dtcor > 0. :  time.sleep(dtcor) 
 
-    print('*==* yieldEvt_fromQ: received end event')          
+    # print('*==* yieldEvt_fromQ: received END event')          
     sys.exit()
 
 
@@ -131,8 +131,9 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
 
 
 # set up matplotlib animation
+  tw = max(WaitTime - 20., 0.5) # smaller than WaitTime to allow for processing
   VMAnim = anim.FuncAnimation(figDL, DL, yieldEvt_fromQ,
-                         interval = 1. , init_func=DL.init,
+                         interval = tw , init_func=DL.init,
                          blit=True, fargs=None, repeat=True, save_count=None)
                        # save_count=None is a (temporary) work-around 
                        #     to fix memory leak in animate

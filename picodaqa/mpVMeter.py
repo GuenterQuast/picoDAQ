@@ -52,7 +52,7 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage', cmdQ=None):
       dtcor = interval - time.time() + T0
       if dtcor > 0. :  time.sleep(dtcor) 
 
-    #print('*==* yieldEvt_fromQ: termination signal received')
+    # print('*==* yieldEvt_fromQ: received END event')          
     sys.exit()
 
 
@@ -76,7 +76,7 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage', cmdQ=None):
 # ------- executable part -------- 
 #  print(' -> mpVMeter starting')
 
-  VM = VoltMeter(conf)
+  VM = VoltMeter(WaitTime, conf)
   figVM = VM.fig
 
 # generate a simple window for graphics display as a tk.DrawingArea
@@ -126,8 +126,9 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage', cmdQ=None):
   canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
 # set up matplotlib animation
+  tw = max(WaitTime - 20., 0.5) # smaller than WaitTime to allow for processing
   VMAnim = anim.FuncAnimation(figVM, VM, yieldEvt_fromQ,
-                         interval = 1., init_func = VM.init,
+                         interval = tw, init_func = VM.init,
                          blit=True, fargs=None, repeat=True, save_count=None)
                        # save_count=None is a (temporary) work-around 
                        #     to fix memory leak in animate

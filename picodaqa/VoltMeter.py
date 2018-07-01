@@ -8,15 +8,16 @@ import matplotlib.pyplot as plt
 class VoltMeter(object):
   ''' Bar graph display of average over samples '''
 
-  def __init__(self, ConfDict):
+  def __init__(self, Wtime, ConfDict):
     '''Args:   Wtime: waiting time between updates
-              conf: Configuration of channels
+               conf: Configuration of channels
     '''
    # collect relevant configuration parameters
     self.Npoints = 120  # number of points for history
     self.bwidth = 0.5   # width of bars
 
-    # get relevant oscilloscpe settings   
+    # get relevant oscilloscpe settings 
+    self.dT = Wtime/1000.  
     self.Channels = ConfDict['Channels']
     self.NChannels = ConfDict['NChannels']
     self.CRanges = ConfDict['CRanges']
@@ -24,7 +25,7 @@ class VoltMeter(object):
     self.ChanColors = ConfDict['ChanColors']
 
    # data structures needed throughout the class
-    self.ix = np.linspace(-self.Npoints+1, 0, self.Npoints) # history plot
+    self.Ti = self.dT* np.linspace(-self.Npoints+1, 0, self.Npoints) 
     self.ind = self.bwidth + np.arange(self.NChannels) # bar position for voltages
   # 
     self.V = np.empty(self.NChannels)
@@ -51,7 +52,7 @@ class VoltMeter(object):
      #                   self.CRanges[i]-self.COffsets[i])
       axes[i].set_ylim(0., self.CRanges[i]-self.COffsets[i])
       axes[i].set_ylabel('Chan ' + C + ' (Veff)', color=self.ChanColors[i])
-    axes[0].set_xlabel('History')
+    axes[0].set_xlabel('History (s)')
   # barchart
     axes.append(plt.subplot2grid((6,1),(1,0), rowspan=3) )
     axbar1 = axes[-1]
@@ -81,7 +82,7 @@ class VoltMeter(object):
     axtxt.set_frame_on(False)
     axtxt.get_xaxis().set_visible(False)
     axtxt.get_yaxis().set_visible(False)
-    axtxt.set_title('Picoscope as Voltmeter', size='xx-large')
+    axtxt.set_title('Voltmeter', size='xx-large')
 
     self.fig = fig
     self.axes = axes
@@ -106,7 +107,7 @@ class VoltMeter(object):
     for i, C in enumerate(self.Channels):
       if i > 1:
         break  # max. of 2 channels
-      g,= self.axes[i].plot(self.ix, np.zeros(self.Npoints), 
+      g,= self.axes[i].plot(self.Ti, np.zeros(self.Npoints), 
           color=self.ChanColors[i])
       self.graphs += (g,)
     self.animtxt = self.axes[-1].text(0.01, 0.05 , ' ',
@@ -141,10 +142,10 @@ class VoltMeter(object):
         self.stdVhist[i, k] = self.stdV[i]
     # update history graph
         if n>1: # !!! fix to avoid permanent display of first object in blit mode
-          self.graphs[i].set_data(self.ix,
+          self.graphs[i].set_data(self.Ti,
             np.concatenate((self.Vhist[i, k+1:], self.Vhist[i, :k+1]), axis=0) )
         else:
-          self.graphs[i].set_data(self.ix, np.zeros(self.Npoints))
+          self.graphs[i].set_data(self.Ti, np.zeros(self.Npoints))
         txt.append('  %s:   %.3gV +/-%.2gV' % (C, self.Vhist[i,k], 
                                                self.stdVhist[i,k]) )
     # update bar chart
