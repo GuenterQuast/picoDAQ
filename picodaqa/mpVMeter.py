@@ -32,15 +32,12 @@ def mpVMeter(Q, conf, WaitTime=500.,
       Q:    multiprocessing.Queue()   
   '''
 
-  TimeLag = False   # indicate occurrence of a time lag 
-
   # Generator to provide data to animation
   def yieldEvt_fromQ():
 # random consumer of Buffer Manager, receives an event copy 
    # via a Queue from package mutiprocessing
     interval = WaitTime/1000.  # in ms 
     cnt = 0
-    global TimeLag
     while True:
       T0 = time.time()
       if not Q.empty():
@@ -56,15 +53,12 @@ def mpVMeter(Q, conf, WaitTime=500.,
       dtcor = interval - time.time() + T0
       if dtcor > 0. :  
         time.sleep(dtcor) 
-        TimeLag = False
         LblStatus.config(text=' OK ', fg = 'green')
       else:
-        TimeLag = True
         LblStatus.config(text='! lagging !', fg='red')
 
     # print('*==* yieldEvt_fromQ: received END event')          
     sys.exit()
-
 
   def cmdResume():
     cmdQ.put('R')

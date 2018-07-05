@@ -54,7 +54,11 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
         yield None # send empty event if no new data
 # guarantee correct timing 
       dtcor = interval - time.time() + T0
-      if dtcor > 0. :  time.sleep(dtcor) 
+      if dtcor > 0. :  
+        time.sleep(dtcor) 
+        LblStatus.config(text=' OK ', fg = 'green')
+      else:
+        LblStatus.config(text='! lagging !', fg='red')
 
     # print('*==* yieldEvt_fromQ: received END event')          
     sys.exit()
@@ -118,11 +122,8 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
   buttonR = Tk.Button(frame, text='Resume', fg='blue', command=cmdResume)
   buttonR.grid(row=0, column=2)
 
-  blank3 = Tk.Label(frame, width=7, text="")
-  blank3.grid(row=0, column=0)
-
-  blank4 = Tk.Label(frame, width=7, text="")
-  blank4.grid(row=0, column=0)
+  LblStatus = Tk.Label(frame, width=13, text="")
+  LblStatus.grid(row=0, column=0)
 
   canvas = FigureCanvasTkAgg(figDL, master=root)
   canvas.draw()
