@@ -24,12 +24,15 @@ import matplotlib.pyplot as plt, matplotlib.animation as anim
 # import Voltmeter class
 from .VoltMeter import *
 
-def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage', cmdQ=None):
+def mpVMeter(Q, conf, WaitTime=500., 
+                name='effective Voltage', XYmode= False, cmdQ=None):
   '''effective Voltage of data passed via multiprocessing.Queue
     Args:
       conf: picoConfig object
       Q:    multiprocessing.Queue()   
   '''
+
+  TimeLag = False   # indicate occurrence of a time lag 
 
   # Generator to provide data to animation
   def yieldEvt_fromQ():
@@ -37,6 +40,7 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage', cmdQ=None):
    # via a Queue from package mutiprocessing
     interval = WaitTime/1000.  # in ms 
     cnt = 0
+    global TimeLag
     while True:
       T0 = time.time()
       if not Q.empty():
@@ -50,7 +54,13 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage', cmdQ=None):
 
 # guarantee correct timing 
       dtcor = interval - time.time() + T0
-      if dtcor > 0. :  time.sleep(dtcor) 
+      if dtcor > 0. :  
+        time.sleep(dtcor) 
+        TimeLag = False
+        LblStatus.config(text=' OK ', fg = 'green')
+      else:
+        TimeLag = True
+        LblStatus.config(text='! lagging !', fg='red')
 
     # print('*==* yieldEvt_fromQ: received END event')          
     sys.exit()
@@ -76,7 +86,7 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage', cmdQ=None):
 # ------- executable part -------- 
 #  print(' -> mpVMeter starting')
 
-  VM = VoltMeter(WaitTime, conf)
+  VM = VoltMeter(WaitTime, conf, XYmode)
   figVM = VM.fig
 
 # generate a simple window for graphics display as a tk.DrawingArea
@@ -114,11 +124,8 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage', cmdQ=None):
   buttonR = Tk.Button(frame, text='Resume', fg='blue', command=cmdResume)
   buttonR.grid(row=0, column=2)
 
-  blank3 = Tk.Label(frame, width=7, text="")
-  blank3.grid(row=0, column=0)
-
-  blank4 = Tk.Label(frame, width=7, text="")
-  blank4.grid(row=0, column=0)
+  LblStatus = Tk.Label(frame, width=13, text="")
+  LblStatus.grid(row=0, column=0)
 
   canvas = FigureCanvasTkAgg(figVM, master=root)
   canvas.draw()

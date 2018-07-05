@@ -26,6 +26,7 @@ __version__ += _version_suffix
 
 # Import components to be callabel at package level
 __all__ = ["BufferMan","mpBufManCntrl","mpOsci","mpRMeter","mpVMeter",
+            "mpVmeter_xy", "Voltmeter_xy", 
             "mpBDisplay","mpHists", "DataLogger", "mpDataLogger"]
 
 

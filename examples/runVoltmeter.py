@@ -63,7 +63,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
 
   if interval < 0.05:
     print(" !!! read-out intervals < 0.05 s not reliable, setting to 0.05 s")
-    interval = 0.05
+#    interval = 0.05
 
   # read scope configuration file
   print('    Device configuration from file ' + PSconfFile)
@@ -88,8 +88,9 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   deltaT = interval * 1000.   # update interval in ms
   cmdQ =  mp.Queue(1) # Queue for command input
   VMmpQ =  mp.Queue(1) # Queue for data transfer to sub-process
+  XY = False  # display Channel A vs. B if True
   procs.append(mp.Process(name='VoltMeter', target = mpVMeter, 
-    args=(VMmpQ, PSconf.OscConfDict, deltaT, 'effective Voltage', cmdQ) ) )
+    args=(VMmpQ, PSconf.OscConfDict, deltaT, 'effective Voltage', XY, cmdQ) ) )
 #                Queue            config                      interval    name
 
   thrds.append(threading.Thread(name='kbdInput', target = kbdInput, 

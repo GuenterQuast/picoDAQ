@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 class VoltMeter(object):
   ''' Bar graph display of average over samples '''
 
-  def __init__(self, Wtime, ConfDict):
+  def __init__(self, Wtime, ConfDict, XYmode):
     '''Args:   Wtime: waiting time between updates
                conf: Configuration of channels
     '''
@@ -24,6 +24,10 @@ class VoltMeter(object):
     self.COffsets = ConfDict['ChanOffsets']
     self.ChanColors = ConfDict['ChanColors']
 
+    self.XYmode = XYmode
+    if self.NChannels < 2: 
+      self.XYmode = True
+
    # data structures needed throughout the class
     self.Ti = self.dT* np.linspace(-self.Npoints+1, 0, self.Npoints) 
     self.ind = self.bwidth + np.arange(self.NChannels) # bar position for voltages
@@ -32,14 +36,25 @@ class VoltMeter(object):
     self.stdV = np.empty(self.NChannels)
     self.Vhist = np.zeros( [self.NChannels, self.Npoints] )
     self.stdVhist = np.zeros( [self.NChannels, self.Npoints] )
+    self.d = np.zeros( [self.NChannels, self.Npoints] ) 
 
 # set up a figure to plot actual voltage and samplings from Picoscope
-    fig = plt.figure("Voltmeter", figsize=(4., 5.3) )
-    fig.subplots_adjust(left=0.2, bottom=0.08, right=0.8, top=0.95,
+    if self.XYmode:
+      fig = plt.figure("Voltmeter", figsize=(8.5, 5.3) )
+      fig.subplots_adjust(left=0.075, bottom=0.1, right=0.95, top=0.95,
+                          wspace=0.75, hspace=.15)
+    else:
+      fig = plt.figure("Voltmeter", figsize=(4., 5.3) )
+      fig.subplots_adjust(left=0.2, bottom=0.08, right=0.8, top=0.95,
                   wspace=None, hspace=.25)
+
     axes=[]
+
   # history plot
-    axes.append(plt.subplot2grid((6,1),(4,0), rowspan=2) )
+    if self.XYmode:
+      axes.append(plt.subplot2grid((6,3),(4,0), rowspan=2, colspan=1) )
+    else:
+      axes.append(plt.subplot2grid((6,1),(4,0), rowspan=2) )
     if self.NChannels > 1:
       axes.append(axes[0].twinx())
 #    axes[1].set_ylim(-self.CRanges[1], self.CRanges[1])
@@ -53,8 +68,12 @@ class VoltMeter(object):
       axes[i].set_ylim(0., self.CRanges[i]-self.COffsets[i])
       axes[i].set_ylabel('Chan ' + C + ' (Veff)', color=self.ChanColors[i])
     axes[0].set_xlabel('History (s)')
+
   # barchart
-    axes.append(plt.subplot2grid((6,1),(1,0), rowspan=3) )
+    if self.XYmode:
+      axes.append(plt.subplot2grid((6,3),(1,0), rowspan=3, colspan=1) )
+    else:
+      axes.append(plt.subplot2grid((6,1),(1,0), rowspan=3) )
     axbar1 = axes[-1]
     axbar1.set_frame_on(False)
     if self.NChannels > 1:
@@ -65,30 +84,48 @@ class VoltMeter(object):
     axbar1.axvline(0, color = self.ChanColors[0])
     if self.NChannels > 1:
       axbar1.axvline(self.NChannels, color = self.ChanColors[1])
-
 # for absolute Voltage
 #    axbar1.set_ylim(-self.CRanges[0], self.CRanges[0])
 # for effective Voltage
     axbar1.set_ylim(0., self.CRanges[0]-self.COffsets[0])
     axbar1.axhline(0., color='k', linestyle='-', lw=2, alpha=0.5)
-    axbar1.set_ylabel('Chan A (Veff)', color = self.ChanColors[0])
+    axbar1.set_ylabel('Chan A (Veff)', size='x-large', color = self.ChanColors[0])
     if self.NChannels > 1:
 #     axbar2.set_ylim(-self.CRanges[1], self.CRanges[1])
       axbar2.set_ylim(0., self.CRanges[1]-self.COffsets[1])
-      axbar2.set_ylabel('Chan B (Veff)', color = self.ChanColors[1])
+      axbar2.set_ylabel('Chan B (Veff)', size='x-large', color = self.ChanColors[1])
+
   # Voltage in Text format
-    axes.append(plt.subplot2grid((6,1),(0,0)) )
+    if self.XYmode:
+      axes.append(plt.subplot2grid((6,3), (0,0), rowspan=1, colspan=1) )
+    else:
+      axes.append(plt.subplot2grid((6,1), (0,0)) )
     axtxt=axes[-1]
     axtxt.set_frame_on(False)
     axtxt.get_xaxis().set_visible(False)
     axtxt.get_yaxis().set_visible(False)
     axtxt.set_title('Voltmeter', size='xx-large')
 
+  # XY display
+    if self.XYmode:
+      axes.append(plt.subplot2grid((6,3),(0,1), rowspan=6, colspan=2) )
+      axXY = axes[-1]
+      axXY.set_xlim(0., self.CRanges[0]-self.COffsets[0])
+      axXY.set_ylim(0., self.CRanges[0]-self.COffsets[0])
+      axXY.set_xlabel('Chan '+self.Channels[0]+' (Veff)', 
+         size='x-large', color=self.ChanColors[0])
+      axXY.set_ylabel('Chan '+self.Channels[1]+' (Veff)', 
+         size='x-large', color=self.ChanColors[1])
+    else:
+      axXY = None
+
     self.fig = fig
     self.axes = axes
     self.axbar1 = axbar1
     if self.NChannels > 1:
       self.axbar2 = axbar2
+    self.axtxt = axtxt
+    self.axXY = axXY
 # -- end def grVMeterIni
 
   def init(self):
@@ -110,9 +147,13 @@ class VoltMeter(object):
       g,= self.axes[i].plot(self.Ti, np.zeros(self.Npoints), 
           color=self.ChanColors[i])
       self.graphs += (g,)
-    self.animtxt = self.axes[-1].text(0.01, 0.05 , ' ',
-              transform=self.axes[-1].transAxes,
+    self.animtxt = self.axtxt.text(0.01, 0.05 , ' ',
+              transform=self.axtxt.transAxes,
               size='large', color='darkblue')
+  
+    if self.XYmode:
+      g, = self.axXY.plot([0.], [0.], 'g-')
+      self.graphs += (g,)
 
     self.t0=time.time() # remember start time
 
@@ -142,12 +183,12 @@ class VoltMeter(object):
         self.stdVhist[i, k] = self.stdV[i]
     # update history graph
         if n>1: # !!! fix to avoid permanent display of first object in blit mode
-          self.graphs[i].set_data(self.Ti,
-            np.concatenate((self.Vhist[i, k+1:], self.Vhist[i, :k+1]), axis=0) )
-        else:
-          self.graphs[i].set_data(self.Ti, np.zeros(self.Npoints))
+          self.d[i] = np.concatenate((self.Vhist[i, k+1:], self.Vhist[i, :k+1]), axis=0)
+          self.graphs[i].set_data(self.Ti, self.d[i])
+          if self.XYmode:
+            self.graphs[-1].set_data(self.d[0], self.d[1])
         txt.append('  %s:   %.3gV +/-%.2gV' % (C, self.Vhist[i,k], 
-                                               self.stdVhist[i,k]) )
+                                              self.stdVhist[i,k]) )
     # update bar chart
 #        for r, v in zip(bgraph, V):
 #            r.set_height(v)
