@@ -52,6 +52,7 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
         yield (cnt, evData)
       else:
         yield None # send empty event if no new data
+
 # guarantee correct timing 
       dtcor = interval - time.time() + T0
       if dtcor > 0. :  

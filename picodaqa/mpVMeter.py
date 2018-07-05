@@ -127,7 +127,7 @@ def mpVMeter(Q, conf, WaitTime=500.,
   canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
 # set up matplotlib animation
-  tw = max(WaitTime - 20., 0.5) # smaller than WaitTime to allow for processing
+  tw = max(WaitTime/2., 0.5) # smaller than WaitTime to allow for processing
   VMAnim = anim.FuncAnimation(figVM, VM, yieldEvt_fromQ,
                          interval = tw, init_func = VM.init,
                          blit=True, fargs=None, repeat=True, save_count=None)
