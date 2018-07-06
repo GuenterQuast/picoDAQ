@@ -36,8 +36,11 @@ def mpDataGraphs(Q, conf, WaitTime=500.,
   def yieldEvt_fromQ():
 # random consumer of Buffer Manager, receives an event copy 
    # via a Queue from package mutiprocessing
+
     interval = WaitTime/1000.  # in ms 
     cnt = 0
+    lagging = False
+
     while True:
       T0 = time.time()
       if not Q.empty():
@@ -53,8 +56,11 @@ def mpDataGraphs(Q, conf, WaitTime=500.,
       dtcor = interval - time.time() + T0
       if dtcor > 0. :  
         time.sleep(dtcor) 
-        LblStatus.config(text='', fg = 'green')
+        if lagging: 
+          LblStatus.config(text='')
+          lagging=False
       else:
+        lagging=True
         LblStatus.config(text='! lagging !', fg='red')
 
     # print('*==* yieldEvt_fromQ: received END event')          
@@ -62,14 +68,17 @@ def mpDataGraphs(Q, conf, WaitTime=500.,
 
   def cmdResume():
     cmdQ.put('R')
+    buttonP.config(text='Pause', fg='blue')
 
   def cmdPause():
     cmdQ.put('P')
+    buttonP.config(text='paused', fg='grey')
 
   def cmdEnd():
     cmdQ.put('E')
 
   def cmdSave():
+    cmdPause()
     try:
       filename = asksaveasfilename(initialdir='.', initialfile='DGraphs.png', 
                title='select file name')
@@ -109,13 +118,13 @@ def mpDataGraphs(Q, conf, WaitTime=500.,
   clock = Tk.Label(frame)
   clock.grid(row=0, column=5)
 
-  buttonSv = Tk.Button(frame, text=' save  ', fg='purple', command=cmdSave)
+  buttonSv = Tk.Button(frame, width=8, text='save', fg='purple', command=cmdSave)
   buttonSv.grid(row=0, column=4)
 
-  buttonS = Tk.Button(frame, text=' Pause ', fg='blue', command=cmdPause)
-  buttonS.grid(row=0, column=3)
+  buttonP = Tk.Button(frame, width=8, text='Pause', fg='blue', command=cmdPause)
+  buttonP.grid(row=0, column=3)
 
-  buttonR = Tk.Button(frame, text='Resume', fg='blue', command=cmdResume)
+  buttonR = Tk.Button(frame, width=8, text='Resume', fg='blue', command=cmdResume)
   buttonR.grid(row=0, column=2)
 
   LblStatus = Tk.Label(frame, width=13, text="")

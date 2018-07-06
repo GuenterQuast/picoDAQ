@@ -40,6 +40,7 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
   # receives data via Queue from package mutiprocessing 
     interval = WaitTime/1000.  # in s 
     cnt = 0
+    lagging=False
     while True:
       T0 = time.time()
       if not Q.empty():
@@ -57,8 +58,11 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
       dtcor = interval - time.time() + T0
       if dtcor > 0. :  
         time.sleep(dtcor) 
-        LblStatus.config(text=' OK ', fg = 'green')
+        if lagging: 
+          LblStatus.config(text=' OK ', fg = 'green')
+          lagging=False
       else:
+        lagging=True
         LblStatus.config(text='! lagging !', fg='red')
 
     # print('*==* yieldEvt_fromQ: received END event')          
@@ -67,9 +71,11 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
 
   def cmdResume():
     cmdQ.put('R')
+    buttonP.config(text='Pause', fg='blue')
 
   def cmdPause():
     cmdQ.put('P')
+    buttonP.config(text='paused', fg='grey')
 
   def cmdEnd():
     cmdQ.put('E')
@@ -114,13 +120,13 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
   clock = Tk.Label(frame)
   clock.grid(row=0, column=5)
 
-  buttonSv = Tk.Button(frame, text=' save  ', fg='purple', command=cmdSave)
+  buttonSv = Tk.Button(frame,text='save',width=8,fg='purple', command=cmdSave)
   buttonSv.grid(row=0, column=4)
 
-  buttonS = Tk.Button(frame, text=' Pause ', fg='blue', command=cmdPause)
-  buttonS.grid(row=0, column=3)
+  buttonP = Tk.Button(frame,text='Pause',width=8,fg='blue', command=cmdPause)
+  buttonP.grid(row=0, column=3)
 
-  buttonR = Tk.Button(frame, text='Resume', fg='blue', command=cmdResume)
+  buttonR = Tk.Button(frame,text='Resume',width=8,fg='blue', command=cmdResume)
   buttonR.grid(row=0, column=2)
 
   LblStatus = Tk.Label(frame, width=13, text="")
