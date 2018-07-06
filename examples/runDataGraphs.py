@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-'''PicoScope as Voltmeter
+'''Data visualisation
      this script reads data samples from PicoScope and 
-     displays data as effective voltage
+     displays data as effective voltage, history display and xy plot
 
      Usage: ./runVoltmeter.py [<Oscilloscpope_config>.yaml Interval]
 '''
@@ -15,7 +15,7 @@ import sys, time, yaml, numpy as np, threading, multiprocessing as mp
 
 # import relevant pieces from picodaqa
 import picodaqa.picoConfig
-from picodaqa.mpVMeter import mpVMeter
+from picodaqa.mpDataGraphs import mpDataGraphs
 
 # helper functions
 
@@ -87,10 +87,10 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   procs=[]
   deltaT = interval * 1000.   # update interval in ms
   cmdQ =  mp.Queue(1) # Queue for command input
-  VMmpQ =  mp.Queue(1) # Queue for data transfer to sub-process
-  XY = False  # display Channel A vs. B if True
-  procs.append(mp.Process(name='VoltMeter', target = mpVMeter, 
-    args=(VMmpQ, PSconf.OscConfDict, deltaT, 'effective Voltage', XY, cmdQ) ) )
+  DGmpQ =  mp.Queue(1) # Queue for data transfer to sub-process
+  XY = True  # display Channel A vs. B if True
+  procs.append(mp.Process(name='DataGraphs', target = mpDataGraphs, 
+    args=(DGmpQ, PSconf.OscConfDict, deltaT, 'effective Voltage', XY, cmdQ) ) )
 #                Queue            config                      interval    name
 
   thrds.append(threading.Thread(name='kbdInput', target = kbdInput, 
@@ -110,12 +110,9 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
     thrd.deamon = True
     thrd.start()
 
-  sig = np.zeros(NChannels)
-  PSconf.acquireData(buf) # read initial data from PicoScope
-  VMmpQ.put( (0, 0. , buf) ) 
-
-  DAQ_ACTIVE = True  # Data Acquistion active    
+  DAQ_ACTIVE = True  # Data Acquisition active    
 # -- LOOP 
+  sig = np.zeros(NChannels)
   try:
     cnt = 0
     T0 = time.time()
@@ -124,12 +121,16 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
         cnt +=1
         PSconf.acquireData(buf) # read data from PicoScope
         # construct an "event" like BufferMan.py does and send via Queue
-        VMmpQ.put( (cnt, time.time()- T0 , buf) )
+        for i, b in enumerate(buf): # process data 
+         # sig[i] = np.sqrt (np.inner(b, b) / NSamples)    # eff. Voltage
+          sig[i] = b.sum() / NSamples          # average
+        DGmpQ.put(sig)
+
    # check for keboard input
       if not cmdQ.empty():
         cmd = cmdQ.get()
         if cmd == 'E':
-          VMmpQ.put(None)       # send empty "end" event
+          DGmpQ.put(None)       # send empty "end" event
           print('\n' + sys.argv[0] + ': End command recieved - closing down')
           ACTIVE = False
           break
@@ -138,7 +139,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
         elif cmd == 'R':
           DAQ_ACTIVE = True
         elif cmd == 's':  
-          VMmpQ.put(None)       # send empty "end" event
+          DGmpQ.put(None)       # send empty "end" event
           DAQ_ACTIVE = False     
           ACTIVE = False
           print('\n storing data to file, ending')

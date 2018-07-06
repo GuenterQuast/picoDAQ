@@ -3,6 +3,6 @@
 DeviceFile: PSconfig.yaml         # describes oscilloscope set-up
 
 BMfile: BMconfig.yaml             # config for Buffer manager
-DAQmodules: [mpRMeter]            # modules to start
+DAQmodules: [mpRMeter, mpVMeter]  # modules to start
 
 ANAscript: testDAQ.py             # include-file for user code
