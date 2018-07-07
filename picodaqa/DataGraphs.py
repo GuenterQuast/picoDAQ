@@ -55,15 +55,13 @@ class DataGraphs(object):
       axes.append(plt.subplot2grid((6,1),(4,0), rowspan=2) )
     if self.NChannels > 1:
       axes.append(axes[0].twinx())
-#    axes[1].set_ylim(-self.CRanges[1], self.CRanges[1])
-# for effective Voltage
+
     for i, C in enumerate(self.Channels):
       if i > 1:
         break # works for a maximum of 2 Channels only
-     # for absolute Voltage
-     # axes[i].set_ylim(-self.CRanges[i]-self.COffsets[i], 
-     #                   self.CRanges[i]-self.COffsets[i])
-      axes[i].set_ylim(0., self.CRanges[i]-self.COffsets[i])
+      axes[i].set_ylim(-self.CRanges[i]-self.COffsets[i], 
+                        self.CRanges[i]-self.COffsets[i])
+      # axes[i].set_ylim(0., self.CRanges[i]-self.COffsets[i])
       axes[i].set_ylabel('Chan ' + C + ' (Veff)', color=self.ChanColors[i])
     axes[0].set_xlabel('History (s)', size='x-large')
 
@@ -82,15 +80,15 @@ class DataGraphs(object):
     axbar1.axvline(0, color = self.ChanColors[0])
     if self.NChannels > 1:
       axbar1.axvline(self.NChannels, color = self.ChanColors[1])
-# for absolute Voltage
-#    axbar1.set_ylim(-self.CRanges[0], self.CRanges[0])
-# for effective Voltage
-    axbar1.set_ylim(0., self.CRanges[0]-self.COffsets[0])
+    axbar1.set_ylim(-self.CRanges[0]-self.COffsets[0],
+                     self.CRanges[0]-self.COffsets[0])
+    # axbar1.set_ylim(0., self.CRanges[0]-self.COffsets[0])
     axbar1.axhline(0., color='k', linestyle='-', lw=2, alpha=0.5)
     axbar1.set_ylabel('Chan A (Veff)', size='x-large', color = self.ChanColors[0])
     if self.NChannels > 1:
-#     axbar2.set_ylim(-self.CRanges[1], self.CRanges[1])
-      axbar2.set_ylim(0., self.CRanges[1]-self.COffsets[1])
+      axbar2.set_ylim(-self.CRanges[1]-self.COffsets[1],
+                      self.CRanges[1]-self.COffsets[1])
+      # axbar2.set_ylim(0., self.CRanges[1]-self.COffsets[1])
       axbar2.set_ylabel('Chan B (Veff)', size='x-large', color = self.ChanColors[1])
 
   # Voltage in Text format
@@ -108,8 +106,10 @@ class DataGraphs(object):
     if self.XYmode:
       axes.append(plt.subplot2grid((6,5),(0,2), rowspan=6, colspan=3) )
       axXY = axes[-1]
-      axXY.set_xlim(0., self.CRanges[0]-self.COffsets[0])
-      axXY.set_ylim(0., self.CRanges[1]-self.COffsets[1])
+      axXY.set_xlim(-self.CRanges[0]-self.COffsets[0],
+                     self.CRanges[0]-self.COffsets[0])
+      axXY.set_ylim(-self.CRanges[1]-self.COffsets[1], 
+                     self.CRanges[1]-self.COffsets[1])
       axXY.set_xlabel('Chan '+self.Channels[0]+' (Veff)', 
          size='x-large', color=self.ChanColors[0])
       axXY.set_ylabel('Chan '+self.Channels[1]+' (Veff)', 
