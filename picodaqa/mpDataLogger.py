@@ -71,11 +71,13 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
 
   def cmdResume():
     cmdQ.put('R')
-    buttonP.config(text='Pause', fg='blue')
+    buttonP.config(text='Pause', fg='blue', state=Tk.NORMAL)
+    buttonR.config(state=Tk.DISABLED)
 
   def cmdPause():
     cmdQ.put('P')
-    buttonP.config(text='paused', fg='grey')
+    buttonP.config(text='paused', fg='grey', state=Tk.DISABLED)
+    buttonR.config(state=Tk.NORMAL)
 
   def cmdEnd():
     cmdQ.put('E')
@@ -128,6 +130,7 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
 
   buttonR = Tk.Button(frame,text='Resume',width=8,fg='blue', command=cmdResume)
   buttonR.grid(row=0, column=2)
+  buttonR.config(state=Tk.DISABLED)
 
   LblStatus = Tk.Label(frame, width=13, text="")
   LblStatus.grid(row=0, column=0)

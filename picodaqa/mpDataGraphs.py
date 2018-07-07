@@ -68,11 +68,14 @@ def mpDataGraphs(Q, conf, WaitTime=500.,
 
   def cmdResume():
     cmdQ.put('R')
-    buttonP.config(text='Pause', fg='blue')
+    buttonP.config(text='Pause', fg='blue', state=Tk.NORMAL)
+    buttonR.config(state=Tk.DISABLED)
 
   def cmdPause():
     cmdQ.put('P')
-    buttonP.config(text='paused', fg='grey')
+    buttonP.config(text='paused', fg='grey', state=Tk.DISABLED)
+    buttonR.config(state=Tk.NORMAL)
+    
 
   def cmdEnd():
     cmdQ.put('E')
@@ -118,14 +121,15 @@ def mpDataGraphs(Q, conf, WaitTime=500.,
   clock = Tk.Label(frame)
   clock.grid(row=0, column=5)
 
-  buttonSv = Tk.Button(frame, width=8, text='save', fg='purple', command=cmdSave)
+  buttonSv = Tk.Button(frame,width=8,text='save',fg='purple', command=cmdSave)
   buttonSv.grid(row=0, column=4)
 
-  buttonP = Tk.Button(frame, width=8, text='Pause', fg='blue', command=cmdPause)
+  buttonP = Tk.Button(frame,width=8,text='Pause',fg='blue', command=cmdPause)
   buttonP.grid(row=0, column=3)
 
-  buttonR = Tk.Button(frame, width=8, text='Resume', fg='blue', command=cmdResume)
+  buttonR = Tk.Button(frame,width=8,text='Resume',fg='blue', command=cmdResume)
   buttonR.grid(row=0, column=2)
+  buttonR.config(state=Tk.DISABLED)
 
   LblStatus = Tk.Label(frame, width=13, text="")
   LblStatus.grid(row=0, column=0)

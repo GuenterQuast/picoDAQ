@@ -89,12 +89,7 @@ filled with water and equipped with a PM to count muons from cosmic rays.
   module *mpVMeter* 
 
    - runs an instance of the *VoltMeter* class as a sub-process, receiving
-        data via a multiprocessing Queue.
-
-  module *mpDataLogger* 
-
-   - runs an instance of the *DataLogger* class as a sub-process, receiving
-        data via a multiprocessing Queue.
+        data via a multiprocessing Queue. 
 
   module *mpHists* 
  
@@ -109,29 +104,47 @@ filled with water and equipped with a PM to count muons from cosmic rays.
        value per Channel (e.g. peak Voltage, effective Voltage etc.). Values 
        are passed to the sub-process via a multiprocessing Queue.
 
+ module *mpDataLogger* 
+
+   - runs an instance of the *DataLogger* class as a sub-process, displaying  
+     values passed via a multiprocessing Queue as a history plot. This module  
+      is not implemented as a *BufferMan** client (see example `runDataLogger`).
+
+  module *mpDataGraphs* 
+
+   - runs an instance of the *DataGraphs* class as a sub-process, 
+    displaying values passed via a multiprocessing Queue as a bar graph, a
+    history plot or optionally - if tow channels are enabled - as a xy-display.
+    This module is not implemented as a *BufferMan** client (see example   
+    `runDataGraphs`).
+
+
 The script `runDAQ.py` gives an example of how to use all of the above. For a
 full demo, connect the output of a PicoScope's signal generator to channel *B*,
 and eventually an open cable to Channel *A* to see random noise. 
 Use the configuration file `DAQconfig.yaml`, which specifies the configuration files
- `BMconfig.yaml` for the Buffer Manager and `PSConfig.yaml` for the
-PicoScope. As a hook for own extensions, user code may be included. An example for this is shown in the configuration file `DAQ_Cosmo.json`, which points to a code snippet *anaDAQ.py* to starts some example consumers (code in
+`BMconfig.yaml` for the Buffer Manager and `PSConfig.yaml` for the
+PicoScope. As a hook for own extensions, user code may be included. An example
+for this is shown in the configuration file `DAQ_Cosmo.json`, which points to a
+code snippet *anaDAQ.py* to starts some example consumers (code in
 `exampleConsumers.py`).
+
 
 ## Examples
 
 The directory `examples/` contains configuration files and some 
 special applications. 
 
-The script `runDataLogger.py` implements a data logger for slow signals
-rates below 10 Hz. Signals are sampled with a PicoSocpe at a rate of
+The script `runDataLogger.py` implements a data logger for rates
+below 20 Hz. Signals are sampled with a PicoSocpe at a rate of
 10 kHz over 20 ms and then averaged. 50 Hz noise is thus eliminated,
 and a clean voltage signal is obtained. The history of the recorded
-voltages is displayed using the module `mpDataLogger`. This example
-directly reads from the hardware device and therefore does not rely
-on the `BufferMan` class.
-
-Similarly, `runVoltMeter` uses a PicoScope device to display the
-effective voltage as bar graph and history plot.
+voltages is displayed using the module `mpDataLogger`. 
+Similarly, `runDataGraphs` uses the same sampling mechanism to
+display the effective voltage as bar graph, a history plot, and, optionally,   
+channel B vs. Channel A as an xy-graph if two channels are enabled.
+These examples directly read from the hardware device and
+therefore do not rely on the `BufferMan` class.
 
 The script `runCosmo.py` is a modified version of `runDAQ.py` and
 depends on the code in `pulseFilter.py`, which implements a
