@@ -40,7 +40,7 @@ class DataGraphs(object):
     if self.XYmode:
       fig = plt.figure("DataGraphs", figsize=(9., 5.3) )
       fig.subplots_adjust(left=0.075, bottom=0.1, right=0.975, top=0.94,
-                          wspace=1.5, hspace=.25)
+                          wspace=2.5, hspace=.25)
     else:
       fig = plt.figure("DataGraphs", figsize=(4., 5.3) )
       fig.subplots_adjust(left=0.2, bottom=0.08, right=0.8, top=0.94,
@@ -109,7 +109,7 @@ class DataGraphs(object):
       axes.append(plt.subplot2grid((6,5),(0,2), rowspan=6, colspan=3) )
       axXY = axes[-1]
       axXY.set_xlim(0., self.CRanges[0]-self.COffsets[0])
-      axXY.set_ylim(0., self.CRanges[0]-self.COffsets[0])
+      axXY.set_ylim(0., self.CRanges[1]-self.COffsets[1])
       axXY.set_xlabel('Chan '+self.Channels[0]+' (Veff)', 
          size='x-large', color=self.ChanColors[0])
       axXY.set_ylabel('Chan '+self.Channels[1]+' (Veff)', 
@@ -131,8 +131,6 @@ class DataGraphs(object):
   # initialize objects to be animated
 
   # a bar graph for the actual voltages
-#    self.bgraph = self.axes[0].bar(ind, np.zeros(self.NChannels), self.bwidth,
-#                           align='center', color='grey', alpha=0.5)
     self.bgraph1, = self.axbar1.bar(self.ind[0], 0. , self.bwidth,
        align='center', color = self.ChanColors[0], alpha=0.5) 
     if self.NChannels > 1:
@@ -151,7 +149,7 @@ class DataGraphs(object):
               size='large', color='darkblue')
   
     if self.XYmode:
-      g, = self.axXY.plot([0.], [0.], 'g-')
+      g, = self.axXY.plot([0.], [0.], color='firebrick')
       self.graphs += (g,)
 
     self.t0=time.time() # remember start time
