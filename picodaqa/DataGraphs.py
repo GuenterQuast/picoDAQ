@@ -39,11 +39,11 @@ class DataGraphs(object):
 # set up a figure to plot actual voltage and samplings from Picoscope
     if self.XYmode:
       fig = plt.figure("DataGraphs", figsize=(9., 5.3) )
-      fig.subplots_adjust(left=0.075, bottom=0.1, right=0.975, top=0.95,
+      fig.subplots_adjust(left=0.075, bottom=0.1, right=0.975, top=0.94,
                           wspace=1.5, hspace=.25)
     else:
       fig = plt.figure("DataGraphs", figsize=(4., 5.3) )
-      fig.subplots_adjust(left=0.2, bottom=0.08, right=0.8, top=0.95,
+      fig.subplots_adjust(left=0.2, bottom=0.08, right=0.8, top=0.94,
                   wspace=None, hspace=.25)
 
     axes=[]
@@ -65,7 +65,7 @@ class DataGraphs(object):
      #                   self.CRanges[i]-self.COffsets[i])
       axes[i].set_ylim(0., self.CRanges[i]-self.COffsets[i])
       axes[i].set_ylabel('Chan ' + C + ' (Veff)', color=self.ChanColors[i])
-    axes[0].set_xlabel('History (s)')
+    axes[0].set_xlabel('History (s)', size='x-large')
 
   # barchart
     if self.XYmode:
@@ -114,6 +114,7 @@ class DataGraphs(object):
          size='x-large', color=self.ChanColors[0])
       axXY.set_ylabel('Chan '+self.Channels[1]+' (Veff)', 
          size='x-large', color=self.ChanColors[1])
+      axXY.set_title('XY-View', size='xx-large')
     else:
       axXY = None
 
