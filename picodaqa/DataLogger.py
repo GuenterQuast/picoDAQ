@@ -4,26 +4,32 @@ from __future__ import absolute_import
 import numpy as np, matplotlib.pyplot as plt
 
 class DataLogger(object):
-  ''' history of data'''
+  ''' history of input data'''
 
   def __init__(self, Wtime, ConfDict, sigName):
     '''Args:  Wtime: waiting time between updates
-              conf: Configuration of channels
+              conf: PicoScope Configuration dictionary
     '''
    # collect relevant configuration parameters
     self.Npoints = 120  # number of points for history
 
-    # get relevant oscilloscpe settings   
+   # get relevant settings from (PicoScope) ConfDict
     self.dT = Wtime/1000. # time interval in s 
-    self.Channels = ConfDict['Channels']
-    self.NChannels = ConfDict['NChannels']
-    self.CRanges = ConfDict['CRanges']
-    self.COffsets = ConfDict['ChanOffsets']
+    self.NChan = ConfDict['NChannels']
+
+    self.ChanLim = []
+    CRanges = ConfDict['CRanges']
+    COffsets = ConfDict['ChanOffsets']
+    for i in range(self.NChan):
+       self.ChanLim.append( (-CRanges[i]-COffsets[i], 
+                             CRanges[i]-COffsets[i]) )
+
+    self.ChanNams = ConfDict['Channels']
     self.ChanColors = ConfDict['ChanColors']
 
    # data structures needed throughout the class
     self.Ti = self.dT* np.linspace(-self.Npoints+1, 0, self.Npoints) 
-    self.Vhist = np.zeros( [self.NChannels, self.Npoints] )
+    self.Vhist = np.zeros( [self.NChan, self.Npoints] )
 
 # set up a figure to plot actual voltage and samplings from Picoscope
     fig = plt.figure("DataLogger", figsize=(6., 3.) )
@@ -32,17 +38,14 @@ class DataLogger(object):
     axes=[]
   # history plot
     axes.append(fig.add_subplot(1,1,1, facecolor='ivory'))
-    if self.NChannels > 1:
+    if self.NChan > 1:
       axes.append(axes[0].twinx())
-    for i, C in enumerate(self.Channels):
+    for i, C in enumerate(self.ChanNams):
       if i > 1:
         break # works for a maximum of 2 Channels only
-     # for effective voltage
-     # axes[i].set_ylim(0., self.CRanges[i]-self.COffsets[i])
-     # for absolute Voltage
-      axes[i].set_ylim(-self.CRanges[i]-self.COffsets[i], 
-                        self.CRanges[i]-self.COffsets[i])
+      axes[i].set_ylim(*self.ChanLim[i])
       axes[i].set_ylabel('Chan ' + C + ' ' + sigName, color=self.ChanColors[i])
+      axes[i].grid(True, color=self.ChanColors[i], linestyle = '--', alpha=0.3)
     axes[0].set_xlabel('History (s)')
 
     self.fig = fig
@@ -54,12 +57,12 @@ class DataLogger(object):
 
   # history graphs
     self.graphs=()
-    for i, C in enumerate(self.Channels):
+    for i, C in enumerate(self.ChanNams):
       if i > 1:
         break  # max. of 2 channels
    # intitialize with graph outside range
       g,= self.axes[i].plot(self.Ti, 
-          (self.CRanges[i]-self.COffsets[i])*1.1*np.ones(self.Npoints), 
+          self.ChanLim[i][1] * 1.1 * np.ones(self.Npoints), 
           color=self.ChanColors[i])
       self.graphs += (g,)
 
@@ -72,7 +75,7 @@ class DataLogger(object):
       n, dat = data
 
       k = n % self.Npoints
-      for i, C in enumerate(self.Channels):
+      for i, C in enumerate(self.ChanNams):
         if i > 1: 
           break  # works for 2 channels only
         self.Vhist[i, k] = dat[i]

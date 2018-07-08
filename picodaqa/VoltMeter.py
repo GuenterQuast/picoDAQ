@@ -8,7 +8,7 @@ import time, numpy as np
 import matplotlib.pyplot as plt
 
 class VoltMeter(object):
-  ''' Bar graph display of average over samples '''
+  ''' Bar graph and history displays of effective voltage of input samples '''
 
   def __init__(self, OscConfDict):
     '''Args:   Wtime: waiting time between updates
@@ -17,21 +17,29 @@ class VoltMeter(object):
    # collect relevant configuration parameters
     self.Npoints = 120  # number of points for history
     self.bwidth = 0.5   # width of bars
+    self.NChan = OscConfDict['NChannels']
 
-    # get relevant oscilloscpe settings   
-    self.Channels = OscConfDict['Channels']
-    self.NChannels = OscConfDict['NChannels']
-    self.CRanges = OscConfDict['CRanges']
+    self.ChanLim = []
+    CRanges = OscConfDict['CRanges']
+    COffsets = OscConfDict['ChanOffsets']
+    for i in range(self.NChan):
+      # Channel Limits for effective voltage
+       self.ChanLim.append( (0., CRanges[i]-COffsets[i]) )
+      # Channel Limits for average voltage
+     #  self.ChanLim.append( (-CRanges[i]-COffsets[i], 
+     #                        CRanges[i]-COffsets[i]) )
+
+    self.ChanNams = OscConfDict['Channels']
     self.ChanColors = OscConfDict['ChanColors']
 
    # data structures needed throughout the class
     self.ix = np.linspace(-self.Npoints+1, 0, self.Npoints) # history plot
-    self.ind = self.bwidth + np.arange(self.NChannels) # bar position for voltages
+    self.ind = self.bwidth + np.arange(self.NChan) # bar position for voltages
   # 
-    self.V = np.empty(self.NChannels)
-    self.stdV = np.empty(self.NChannels)
-    self.Vhist = np.zeros( [self.NChannels, self.Npoints] )
-    self.stdVhist = np.zeros( [self.NChannels, self.Npoints] )
+    self.V = np.empty(self.NChan)
+    self.stdV = np.empty(self.NChan)
+    self.Vhist = np.zeros( [self.NChan, self.Npoints] )
+    self.stdVhist = np.zeros( [self.NChan, self.Npoints] )
 
 # set up a figure to plot actual voltage and samplings from Picoscope
     fig = plt.figure("Voltmeter", figsize=(4., 5.3) )
@@ -40,40 +48,33 @@ class VoltMeter(object):
     axes=[]
   # history plot
     axes.append(plt.subplot2grid((6,1),(4,0), rowspan=2) )
-    if self.NChannels > 1:
+    if self.NChan > 1:
       axes.append(axes[0].twinx())
-# for absolute Voltage
-#    axes[0].set_ylim(-self.CRanges[0], self.CRanges[0])
-#    axes[1].set_ylim(-self.CRanges[1], self.CRanges[1])
 # for effective Voltage
-    for i, C in enumerate(self.Channels):
+    for i, C in enumerate(self.ChanNams):
       if i > 1:
         break # works for a maximum of 2 Channels only
-      axes[i].set_ylim(0., self.CRanges[i])
+      axes[i].set_ylim(*self.ChanLim[i])
       axes[i].set_ylabel('Chan ' + C + ' (Veff)', color=self.ChanColors[i])
+      axes[i].grid(True, color=self.ChanColors[i], linestyle = '--', alpha=0.3)
     axes[0].set_xlabel('History')
   # barchart
     axes.append(plt.subplot2grid((6,1),(1,0), rowspan=3) )
     axbar1 = axes[-1]
     axbar1.set_frame_on(False)
-    if self.NChannels > 1:
+    if self.NChan > 1:
       axbar2=axbar1.twinx()
       axbar2.set_frame_on(False)
     axbar1.get_xaxis().set_visible(False)
-    axbar1.set_xlim(0., self.NChannels)
+    axbar1.set_xlim(0., self.NChan)
     axbar1.axvline(0, color = self.ChanColors[0])
-    if self.NChannels > 1:
-      axbar1.axvline(self.NChannels, color = self.ChanColors[1])
-
-# for absolute Voltage
-#    axbar1.set_ylim(-self.CRanges[0], self.CRanges[0])
-# for effective Voltage
-    axbar1.set_ylim(0., self.CRanges[0])
+    if self.NChan > 1:
+      axbar1.axvline(self.NChan, color = self.ChanColors[1])
+    axbar1.set_ylim(*self.ChanLim[0])
     axbar1.axhline(0., color='k', linestyle='-', lw=2, alpha=0.5)
     axbar1.set_ylabel('Chan A (Veff)', color = self.ChanColors[0])
-    if self.NChannels > 1:
-#     axbar2.set_ylim(-self.CRanges[1], self.CRanges[1])
-      axbar2.set_ylim(0., self.CRanges[1])
+    if self.NChan > 1:
+      axbar2.set_ylim(*self.ChanLim[1])
       axbar2.set_ylabel('Chan B (Veff)', color = self.ChanColors[1])
   # Voltage in Text format
     axes.append(plt.subplot2grid((6,1),(0,0)) )
@@ -86,7 +87,7 @@ class VoltMeter(object):
     self.fig = fig
     self.axes = axes
     self.axbar1 = axbar1
-    if self.NChannels > 1:
+    if self.NChan > 1:
       self.axbar2 = axbar2
 # -- end def grVMeterIni
 
@@ -94,16 +95,16 @@ class VoltMeter(object):
   # initialize objects to be animated
 
   # a bar graph for the actual voltages
-#    self.bgraph = self.axes[0].bar(ind, np.zeros(self.NChannels), self.bwidth,
+#    self.bgraph = self.axes[0].bar(ind, np.zeros(self.NChan), self.bwidth,
 #                           align='center', color='grey', alpha=0.5)
     self.bgraph1, = self.axbar1.bar(self.ind[0], 0. , self.bwidth,
        align='center', color = self.ChanColors[0], alpha=0.5) 
-    if self.NChannels > 1:
+    if self.NChan > 1:
       self.bgraph2, = self.axbar2.bar(self.ind[1], 0. , self.bwidth,
           align='center', color = self.ChanColors[1], alpha=0.5) 
   # history graphs
     self.graphs=()
-    for i, C in enumerate(self.Channels):
+    for i, C in enumerate(self.ChanNams):
       if i > 1:
         break  # max. of 2 channels
       g,= self.axes[i].plot(self.ix, np.zeros(self.Npoints), 
@@ -115,7 +116,7 @@ class VoltMeter(object):
 
     self.t0=time.time() # remember start time
 
-    if self.NChannels > 1 :
+    if self.NChan > 1 :
       return (self.bgraph1,) + (self.bgraph2,) + self.graphs + (self.animtxt,)  
     else:
 # -- end VoltMeter.init()
@@ -129,7 +130,7 @@ class VoltMeter(object):
     k=n%self.Npoints
     txt_t='Time  %.1fs' %(evTime)            
     txt=[]
-    for i, C in enumerate(self.Channels):
+    for i, C in enumerate(self.ChanNams):
       if i > 1: 
         break  # works for 2 channels only
       self.V[i] = np.sqrt (np.inner(evData[i], evData[i])/len(evData[i]) )
@@ -149,18 +150,18 @@ class VoltMeter(object):
 #          r.set_height(v)
     if n>1: # !!! fix to avoid permanent display of first object in blit mode
       self.bgraph1.set_height(self.V[0])
-      if self.NChannels > 1:
+      if self.NChan > 1:
         self.bgraph2.set_height(self.V[1])
     else:  
       self.bgraph1.set_height(0.)
-      if self.NChannels > 1:
+      if self.NChan > 1:
         self.bgraph2.set_height(0.)
-    if self.NChannels > 1:
+    if self.NChan > 1:
       self.animtxt.set_text(txt_t + '\n' + txt[0] + '\n' + txt[1])
     else:
       self.animtxt.set_text(txt_t + '\n' + txt[0])
 #
-    if self.NChannels > 1 :
+    if self.NChan > 1 :
       return (self.bgraph1,) + (self.bgraph2,) + self.graphs + (self.animtxt,)
     else:
       return (self.bgraph1,) + self.graphs + (self.animtxt,)
