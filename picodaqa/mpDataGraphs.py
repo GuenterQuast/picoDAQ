@@ -92,7 +92,7 @@ def mpDataGraphs(Q, conf, WaitTime=500.,
 # ------- executable part -------- 
 #  print(' -> mpDataGraph starting')
 
-  DG = DataGraphs(WaitTime, conf, XYmode)
+  DG = DataGraphs(WaitTime, conf, name, XYmode)
   figDG = DG.fig
 
 # generate a simple window for graphics display as a tk.DrawingArea

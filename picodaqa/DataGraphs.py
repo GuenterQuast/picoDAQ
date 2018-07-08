@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 class DataGraphs(object):
   ''' Bar graph display of average over samples '''
 
-  def __init__(self, Wtime, ConfDict, XYmode):
+  def __init__(self, Wtime, ConfDict, sigName, XYmode):
     '''Args:   Wtime: waiting time between updates
                confDict: PicoScope Configuration dictionary
                XYmode: bool, xy-display if True
@@ -67,7 +67,7 @@ class DataGraphs(object):
       if i > 1:
         break # works for a maximum of 2 Channels only
       axes[i].set_ylim(*self.ChanLim[i])
-      axes[i].set_ylabel('Chan ' + C + ' (Veff)', color=self.ChanColors[i])
+      axes[i].set_ylabel('Chan ' + C + ' ' + sigName, color=self.ChanColors[i])
       axes[i].grid(True, color=self.ChanColors[i], linestyle = '--', alpha=0.3)
     axes[0].set_xlabel('History (s)', size='x-large')
 
@@ -88,10 +88,12 @@ class DataGraphs(object):
       axbar1.axvline(self.NChan, color = self.ChanColors[1])
     axbar1.set_ylim(*self.ChanLim[0])
     axbar1.axhline(0., color='k', linestyle='-', lw=2, alpha=0.5)
-    axbar1.set_ylabel('Chan A (Veff)', size='x-large', color = self.ChanColors[0])
+    axbar1.set_ylabel('Chan A ' + sigName, size='x-large', 
+       color = self.ChanColors[0])
     if self.NChan > 1:
       axbar2.set_ylim(*self.ChanLim[1])
-      axbar2.set_ylabel('Chan B (Veff)', size='x-large', color = self.ChanColors[1])
+      axbar2.set_ylabel('Chan B ' + sigName, size='x-large', 
+          color = self.ChanColors[1])
 
   # Voltage in Text format
     if self.XYmode:
@@ -110,9 +112,9 @@ class DataGraphs(object):
       axXY = axes[-1]
       axXY.set_xlim(*self.ChanLim[0])
       axXY.set_ylim(*self.ChanLim[1])
-      axXY.set_xlabel('Chan '+self.ChanNams[0]+' (Veff)', 
+      axXY.set_xlabel('Chan '+self.ChanNams[0]+' ' + sigName, 
          size='x-large', color=self.ChanColors[0])
-      axXY.set_ylabel('Chan '+self.ChanNams[1]+' (Veff)', 
+      axXY.set_ylabel('Chan '+self.ChanNams[1]+ ' ' + sigName, 
          size='x-large', color=self.ChanColors[1])
       axXY.set_title('XY-View', size='xx-large')
       axXY.grid(True, color='grey', linestyle = '--', alpha=0.3)
