@@ -90,10 +90,12 @@ class DataGraphs(object):
     axbar1.axhline(0., color='k', linestyle='-', lw=2, alpha=0.5)
     axbar1.set_ylabel('Chan A ' + sigName, size='x-large', 
        color = self.ChanColors[0])
+    axbar1.grid(True, color=self.ChanColors[0], linestyle = '--', alpha=0.3)
     if self.NChan > 1:
       axbar2.set_ylim(*self.ChanLim[1])
       axbar2.set_ylabel('Chan B ' + sigName, size='x-large', 
           color = self.ChanColors[1])
+      axbar2.grid(True, color=self.ChanColors[0], linestyle = '--', alpha=0.3)
 
   # Voltage in Text format
     if self.XYmode:
