@@ -145,6 +145,8 @@ display the effective voltage as bar graph, a history plot, and, optionally,
 channel B vs. Channel A as an xy-graph if two channels are enabled.
 These examples directly read from the hardware device and
 therefore do not rely on the `BufferMan` class.
+As a third simple example the script `runOsci.py` provides a simple
+oscilloscpe independent of BufferMan. 
 
 The script `runCosmo.py` is a modified version of `runDAQ.py` and
 depends on the code in `pulseFilter.py`, which implements a
