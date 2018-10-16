@@ -81,6 +81,10 @@ class PSconfig(object):
       self.pretrig=confdict["pretrig"]
     else:
       self.pretrig=0.05      # fraction of samples before trigger
+    if self.PSmodel == '2000':
+      self.pretrig = 0.
+      print('  Pretrig sampling disabled on device ', self.PSmodel)
+
     if "trgTO"  in confdict: 
       self.trgTO=confdict["trgTO"] 
     else:
@@ -243,7 +247,10 @@ class PSconfig(object):
         ttrg: time when device became ready
         tlife life time of device
   '''
-    self.picoDevice.runBlock(pretrig=self.pretrig) #
+    if self.pretrig != 0.:
+      self.picoDevice.runBlock(pretrig=self.pretrig) #
+    else:
+      self.picoDevice.runBlock() #
     ti=time.time()
     while not self.picoDevice.isReady():
       if not self.BM.ACTIVE.value: return None
@@ -273,7 +280,10 @@ class PSconfig(object):
         ttrg: time when device became ready
         tlife life time of device
   '''
-    self.picoDevice.runBlock(pretrig=self.pretrig) #
+    if self.pretrig !=0.:
+      self.picoDevice.runBlock(pretrig=self.pretrig)
+    else:  
+     self.picoDevice.runBlock() #
     ti=time.time()
     while not self.picoDevice.isReady():
       time.sleep(0.0001)
