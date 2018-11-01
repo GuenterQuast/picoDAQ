@@ -1,0 +1,3 @@
+Vers. 0.7.3p1  fixed but in RMeter (display of active time)
+               added support for PS2204A
+Vers 0.7.3 

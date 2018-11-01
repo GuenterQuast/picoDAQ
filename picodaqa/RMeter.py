@@ -45,7 +45,8 @@ class RMeter(object):
               transform=self.axes.transAxes,
               size='small', color='darkblue')
 
-    self.t0 = time.time() # start time
+    self.T0 = time.time() # start time
+    self.t0 = self.T0     # time of last event
     self.n0 = 0
     self.N0 = 0
     return self.line1, self.animtxt  
@@ -74,10 +75,10 @@ class RMeter(object):
     if self.BM == None:
       self.animtxt.set_text( \
          'Time: %.1fs  Events: %i  Rate: %.3gHz'\
-         %(time.time()-self.t0, evNr, rate) )
+         %(time.time()-self.T0, evNr, rate) )
     else:
       self.animtxt.set_text( \
          'Time: %.1fs  Triggers: %i  rate: %.3gHz  life: %.1f%%'\
-         %(time.time()-self.t0, evNr, rate, self.BM.lifefrac) )
+         %(time.time()-self.T0, evNr, rate, self.BM.lifefrac) )
 
     return self.line1, self.animtxt  
