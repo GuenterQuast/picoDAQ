@@ -1,0 +1,8 @@
+
+vers. 0.7.4  Nov. 18, 2018
+  - fixed bug in RMeter (display of run time)
+  - added support for PS2204A
+  - added simple oscilloscope display (inde. of BufferMan)
+  - imorived documentation 
+
+vers. 0.7.3 
