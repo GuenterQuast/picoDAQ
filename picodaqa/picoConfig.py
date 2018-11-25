@@ -135,8 +135,20 @@ class PSconfig(object):
   def init(self):
 # configuration parameters only known after initialisation
     # import libraries relevant to PS model
-    exec('from picoscope import ps'+self.PSmodel)
-    exec('self.picoDevice = ps'+self.PSmodel+'.PS'+self.PSmodel+'()')  
+    try:
+      exec('from picoscope import ps'+self.PSmodel)
+    except Exception as e:
+      print('!!! PSconfig:  Error loading driver library ps'+self.PSmodel)
+      print(str(e))
+      print('  - exiting')
+      sys.exit(1)
+    try:      
+      exec('self.picoDevice = ps'+self.PSmodel+'.PS'+self.PSmodel+'()')  
+    except Exception as e:
+      print('!!! PSconfig:  Error initialising device')
+      print(str(e))
+      print('  - exiting')
+      sys.exit(1)
 
     self.TSampling = 0.
     self.NSamples = 0.
@@ -144,8 +156,10 @@ class PSconfig(object):
    
     try: 
       self.picoIni() # run initialisation routine for device  
-    except:
-      print("PSconfig: Error initialising device - exit")
+    except Exception as e:
+      print("!!! PSconfig: Error configuring device")
+      print(str(e))
+      print('  - exiting')
       sys.exit(1)
 
    # store configuration parameters in dictionary
