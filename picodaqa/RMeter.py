@@ -34,12 +34,13 @@ class RMeter(object):
     self.axes = self.fig.add_subplot(1,1,1)
     self.axes.yaxis.tick_right()
     #self.axes.set_title('')
-    self.axes.set_ylabel('rate (HZ)')
+    self.axes.set_xlim(self.xplt[0], self.xplt[-1])
     self.axes.set_xlabel(name)
     self.axes.set_ylim(0., self.maxRate)
-
+    self.axes.set_ylabel('rate (HZ)')
+  
   def init(self):
-    self.line1, = self.axes.plot(self.xplt, self.R, 
+    self.line1, = self.axes.plot([], [], 
       marker='.', markerfacecolor='b', linestyle='dashed', color='grey')
     self.animtxt = self.axes.text(0.2, 0.925 , ' ',
               transform=self.axes.transAxes,
@@ -55,10 +56,11 @@ class RMeter(object):
     n = evt[0]
     evNr = evt[1]
     evTime = evt[2]
-    if n < 3:
-      self.init()
-      self.N0 = evNr
-      return self.line1, self.animtxt  
+    if n <= 1:
+      self.line1.set_xdata(self.xplt)
+#      self.init()
+#      self.N0 = evNr
+#      return self.line1, self.animtxt  
 
     k = n%self.Npoints
     # calculate rate from event number and event Time
