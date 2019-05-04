@@ -65,6 +65,7 @@ class Oscilloscope(object):
                     wspace=-0.1, hspace=.1)
         
     for i in range(self.NChannels):
+      axes[i].set_xlim(self.samplingTimes[0], self.samplingTimes[-1])
       axes[i].set_ylim(-self.CRanges[i]-self.ChanOffsets[i], 
                       self.CRanges[i]-self.ChanOffsets[i])
       axes[i].grid(True, color=self.ChanColors[i], linestyle = '--', alpha=0.5)
@@ -111,9 +112,11 @@ class Oscilloscope(object):
   # initialize objects to be animated
     self.graphsOs = ()
     for i, C in enumerate(self.Channels):
-      g,= self.axes[i].plot(self.samplingTimes, np.zeros(self.NSamples), 
+      g, = self.axes[i].plot([], [], 
                            color=self.ChanColors[i])
       self.graphsOs += (g,)
+      g.set_xdata(self.samplingTimes)
+      
     self.animtxtOs = self.axes[0].text(0.65, 0.94, ' ', 
                      transform=self.axes[0].transAxes,
 #                     backgroundcolor='white', 
@@ -130,13 +133,9 @@ class Oscilloscope(object):
     n, evNr, evTime, evData = evt
     if n == 0:
       return self.init()
-
-    if n>2:    # !!! fix to avoid permanent display of first line in blit mode
-      for i, C in enumerate(self.Channels):
-        self.graphsOs[i].set_data(self.samplingTimes, evData[i])
-    else:
-      for i, C in enumerate(self.Channels):
-        self.graphsOs[i].set_data([],[])
+    
+    for i, C in enumerate(self.Channels):
+      self.graphsOs[i].set_ydata(evData[i])
 
 # display rate and life time
     if n-self.n0 == 50:

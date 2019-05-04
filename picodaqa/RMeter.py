@@ -54,13 +54,11 @@ class RMeter(object):
 
   def __call__(self, evt):
     n = evt[0]
+    if n <= 1:
+      if n==0: self.init()
+      self.line1.set_xdata(self.xplt)
     evNr = evt[1]
     evTime = evt[2]
-    if n <= 1:
-      self.line1.set_xdata(self.xplt)
-#      self.init()
-#      self.N0 = evNr
-#      return self.line1, self.animtxt  
 
     k = n%self.Npoints
     # calculate rate from event number and event Time
