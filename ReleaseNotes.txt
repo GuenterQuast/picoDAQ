@@ -1,3 +1,8 @@
+vers. 0.7.4p2 May 04, 2019
+
+  - optimizations to graphics
+  - button to save Figure in mpRMeter
+  - more explicit error messages
 
 vers. 0.7.4  Nov. 18, 2018
   - fixed bug in RMeter (display of run time)
@@ -6,3 +11,4 @@ vers. 0.7.4  Nov. 18, 2018
   - imorived documentation 
 
 vers. 0.7.3 
+  
