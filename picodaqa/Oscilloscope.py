@@ -45,6 +45,9 @@ class Oscilloscope(object):
 
     self.BM = BM
 
+# figure parameters
+    self.NPoints = 250  # number of points on graph
+    self.iStep = int(self.NSamples  / self.NPoints) + 1
 # set up a figure to plot samplings from Picoscope
     axes=[]
     if self.NChannels <= 2:
@@ -115,7 +118,7 @@ class Oscilloscope(object):
       g, = self.axes[i].plot([], [], 
                            color=self.ChanColors[i])
       self.graphsOs += (g,)
-      g.set_xdata(self.samplingTimes)
+      g.set_xdata(self.samplingTimes[::self.iStep])
       
     self.animtxtOs = self.axes[0].text(0.65, 0.94, ' ', 
                      transform=self.axes[0].transAxes,
@@ -135,7 +138,7 @@ class Oscilloscope(object):
       return self.init()
     
     for i, C in enumerate(self.Channels):
-      self.graphsOs[i].set_ydata(evData[i])
+      self.graphsOs[i].set_ydata(evData[i, ::self.iStep])
 
 # display rate and life time
     if n-self.n0 == 50:
