@@ -14,6 +14,8 @@ class PSconfig(object):
 # -- PicoScope model
     if "PSmodel" in confdict: 
       self.PSmodel = confdict["PSmodel"]
+      if type(self.PSmodel) != type(''):
+        self.PSmodel = str(self.PSmodel)
     else:
       self.PSmodel = '2000a' 
 # -- channels to be used
