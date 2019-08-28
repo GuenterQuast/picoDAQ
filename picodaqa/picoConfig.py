@@ -202,7 +202,8 @@ class PSconfig(object):
 # 1) Time Base
     TSampling, NSamples, maxSamples = \
        self.picoDevice.setSamplingInterval(\
-       self.sampleTime/self.Nsamples, self.sampleTime)
+       self.sampleTime/(self.Nsamples-1), self.sampleTime)
+       ### (Nsamples-1) is an "empirical" fix !!!
     if verbose>0:
       print(prompt+"sampling interval = %.1g µs (%.1g µs)" \
                    % (TSampling*1E6, self.sampleTime*1E6/self.Nsamples ) )
