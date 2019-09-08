@@ -82,6 +82,7 @@ def mpBDisplay(Q, conf, mode=0, size=1, name='SignalSize'):
                        #     to fix memory leak in animate
       Tk.mainloop()
    
-  except:
-    print('*==* mpBDisplay: termination signal recieved')
+  except Exception as e:
+    print('*==* mpBDisplay: terminating')
+    print(e)
   sys.exit()

@@ -19,7 +19,9 @@ class BarDisplay(object):
    # collect relevant configuration parameters
     self.NChan = conf.NChannels
     self.CNames = conf.picoChannels
-    self.Range = conf.CRanges[0]+abs(conf.ChanOffsets[0]) # voltage range
+    self.Ranges = conf.CRanges # voltage range
+    for ic in range(self.NChan):
+      self.Ranges[ic] += abs(conf.ChanOffsets[ic])  
     self.trgChan = conf.trgChan
     self.mode = mode # display mode
 
@@ -38,14 +40,17 @@ class BarDisplay(object):
     if self.mode==2: axbar.get_xaxis().set_visible(False)
     axbar.get_yaxis().set_visible(False)
     if self.mode==1: 
-      axbar.set_xlim(0., self.Range)
+      mn = 0.
+      mx = 1.
     else:
-      axbar.set_xlim(-self.Range, self.Range)
+      mn = -1.
+      mx = 1.
+    axbar.set_xlim(mn, mx)
     axbar.set_ylim(0., self.NChan)
     for i in range(self.NChan+1):
       axbar.axhline(float(i), color = 'darkblue', linewidth=3)
-    axbar.axvline(-self.Range, color = 'darkblue', linewidth=3)
-    axbar.axvline(self.Range, color = 'darkblue', linewidth=3)
+    axbar.axvline(mn, color = 'darkblue', linewidth=3)
+    axbar.axvline(mx, color = 'darkblue', linewidth=3)
     axbar.axvline(0., color = 'darkblue', linewidth=1, linestyle='--')
     for i, C in enumerate(self.CNames):
       if C == self.trgChan: 
@@ -77,9 +82,9 @@ class BarDisplay(object):
   def __call__( self, vals ):
   # update bar chart
     for i in range(self.NChan):
-      self.barsp[i].set_width(vals[i])
+      self.barsp[i].set_width(vals[i]/self.Ranges[i])
       if self.mode==2: 
-        self.barsm[i].set_width(-vals[i])
+        self.barsm[i].set_width(-vals[i]/self.Ranges[i])
 
     return self.barsm + self.barsp
 #- -end def BarDisplay.__call__
