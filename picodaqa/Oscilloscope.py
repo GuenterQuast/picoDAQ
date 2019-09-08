@@ -136,9 +136,13 @@ class Oscilloscope(object):
     n, evNr, evTime, evData = evt
     if n == 0:
       return self.init()
-    
-    for i, C in enumerate(self.Channels):
-      self.graphsOs[i].set_ydata(evData[i, ::self.iStep])
+
+    if n == 1: # 1st event sometimes sticks - don't plot
+      for i, C in enumerate(self.Channels):
+        self.graphsOs[i].set_ydata([None]*len(evData[i, ::self.iStep]) )
+    else:
+      for i, C in enumerate(self.Channels):
+        self.graphsOs[i].set_ydata(evData[i, ::self.iStep])
 
 # display rate and life time
     if n-self.n0 == 50:
