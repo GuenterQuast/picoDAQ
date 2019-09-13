@@ -78,6 +78,8 @@ class animHists(object):
           nh += 1
           if nh <= self.nHist:
             self.axes.append(axarray[ir,ic])
+          else:
+            axarray[ir,ic].axis('off')
 
     for ih in range(self.nHist):
       self.axes[ih].set_ylabel('frequency')
