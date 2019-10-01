@@ -40,7 +40,7 @@ class RMeter(object):
     self.axes.set_ylabel('rate (HZ)')
   
   def init(self):
-    self.line1, = self.axes.plot([], [], 
+    self.line1, = self.axes.plot(self.xplt, np.zeros(len(self.xplt)), 
       marker='.', markerfacecolor='b', linestyle='dashed', color='grey')
     self.animtxt = self.axes.text(0.2, 0.925 , ' ',
               transform=self.axes.transAxes,
@@ -54,9 +54,7 @@ class RMeter(object):
 
   def __call__(self, evt):
     n = evt[0]
-    if n <= 1:
-      if n==0: self.init()
-      self.line1.set_xdata(self.xplt)
+    if n==0: self.init()
     evNr = evt[1]
     evTime = evt[2]
 
