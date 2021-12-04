@@ -36,7 +36,7 @@ if __name__ == "__main__": # -----------------------------
   try:
     with open(fnam) as f:
       print("*= loading data")
-      obj = yaml.load(f)
+      obj = yaml.load(f, Loader=yaml.Loader)
   except:
     print('     failed to read input file ' + fnam)
     exit(1)

@@ -84,7 +84,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   print('    DAQconfiguration from file ' + DAQconfFile)
   try:
     with open(DAQconfFile) as f:
-      DAQconfdict=yaml.load(f)
+      DAQconfdict=yaml.load(f, Loader=yaml.Loader)
   except:
     print('     failed to read DAQ configuration file ' + DAQconfFile)
     exit(1)
