@@ -292,7 +292,7 @@ class BufferMan(object):
     ''' 
     register a subprocess to Buffer Manager
     
-    data will be transferred via a multiprocess Queue
+    copy of data will be transferred via a multiprocess Queue
     
     Returns: client index
              multiprocess Queue
