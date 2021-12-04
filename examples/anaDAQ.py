@@ -16,7 +16,7 @@ from pulseFilter import *
 pFconfFile = 'pFconfig.yaml'
 try:   # read config file
   with open(pFconfFile) as f:
-    pFconfdict = yaml.load(f)
+    pFconfdict = yaml.load(f, Loader=yaml.Loader)
 except: 
    pFconfdict = None
 if pFconfdict:
