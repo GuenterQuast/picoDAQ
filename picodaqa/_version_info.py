@@ -1,14 +1,14 @@
 '''
 .. module:: _version_info
-   :platform: python 2.7, 3.4
-   :synopsis: Version 0.7.1 of picodaq, rel. Apr. 28, 2018
+   :platform: python 2.7, >=3.6
+   :synopsis: Version 1.0.0 of picodaq, rel. Mar. 22
 
 .. moduleauthor:: Guenter Quast <guenter.quast@online.de>
 '''
 
-major = 0
-minor = 7
-revision = 5
+major = 1
+minor = 1
+revision = 0
 
 def _get_version_tuple():
   '''

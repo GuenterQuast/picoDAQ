@@ -38,7 +38,7 @@ setup(
     description='Data AcQuisition and analysis with PicoScope usb-oscilloscopes',
     long_description=open('README.md').read(),
     setup_requires=[\
-        "NumPy >= 1.14.5",
-        "SciPy >= 1.5.4",
+        "NumPy >= 1.16.2",
+        "SciPy >= 1.1.0",
         "matplotlib >= 3.0.0",]
 )
