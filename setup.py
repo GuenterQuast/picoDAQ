@@ -24,20 +24,23 @@ setup(
     author='Guenter Quast',
     author_email='Guenter.Quast@online.de',
     packages=['picodaqa'],
-    install_requires=[
-        'picoscope @ git+https://github.com/colinoflynn/pico-python'],
+    install_requires=[],
     scripts=[],
     classifiers=[
-    'Development Status :: 5 - stable',
+    'Development Status :: 5 - Production/Stable',
     # Specify the Python versions you support here. In particular, ensure
     # that you indicate whether you support Python 2, Python 3 or both.
-    'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
     ],
-    url='http://www.ekp.kit.edu/~quast/',
+    url='https://www.etp.kit.edu/~quast/',
     license='GNU Public Licence',
     description='Data AcQuisition and analysis with PicoScope usb-oscilloscopes',
     long_description=open('README.md').read(),
     setup_requires=[\
+        "picoscope",            
         "NumPy >= 1.14.5",
         "SciPy >= 1.5.4",
         "matplotlib >= 3.0.0",]
