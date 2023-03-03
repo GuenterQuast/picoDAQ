@@ -235,7 +235,7 @@ class PSconfig(object):
       self.picoDevice.setSigGenBuiltInSimple(frequency=self.frqSG, 
          pkToPk=self.PkToPkSG, waveType=self.waveTypeSG, 
          offsetVoltage=self.offsetVoltageSG, sweepType=self.swpSG, 
-         dwellTime=self.dwellTimeSG, stopFreq=self.stopFreqSG)
+         dwellTime=self.dwellTimeSG, stopFrequency=self.stopFreqSG)
       if verbose>0:
         print(prompt+"signal generator enabled: %.3gHz, +/-%.3g V %s"\
             % (self.frqSG, self.PkToPkSG, self.waveTypeSG) )
