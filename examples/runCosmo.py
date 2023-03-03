@@ -119,7 +119,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   print('    Device configuration from file ' + DeviceFile)
   try:
     with open(DeviceFile) as f:
-      PSconfdict=yaml.load(f)
+      PSconfdict=yaml.load(f, Loader=yaml.Loader)
   except:
     print('     failed to read scope configuration file ' + DeviceFile)
     exit(1)
@@ -127,7 +127,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   # read Buffer Manager configuration file
   try:
     with open(BMfile) as f:
-        BMconfdict=yaml.load(f)
+        BMconfdict=yaml.load(f, Loader=yaml.Loader)
   except:
    print('     failed to read BM input file ' + BMfile)
    exit(1)

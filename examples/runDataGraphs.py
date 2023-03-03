@@ -69,7 +69,7 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   print('    Device configuration from file ' + PSconfFile)
   try:
     with open(PSconfFile) as f:
-      PSconfDict=yaml.load(f)
+      PSconfDict=yaml.load(f, Loader=yaml.Loader)
   except:
     print('     failed to read scope configuration file ' + PSconfFile)
     exit(1)
