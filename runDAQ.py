@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # script runDAQ.py
 '''
@@ -85,8 +85,9 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   try:
     with open(DAQconfFile) as f:
       DAQconfdict=yaml.load(f, Loader=yaml.Loader)
-  except:
+  except Exception as e:
     print('     failed to read DAQ configuration file ' + DAQconfFile)
+    print(e)
     exit(1)
 
   if "DeviceFile" in DAQconfdict: 
@@ -120,16 +121,18 @@ if __name__ == "__main__": # - - - - - - - - - - - - - - - - - - - - - -
   try:
     with open(DeviceFile) as f:
       PSconfdict=yaml.load(f, Loader=yaml.Loader)
-  except:
+  except Exception as e:
     print('     failed to read scope configuration file ' + DeviceFile)
+    print(e)
     exit(1)
 
   # read Buffer Manager configuration file
   try:
     with open(BMfile) as f:
         BMconfdict=yaml.load(f, Loader=yaml.Loader)
-  except:
+  except Exception as e:
    print('     failed to read BM input file ' + BMfile)
+   print(e)
    exit(1)
 
 # initialisation
