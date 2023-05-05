@@ -61,7 +61,8 @@ class animHists(object):
     if ncols * nrows < self.nHist: ncols +=1
     self.fig, axarray = plt.subplots(nrows=nrows, ncols=ncols,
                                           figsize=(3.*ncols, 2.*nrows) )
-    self.fig.canvas.set_window_title(name)
+    # deprecated sind vers. 3.4 self.fig.canvas.set_window_title(name)
+    self.fig.canvas.setWindowTitle(name)
     self.fig.subplots_adjust(left=0.25/ncols, bottom=0.25/nrows, right=0.975, top=0.95,
                              wspace=0.35, hspace=0.35)
 # sort axes in linear array
