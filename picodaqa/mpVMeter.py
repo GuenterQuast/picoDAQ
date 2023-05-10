@@ -63,9 +63,7 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage'):
 # set up matplotlib animation
   VMAnim = anim.FuncAnimation(figVM, VM, yieldEvt_fromQ,
                          interval=WaitTime, init_func=VM.init,
-                         blit=True, fargs=None, repeat=True, save_count=None)
-                       # save_count=None is a (temporary) work-around 
-                       #     to fix memory leak in animate
+                         blit=True, fargs=None, repeat=True, cache_frame_data=False)
   try:
     Tk.mainloop()
    

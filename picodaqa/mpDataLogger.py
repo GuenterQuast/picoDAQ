@@ -145,9 +145,7 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
   tw = max(WaitTime - 20., 0.5) # smaller than WaitTime to allow for processing
   VMAnim = anim.FuncAnimation(figDL, DL, yieldEvt_fromQ,
                          interval = tw , init_func=DL.init,
-                         blit=True, fargs=None, repeat=True, save_count=None)
-                       # save_count=None is a (temporary) work-around 
-                       #     to fix memory leak in animate
+                         blit=True, fargs=None, repeat=True, cache_frame_data=False)
   try:
     Tk.mainloop()
    
