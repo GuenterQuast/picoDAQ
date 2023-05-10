@@ -65,9 +65,7 @@ def mpOsci(Q, conf, interval = 50., name='event rate'):
 # set up matplotlib animation
     osciAnim = anim.FuncAnimation(figOs, Osci, yieldEvt_fromQ, 
                   init_func=Osci.init, interval=interval, blit=True,
-                  fargs=None, repeat=True, save_count=None)
-                       # save_count=None is a (temporary) work-around 
-                       #     to fix memory leak in animate
+                  fargs=None, repeat=True, cache_frame_data=False)
     Tk.mainloop()
    
   except:

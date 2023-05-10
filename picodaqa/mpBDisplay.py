@@ -77,9 +77,7 @@ def mpBDisplay(Q, conf, mode=0, size=1, name='SignalSize'):
       interval = 1
       BDAnim = anim.FuncAnimation(figBD, BD, yieldEvt_fromQ,
                          interval=interval, init_func=BD.init,
-                         blit=True, fargs=None, repeat=True, save_count=None)
-                       # save_count=None is a (temporary) work-around 
-                       #     to fix memory leak in animate
+                         blit=True, fargs=None, repeat=True, cache_frame_data=False)
       Tk.mainloop()
    
   except Exception as e:

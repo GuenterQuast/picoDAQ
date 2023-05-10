@@ -93,9 +93,7 @@ def mpRMeter(Q, maxRate = 10. , interval = 2500., name='rate history'):
   try:
     RMAnim = anim.FuncAnimation(figRM, RM, yieldEvt_fromQ, 
                         init_func=RM.init, interval=interval, blit=True,
-                        fargs=None, repeat=True, save_count=None)
-                             # save_count=None is a (temporary) work-around 
-                             #     to fix memory leak in animate
+                        fargs=None, repeat=True, cache_frame_data=False)
     Tk.mainloop()
    
   except:
