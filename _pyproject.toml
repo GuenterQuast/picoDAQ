@@ -1,0 +1,49 @@
+# initial version created with pdm import setup.py  July 2023
+# additions:
+#  - dynamic versioning
+#  - build sysetem 
+#  - package scrips
+
+[project]
+name = "picodaqa"
+dynamic = ["version"]
+description = "Data AcQuisition and analysis with PicoScope usb-oscilloscopes"
+readme = "README.md"
+authors = [
+    {name = "Guenter Quast", email = "Guenter.Quast@online.de"},
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = []
+license = {text = "GNU Public Licence"}
+requires-python = ">=3.6"
+
+[tool.setuptools]
+script-files = []
+
+[tool.setuptools.package-data]
+picocosmo = []
+
+[project.urls]
+Homepage = "https://www.etp.kit.edu/~quast/"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.distutils.bdist_wheel]
+universal = false
+
+[tool.setuptools.packages.find]
+include = ["picodaqa.*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "picodaqa.__version__"}
+
