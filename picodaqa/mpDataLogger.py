@@ -145,10 +145,11 @@ def mpDataLogger(Q, conf, WaitTime=100., name='(Veff)', cmdQ = None):
   tw = max(WaitTime - 20., 0.5) # smaller than WaitTime to allow for processing
   VMAnim = anim.FuncAnimation(figDL, DL, yieldEvt_fromQ,
                          interval = tw , init_func=DL.init,
-                         blit=True, fargs=None, repeat=True, cache_frame_data=False)
+                         blit=True, fargs=None, repeat=True,
+                        # cache_frame_data=False, # not with old matplotlib
+                         save_count=0) 
   try:
-    Tk.mainloop()
-   
+    Tk.mainloop()   
   except:
     print('*==* mpDataLogger: termination signal recieved')
   sys.exit()

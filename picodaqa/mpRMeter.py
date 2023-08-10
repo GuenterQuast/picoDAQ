@@ -93,9 +93,10 @@ def mpRMeter(Q, maxRate = 10. , interval = 2500., name='rate history'):
   try:
     RMAnim = anim.FuncAnimation(figRM, RM, yieldEvt_fromQ, 
                         init_func=RM.init, interval=interval, blit=True,
-                        fargs=None, repeat=True, cache_frame_data=False)
-    Tk.mainloop()
-   
+                        fargs=None, repeat=True,
+                      # cache_frame_data=False, #! not with old matplotlib
+                        save_count=0)
+    Tk.mainloop()   
   except:
     print('*==* mpRMeter: termination signal received')
   sys.exit()

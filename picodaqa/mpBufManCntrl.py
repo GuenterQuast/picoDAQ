@@ -144,7 +144,9 @@ def mpBufManCntrl(Qcmd, Qlog, Qinfo, maxRate = 100. , interval = 1000.):
 # set up matplotlib animation for rate history
     BMiAnim = anim.FuncAnimation(figBMi, BMi, sequence_gen,
                      interval=interval, init_func=BMi.init,
-                     blit=True, fargs=None, repeat=True, cache_frame_data=False)
+                     blit=True, fargs=None, repeat=True, 
+                # cache_frame_data=False, # not with old matplotlib
+                    save_count=0)
     Tk.mainloop()
   except:
     print('*==* mpBufManInfo: termination signal received')

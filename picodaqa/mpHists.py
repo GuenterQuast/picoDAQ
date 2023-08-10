@@ -55,8 +55,9 @@ def mpHists(Q, Hdescripts, interval, name = 'Histograms'):
 # set up matplotlib animation
     HAnim = anim.FuncAnimation(figH, H, yieldData_fromQ, 
                         init_func=H.init, interval=interval, blit=True,
-                        fargs=None, repeat=True, cache_frame_data=False)
-                        #    save_count=None)
+                        fargs=None, repeat=True,
+                               # cache_frame_data=False #! no with old mpl)
+                        save_count=0)
     plt.show()
   
   except:

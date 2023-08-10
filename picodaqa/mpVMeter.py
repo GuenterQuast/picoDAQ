@@ -63,10 +63,11 @@ def mpVMeter(Q, conf, WaitTime=500., name='effective Voltage'):
 # set up matplotlib animation
   VMAnim = anim.FuncAnimation(figVM, VM, yieldEvt_fromQ,
                          interval=WaitTime, init_func=VM.init,
-                         blit=True, fargs=None, repeat=True, cache_frame_data=False)
+                         blit=True, fargs=None, repeat=True,
+                       # cache_frame_data=False, # not with old matplotlib
+                         save_count=0)                         
   try:
-    Tk.mainloop()
-   
+    Tk.mainloop()  
   except:
     print('*==* mpVMeter: termination signal recieved')
   sys.exit()

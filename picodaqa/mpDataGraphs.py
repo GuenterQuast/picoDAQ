@@ -143,7 +143,9 @@ def mpDataGraphs(Q, conf, WaitTime=500.,
   tw = max(WaitTime-50., 0.5) # smaller than WaitTime to allow for processing
   DGAnim = anim.FuncAnimation(figDG, DG, yieldEvt_fromQ,
                          interval = tw, init_func = DG.init,
-                         blit=True, fargs=None, repeat=True, cache_frame_data=False)
+                         blit=True, fargs=None, repeat=True,
+                         # cache_frame_data=False, # not with old matplotlib
+                         save_count=0)
   Tk.mainloop()
   print('*==* mpDataGraphs: terminating')
   sys.exit()
