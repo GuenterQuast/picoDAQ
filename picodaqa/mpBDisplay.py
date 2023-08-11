@@ -80,7 +80,7 @@ def mpBDisplay(Q, conf, mode=0, size=1, name='SignalSize'):
                          blit=True, fargs=None, repeat=True,
                        # cache_frame_data=False, # not with old matplotlib
                          save_count=0)
-       Tk.mainloop()
+      Tk.mainloop()
    
   except Exception as e:
     print('*==* mpBDisplay: terminating')
