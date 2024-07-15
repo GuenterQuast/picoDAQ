@@ -51,7 +51,6 @@ class picolog1000config:
 
     def __init__(self, confdict = None, verbose = 0):
         self.verbose = verbose
-        print(confdict)
         self.confdict = {} if confdict is None else confdict
         self.channels = [1] if "channels" not in self.confdict else self.confdict["channels"]
         self.NSamples = 1 if "number_of_samples" not in self.confdict else self.confdict["number_of_samples"]
