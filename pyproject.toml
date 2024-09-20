@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+# options for linting tools 
+[tool.black]
+line-length = 120
+indent-width = 4
+
+[tool.ruff]
+# only differences from default 
+line-length = 120
+
+[tool.ruff.lint]
+# ignore "unable to detect undefined names", "name may be undefined"
+ignore = ["F403", "F405", "F821"]
+
+[tool.ruff.format]
+quote-style = "preserve"
+line-ending = "lf"
+
+[tool.ruff.lint.per-file-ignores]
+# allow imports not at top
+"__init__.py" = ["E402"]
+"setup.py" = ["E402"]
