@@ -39,6 +39,7 @@ setup(
     license='GNU Public Licence',
     description='Data AcQuisition and analysis with PicoScope usb-oscilloscopes',
     long_description=open('README.md').read(),
+    long_description_content_type='text/x-rst',
     setup_requires=[\
         "picoscope",            
         "NumPy >= 1.16.2",
