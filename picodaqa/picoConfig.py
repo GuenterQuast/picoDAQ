@@ -2,7 +2,7 @@
 from __future__ import print_function, division, unicode_literals
 from __future__ import absolute_import
 
-import numpy as np, time, sys
+import numpy as np, time, sys, importlib
 
 class PSconfig(object):
   '''set PicoScope configuration'''
@@ -138,14 +138,15 @@ class PSconfig(object):
 # configuration parameters only known after initialisation
     # import libraries relevant to PS model
     try:
-      exec('from picoscope import ps'+self.PSmodel)
+      ps_module = importlib.import_module('picoscope.ps' + self.PSmodel)
     except Exception as e:
       print('!!! PSconfig:  Error loading driver library ps'+self.PSmodel)
       print(str(e))
       print('  - exiting')
       sys.exit(1)
-    try:      
-      exec('self.picoDevice = ps'+self.PSmodel+'.PS'+self.PSmodel+'()')  
+    try:
+      ps_class = getattr(ps_module, 'PS' + self.PSmodel)
+      self.picoDevice = ps_class()
     except Exception as e:
       print('!!! PSconfig:  Error initialising device')
       print(str(e))
